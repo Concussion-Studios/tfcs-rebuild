@@ -5,8 +5,7 @@
 //-----------------------------------------------------------------------------
 
 $Macro SRCDIR		"..\.."
-$Macro GAMENAME 	"tfcs" [!$SOURCESDK]
-$Macro GAMENAME 	"mod_tfcs" [$SOURCESDK]
+$Macro GAMENAME 	"tfcsource"
 
 $Include "$SRCDIR\game\client\client_base.vpc"
 
