@@ -33,6 +33,12 @@ public:
 	virtual int			TakeHealth(float flHealth);
 	int					TakeArmor(float flArmor);
 	void				SetArmorClass(float flClass);
+	void				Concuss();
+	void				Cripple(int iCrippleLevel);
+	int					GetCrippleLevel();
+	void				SaveMe();
+	void				Burn();
+	void				Infect();
 	
 	CNetworkQAngle(m_angEyeAngles);
 
@@ -41,8 +47,17 @@ public:
 private:
 	void				GiveDefaultItems();
 	void				TFCSPlayerThink();
-	float				m_flArmorClass;
-	int					m_MaxArmorValue;
+
+	//TFCS related vars
+	CNetworkVar(float, m_flArmorClass);
+	CNetworkVar(int, m_iArmor);
+	CNetworkVar(int, m_iMaxArmor);
+	CNetworkVar(float, m_flConcussTime);
+	CNetworkVar(float, m_flCrippleTime);
+	CNetworkVar(int, m_iCrippleLevel);
+	EHANDLE				m_hBurnAttacker;
+	EHANDLE				m_hInfecAttacker;
+
 	CNetworkVar(int, m_iPlayerState);
 };
 

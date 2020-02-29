@@ -33,27 +33,22 @@ public:
 
 	CTFCSWeaponInfo const	&GetTFCSWpnData() const;
 
-	//TODO get player owner
+	//TODO Get Owner
 
 	virtual void			PrimaryAttack();
 
-	virtual void			Drop(const Vector &vecVelocity);
-	void					DropThink(void);
+	//virtual void			Drop(const Vector &vecVelocity); //todo: make weapons drop on owner death
+	//void					DropThink(void);
 
 	virtual float			GetFOV() { return -1; }
-
-	const char				*GetWorldModel(void) const;
 
 private:
 
 	CTFCSWeaponBase(const CTFCSWeaponBase &);
 
 #ifdef CLIENT_DLL
-	virtual bool			ShouldPretict();
+	virtual bool			ShouldPredict();
 	virtual void			OnDataChanged(DataUpdateType_t type);
-	virtual int				DrawModel(int flags);
-	virtual RenderGroup_t	GetRenderGroup(void);
-	virtual ShadowType_t	ShadowCastType(void);
 #endif
 };
 #endif //TFCS_WEAPON_BASE_H
