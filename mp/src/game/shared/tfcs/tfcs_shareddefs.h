@@ -7,8 +7,8 @@
 #include "shareddefs.h"
 #include "mp_shareddefs.h"
 
-#define SDK_GAME_DESCRIPTION "Team Fortress Classic: Source"
-#define SDK_MAX_PLAYERS 128
+#define TFCS_GAME_DESCRIPTION "Team Fortress Classic: Source"
+#define TFCS_MAX_PLAYERS 128
 
 #define TFCS_DEFAULT_RUN_SPEED 220.0f
 #define TFCS_MAX_WEAPON_SLOTS 10

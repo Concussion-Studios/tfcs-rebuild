@@ -56,31 +56,31 @@
 #include "tfcs_weapon_base.h"
 
 //Data tables
-IMPLEMENT_NETWORKCLASS_ALIASED(TFCSWeaponBase, DT_TFCSWeaponBase)
-BEGIN_NETWORK_TABLE(CTFCSWeaponBase, DT_TFCSWeaponBase)
+IMPLEMENT_NETWORKCLASS_ALIASED( TFCSWeaponBase, DT_TFCSWeaponBase )
+	BEGIN_NETWORK_TABLE( CTFCSWeaponBase, DT_TFCSWeaponBase )
 END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA(CTFCSWeaponBase)
+BEGIN_PREDICTION_DATA( CTFCSWeaponBase )
 END_PREDICTION_DATA()
 
 #ifdef GAME_DLL
-BEGIN_DATADESC(CTFCSWeaponBase)
-//DEFINE_ENTITYFUNC(DropThink),
+BEGIN_DATADESC( CTFCSWeaponBase )
+	//DEFINE_ENTITYFUNC( DropThink ),
 END_DATADESC()
 #endif
 
 CTFCSWeaponBase::CTFCSWeaponBase()
 {
-	SetPredictionEligible(true);
-	AddSolidFlags(FSOLID_TRIGGER);
+	SetPredictionEligible( true );
+	AddSolidFlags( FSOLID_TRIGGER );
 
 	m_bFiresUnderwater = true;
 	//m_bMuzzleFlash = true;
 
-	SetCollisionGroup(COLLISION_GROUP_WEAPON);
+	SetCollisionGroup( COLLISION_GROUP_WEAPON );
 }
 
-void CTFCSWeaponBase::Spawn(void)
+void CTFCSWeaponBase::Spawn( void )
 {
 	BaseClass::Spawn();
 }
@@ -88,12 +88,12 @@ void CTFCSWeaponBase::Spawn(void)
 const CTFCSWeaponInfo &CTFCSWeaponBase::GetTFCSWpnData() const
 {
 	const FileWeaponInfo_t *pWeaponInfo = &GetWpnData();
-	const CTFCSWeaponInfo *pInfo = static_cast<const CTFCSWeaponInfo *>(pWeaponInfo);
+	const CTFCSWeaponInfo *pInfo = static_cast<const CTFCSWeaponInfo *>( pWeaponInfo );
 
 	return *pInfo;
 }
 
-void CTFCSWeaponBase::PrimaryAttack(void)
+void CTFCSWeaponBase::PrimaryAttack( void )
 {
 	BaseClass::PrimaryAttack();
 }
@@ -101,21 +101,17 @@ void CTFCSWeaponBase::PrimaryAttack(void)
 #ifdef CLIENT_DLL
 bool CTFCSWeaponBase::ShouldPredict()
 {
-	if(GetOwner() && GetOwner() == C_BasePlayer::GetLocalPlayer())
-	{
+	if( GetOwner() && GetOwner() == C_BasePlayer::GetLocalPlayer() )
 		return true;
-	}
 
 	return BaseClass::ShouldPredict();
 }
 
-void CTFCSWeaponBase::OnDataChanged(DataUpdateType_t type)
+void CTFCSWeaponBase::OnDataChanged( DataUpdateType_t type )
 {
-	BaseClass::OnDataChanged(type);
+	BaseClass::OnDataChanged( type );
 
-	if (GetPredictable() && !ShouldPredict())
-	{
+	if ( GetPredictable() && !ShouldPredict() )
 		ShutdownPredictable();
-	}
 }
 #endif

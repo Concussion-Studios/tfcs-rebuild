@@ -10,12 +10,12 @@
 class CTFCSWeaponInfo : public FileWeaponInfo_t
 {
 public:
-	DECLARE_CLASS_GAMEROOT(CTFCSWeaponInfo, FileWeaponInfo_t);
+	DECLARE_CLASS_GAMEROOT( CTFCSWeaponInfo, FileWeaponInfo_t );
 
 	CTFCSWeaponInfo();
 	~CTFCSWeaponInfo();
 
-	virtual void Parse(::KeyValues *pKeyValuesData, const char *szWeaponName);
+	virtual void Parse( ::KeyValues *pKeyValuesData, const char *szWeaponName );
 
 	int m_nDamage;
 	int m_nBulletsPerShot;

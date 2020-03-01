@@ -228,6 +228,8 @@ enum CastVote
 //Since this is decided by the gamerules (and it can be whatever number as long as its less than MAX_PLAYERS).
 #if defined( CSTRIKE_DLL )
 	#define MAX_PLAYERS				65  // Absolute max players supported
+#elif TFCSOURCE_DLL
+	#define MAX_PLAYERS				TFCS_MAX_PLAYERS  // Absolute max players supported
 #else
 	#define MAX_PLAYERS				33  // Absolute max players supported
 #endif
@@ -950,5 +952,9 @@ enum
 	MAX_VISION_MODES
 };
 #endif // TF_DLL || TF_CLIENT_DLL
+
+#ifdef TFCSOURCE_DLL
+	#include "tfcs_shareddefs.h"
+#endif
 
 #endif // SHAREDDEFS_H

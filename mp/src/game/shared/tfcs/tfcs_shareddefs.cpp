@@ -83,13 +83,13 @@ const char* g_aWeaponNames[] =
 	"WEAPON_LAST"
 };
 
-int AliasToWeaponID(const char *alias)
+int AliasToWeaponID( const char *alias )
 {
-	if (alias)
+	if ( alias )
 	{
-		for (int i = 0; i < WEAPON_LAST; ++i)
+		for ( int i = 0; i < WEAPON_LAST; ++i )
 		{
-			if (!Q_stricmp(g_aWeaponNames[i], alias))
+			if ( !Q_stricmp( g_aWeaponNames[i], alias ) )
 				return i;
 		}
 	}
