@@ -3,7 +3,7 @@
 #pragma once
 
 #include "basemultiplayerplayer.h"
-//#include "tfcs_shareddefs.h"
+#include "tfcs_player_shared.h"
 
 class CTFCSPlayer;
 
@@ -17,56 +17,62 @@ public:
 	CTFCSPlayer();
 	~CTFCSPlayer();
 
-	static CTFCSPlayer	*CreatePlayer(const char *className, edict_t *ed);
-	static CTFCSPlayer	*Instance(int iEnt);
+	static CTFCSPlayer	*CreatePlayer( const char *className, edict_t *ed );
+	static CTFCSPlayer	*Instance( int iEnt );
 
-	virtual void		Precache();
-	virtual void		Spawn();
-	virtual void		ForceRespawn();
-	virtual void		PreThink();
-	virtual void		PostThink();
-	virtual int			OnTakeDamage(const CTakeDamageInfo &info);
-	virtual int			OnTakeDamage_Alive(const CTakeDamageInfo &info);
-	virtual void		Event_Killed(const CTakeDamageInfo &info);
-	virtual bool		ClientCommand(const CCommand &args);
-	virtual void		ChangeTeam(int iTeamNum);
-	virtual int			TakeHealth(float flHealth);
-	int					TakeArmor(float flArmor);
-	void				SetArmorClass(float flClass);
-	void				Concuss();
-	void				Cripple(int iCrippleLevel);
-	int					GetCrippleLevel();
-	void				SaveMe();
-	void				Burn();
-	void				Infect();
+	virtual void Precache();
+	virtual void Spawn();
+	virtual void ForceRespawn();
+	virtual void PreThink();
+	virtual void PostThink();
+	virtual int OnTakeDamage( const CTakeDamageInfo &info );
+	virtual int OnTakeDamage_Alive( const CTakeDamageInfo &info );
+	virtual void Event_Killed( const CTakeDamageInfo &info );
+	virtual bool ClientCommand( const CCommand &args );
+	virtual void ChangeTeam( int iTeamNum );
+	virtual int TakeHealth( float flHealth );
+	int TakeArmor( float flArmor );
+	void SetArmorClass( float flClass );
+	void Concuss();
+	void Cripple( int iCrippleLevel );
+	int GetCrippleLevel();
+	void SaveMe();
+	void Burn();
+	void Infect();
 	
-	CNetworkQAngle(m_angEyeAngles);
+	CNetworkQAngle( m_angEyeAngles );
 
-	CNetworkHandle(CBaseEntity, m_hRagdoll);
+	CNetworkHandle( CBaseEntity, m_hRagdoll );
+
+public: // called by shared code
+
+	//virtual void DoAnimationEvent( PlayerAnimEvent_t event, int nData = 0 );
+
+	CNetworkVarEmbedded( CTFCSPlayerShared, m_Shared );
 
 private:
-	void				GiveDefaultItems();
-	void				TFCSPlayerThink();
+	void GiveDefaultItems();
+	void TFCSPlayerThink();
 
 	//TFCS related vars
-	CNetworkVar(float, m_flArmorClass);
-	CNetworkVar(int, m_iArmor);
-	CNetworkVar(int, m_iMaxArmor);
-	CNetworkVar(float, m_flConcussTime);
-	CNetworkVar(float, m_flCrippleTime);
-	CNetworkVar(int, m_iCrippleLevel);
-	EHANDLE				m_hBurnAttacker;
-	EHANDLE				m_hInfecAttacker;
+	CNetworkVar( float, m_flArmorClass );
+	CNetworkVar( int, m_iArmor );
+	CNetworkVar( int, m_iMaxArmor );
+	CNetworkVar( float, m_flConcussTime );
+	CNetworkVar( float, m_flCrippleTime );
+	CNetworkVar( int, m_iCrippleLevel );
+	EHANDLE m_hBurnAttacker;
+	EHANDLE m_hInfecAttacker;
 
-	CNetworkVar(int, m_iPlayerState);
+	CNetworkVar( int, m_iPlayerState );
 };
 
-inline CTFCSPlayer *ToTFCSPlayer(CBaseEntity *pEntity)
+inline CTFCSPlayer *ToTFCSPlayer( CBaseEntity *pEntity )
 {
-	if (!pEntity || !pEntity->IsPlayer())
+	if ( !pEntity || !pEntity->IsPlayer() )
 		return NULL;
 
-	return static_cast<CTFCSPlayer*>(pEntity);
+	return static_cast<CTFCSPlayer*>( pEntity );
 }
 
 //TODO add playerclassinfo
