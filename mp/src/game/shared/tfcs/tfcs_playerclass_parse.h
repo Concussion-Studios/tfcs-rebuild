@@ -11,6 +11,7 @@
 struct TFCSPlayerClassInfo_t
 {
 	char m_szArmsModel[MAX_PLAYERCLASS_NAME_LENGTH];
+	char m_szClassName[MAX_PLAYERCLASS_NAME_LENGTH];
 
 	float m_flMaxSpeed;
 	int m_iMaxArmor;
@@ -27,18 +28,29 @@ struct TFCSPlayerClassInfo_t
 	int m_iGrenType1;
 	int m_iGrenType2;
 
+	bool m_bParsed;
+
 	TFCSPlayerClassInfo_t();
-	void Parse(KeyValues *pKeyValues, const char *pszClassName);
+	void Parse(const char *pszClassName);
+
+private:
+	void ParseData(KeyValues *pKeyValuesData);
 };
+
+void InitClasses(void);
+TFCSPlayerClassInfo_t *GetClassData(int iClass);
 
 class CTFCSPlayerClass
 {
 public:
-	CTFCSPlayerClass();
 	DECLARE_EMBEDDED_NETWORKVAR()
 	DECLARE_CLASS_NOBASE(CTFCSPlayerClass);
 
+	CTFCSPlayerClass();
+
 	int GetClassIndex(void) { return m_iClass; }
+	bool Init(int iClass);
+	const char *GetName(void) const { return GetClassData(m_iClass)->m_szClassName; }
 	
 	TFCSPlayerClassInfo_t *GetData(int iClass);
 

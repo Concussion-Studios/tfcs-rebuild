@@ -52,6 +52,9 @@ public:
 
 	virtual const char *GetChatPrefix(bool bTeamOnly, CBasePlayer *pPlayer);
 
+	//TODO: Change this fake key to a real key
+	virtual const unsigned char *GetEncryptionKey(void) { return (unsigned char *)"a1b2c3d4"; }
+
 	CBaseEntity *GetPlayerSpawnSpot(CBasePlayer *pPlayer);
 	bool IsSpawnPointValid(CBaseEntity *pSpot, CBasePlayer *pPlayer);
 	virtual void PlayerSpawn(CBasePlayer *pPlayer);
