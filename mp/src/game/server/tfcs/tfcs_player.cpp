@@ -118,6 +118,7 @@ int CTFCSPlayer::OnTakeDamage( const CTakeDamageInfo &info )
 
 int CTFCSPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 {
+
 	return BaseClass::OnTakeDamage_Alive( info );
 }
 
