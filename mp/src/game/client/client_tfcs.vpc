@@ -81,6 +81,11 @@ $Project "Client (TFCSOURCE)"
 				$File	"$SRCDIR\game\shared\tfcs\tfcs_weapon_base_melee.h"
 				$File	"$SRCDIR\game\shared\tfcs\tfcs_weapon_parse.cpp"
 				$File	"$SRCDIR\game\shared\tfcs\tfcs_weapon_parse.h"
+				$File	"$SRCDIR\game\shared\tfcs\weapon_crowbar.cpp"
+				$File	"$SRCDIR\game\shared\tfcs\weapon_knife.cpp"
+				$File	"$SRCDIR\game\shared\tfcs\weapon_medkit.cpp"
+				$File	"$SRCDIR\game\shared\tfcs\weapon_umbrella.cpp"
+				$File	"$SRCDIR\game\shared\tfcs\weapon_wrench.cpp"
 			}
 
 			$File	"$SRCDIR\game\shared\tfcs\tfcs_gamerules.cpp"
