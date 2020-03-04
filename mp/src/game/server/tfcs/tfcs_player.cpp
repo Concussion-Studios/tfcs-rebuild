@@ -1,6 +1,6 @@
 #include "cbase.h"
 #include "tfcs_player.h"
-#include "tfcs_shareddefs.h"
+#include "tfcs_gamerules.h"
 #include "multiplayer_animstate.h"
 #include "keyvalues.h"
 #include "viewport_panel_names.h"
@@ -26,13 +26,10 @@ void* SendProxy_SendNonLocalDataTable( const SendProp *pProp, const void *pStruc
 }
 REGISTER_SEND_PROXY_NON_MODIFIED_POINTER( SendProxy_SendNonLocalDataTable );
 
-
 // -------------------------------------------------------------------------------- //
 // Tables.
 // -------------------------------------------------------------------------------- //
 BEGIN_DATADESC( CTFCSPlayer )
-	DEFINE_THINKFUNC( Think ),
-
 	DEFINE_FIELD( m_flArmorClass, FIELD_FLOAT ),
 	DEFINE_FIELD( m_iArmor, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iMaxArmor, FIELD_FLOAT ),
@@ -69,6 +66,8 @@ PRECACHE_REGISTER( player );
 CTFCSPlayer::CTFCSPlayer()
 {
 	m_Shared.Init( this );
+
+	SetContextThink( &CTFCSPlayer::TFCSPlayerThink, gpGlobals->curtime, "TFCSPlayerThink" );
 }
 
 CTFCSPlayer::~CTFCSPlayer()
@@ -76,9 +75,25 @@ CTFCSPlayer::~CTFCSPlayer()
 	
 }
 
+CTFCSPlayer *CTFCSPlayer::CreatePlayer( const char *className, edict_t *ed )
+{
+	CTFCSPlayer::s_PlayerEdict = ed;
+	return ( CTFCSPlayer* )CreateEntityByName( className );
+}
+
+void CTFCSPlayer::TFCSPlayerThink()
+{
+	SetContextThink( &CTFCSPlayer::TFCSPlayerThink, gpGlobals->curtime, "TFCSPlayerThink" );
+}
+
 void CTFCSPlayer::Precache()
 {
 	BaseClass::Precache();
+}
+
+void CTFCSPlayer::InitialSpawn( void )
+{
+	BaseClass::InitialSpawn();
 }
 
 void CTFCSPlayer::Spawn()
@@ -101,7 +116,7 @@ void CTFCSPlayer::PreThink()
 	BaseClass::PreThink();
 }
 
-void CTFCSPlayer::TFCSPlayerThink()
+void CTFCSPlayer::Think()
 {
 	BaseClass::Think();
 }
@@ -126,14 +141,21 @@ void CTFCSPlayer::Event_Killed( const CTakeDamageInfo &info )
 	BaseClass::Event_Killed( info );
 }
 
+void CTFCSPlayer::CommitSuicide( bool bExplode /* = false */, bool bForce /*= false*/ )
+{
+	//m_iSuicideCustomKillFlags = DMG_CUSTOM_SUICIDE;
+
+	BaseClass::CommitSuicide( bExplode, bForce );
+}
+
 bool CTFCSPlayer::ClientCommand( const CCommand &args )
 {
-	return false;
+	return BaseClass::ClientCommand( args );
 }
 
 void CTFCSPlayer::ChangeTeam( int iTeamNum )
 {
-
+	BaseClass::ChangeTeam( iTeamNum );
 }
 
 int CTFCSPlayer::TakeHealth( float flHealth )
@@ -150,10 +172,3 @@ void CTFCSPlayer::SetArmorClass( float flArmorClass )
 {
 
 }
-
-CTFCSPlayer *CTFCSPlayer::CreatePlayer( const char *className, edict_t *ed )
-{
-	CTFCSPlayer::s_PlayerEdict = ed;
-	return ( CTFCSPlayer* )CreateEntityByName( className );
-}
-

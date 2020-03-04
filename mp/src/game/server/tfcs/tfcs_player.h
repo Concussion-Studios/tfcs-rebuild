@@ -7,6 +7,10 @@
 
 class CTFCSPlayer;
 
+//=============================================================================
+//
+// TFCS Player
+//
 class CTFCSPlayer : public CBaseMultiplayerPlayer
 {
 public:
@@ -21,15 +25,22 @@ public:
 	static CTFCSPlayer	*Instance( int iEnt );
 
 	virtual void Precache();
+	virtual void InitialSpawn( void );
 	virtual void Spawn();
 	virtual void ForceRespawn();
+	virtual void Think();
 	virtual void PreThink();
 	virtual void PostThink();
+	virtual void CommitSuicide( bool bExplode = false, bool bForce = false );
 	virtual int OnTakeDamage( const CTakeDamageInfo &info );
 	virtual int OnTakeDamage_Alive( const CTakeDamageInfo &info );
 	virtual void Event_Killed( const CTakeDamageInfo &info );
 	virtual bool ClientCommand( const CCommand &args );
 	virtual void ChangeTeam( int iTeamNum );
+	void GiveDefaultItems();
+
+	//TFCS Functions
+	void TFCSPlayerThink();
 	virtual int TakeHealth( float flHealth );
 	int TakeArmor( float flArmor );
 	void SetArmorClass( float flClass );
@@ -39,10 +50,7 @@ public:
 	void SaveMe();
 	void Burn();
 	void Infect();
-	
-	CNetworkQAngle( m_angEyeAngles );
 
-	CNetworkHandle( CBaseEntity, m_hRagdoll );
 
 public: // called by shared code
 
@@ -51,8 +59,6 @@ public: // called by shared code
 	CNetworkVarEmbedded( CTFCSPlayerShared, m_Shared );
 
 private:
-	void GiveDefaultItems();
-	void TFCSPlayerThink();
 
 	//TFCS related vars
 	CNetworkVar( float, m_flArmorClass );
@@ -61,10 +67,12 @@ private:
 	CNetworkVar( float, m_flConcussTime );
 	CNetworkVar( float, m_flCrippleTime );
 	CNetworkVar( int, m_iCrippleLevel );
+
 	EHANDLE m_hBurnAttacker;
 	EHANDLE m_hInfecAttacker;
 
-	CNetworkVar( int, m_iPlayerState );
+	CNetworkQAngle( m_angEyeAngles );
+	CNetworkHandle( CBaseEntity, m_hRagdoll );
 };
 
 inline CTFCSPlayer *ToTFCSPlayer( CBaseEntity *pEntity )
