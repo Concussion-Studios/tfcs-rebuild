@@ -34,6 +34,8 @@ public: // called by shared code
 
 	CTFCSPlayerShared m_Shared;
 
+	CTFCSWeaponBase* Weapon_OwnsThisID( int iWeaponID );
+
 private:
 
 	//CTFCSPlayerAnimState *m_PlayerAnimState;

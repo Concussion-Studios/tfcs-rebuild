@@ -58,6 +58,8 @@ public: // called by shared code
 
 	CNetworkVarEmbedded( CTFCSPlayerShared, m_Shared );
 
+	CTFCSWeaponBase* Weapon_OwnsThisID( int iWeaponID );
+
 private:
 
 	//TFCS related vars

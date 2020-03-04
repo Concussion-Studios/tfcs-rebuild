@@ -1,3 +1,39 @@
+//***************************************************************
+//
+//	TFCS Weapon Base Code
+//
+//	CTFCSWeaponBase
+//	|
+//	|--> CTFCSWeaponBaseMelee
+//	|		|
+//	|		|--> CTFCSWeaponCrowbar
+//	|		|--> CTFCSWeaponMedikit
+//	|		|--> CTFCSWeaponSpanner
+//	|		|--> CTFCSWeaponUmbrella
+//	|		|--> CTFCSWeaponKnife
+//	|
+//	|--> CTFCSWeaponBaseGrenade
+//	|		|
+//	|		|--> Rest of the throwable nades
+//	|
+//	|--> CTFWeaponBaseGun
+//	|		|
+//	|		|--> -CTFCSWeaponShotgun
+//	|		|--> -CTFCSWeaponRailgun
+//	|		|--> -CTFCSWeaponAutorifle
+//	|		|--> -CTFCSWeaponTranq
+//	|		|--> -CTFCSWeaponSuperShotgun
+//	|		|--> -CTFCSWeaponSniperrifle
+//	|		|--> -CTFCSWeaponFlamethrower
+//	|		|--> -CTFCSWeaponNailgun
+//	|		|--> -CTFCSWeaponSuperNailgun
+//	|		|--> -CTFCSWeaponGrenadeLauncher
+//	|		|--> -CTFCSWeaponRocketLauncher
+//	|		|--> -CTFCSWeaponPipebombLauncher
+//	|		|--> -CTFCSWeaponAssaultCannon
+//	|		|--> -CTFCSWeaponIncindiaryCannon
+//
+//***************************************************************
 #ifndef TFCS_WEAPON_BASE_H
 #define TFCS_WEAPON_BASE_H
 #ifdef _WIN32
@@ -5,6 +41,7 @@
 #endif
 
 #include "tfcs_weapon_parse.h"
+#include "tfcs_player_shared.h"
 
 #ifdef CLIENT_DLL
 #define CTFCSWeaponBase C_TFCSWeaponBase
@@ -32,7 +69,8 @@ public:
 
 	CTFCSWeaponInfo const &GetTFCSWpnData() const;
 
-	//TODO Get Owner
+	CBasePlayer* GetPlayerOwner() const;
+	CTFCSPlayer* GetTFCSPlayerOwner() const;
 
 	virtual void PrimaryAttack();
 

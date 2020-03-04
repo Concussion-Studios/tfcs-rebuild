@@ -4,56 +4,44 @@
 //
 //	CTFCSWeaponBase
 //	|
-//	+-CTFCSWeaponBaseMelee
-//	| |
-//  | +-CTFCSWeaponCrowbar
-//	| |
-//  | +-CTFCSWeaponMedikit
-//	| |
-//  | +-CTFCSWeaponSpanner
-//	| |
-//  | +-CTFCSWeaponUmbrella
-//	| |
-//  | +-CTFCSWeaponKnife
+//	|--> CTFCSWeaponBaseMelee
+//	|		|
+//	|		|--> CTFCSWeaponCrowbar
+//	|		|--> CTFCSWeaponMedikit
+//	|		|--> CTFCSWeaponSpanner
+//	|		|--> CTFCSWeaponUmbrella
+//	|		|--> CTFCSWeaponKnife
 //	|
-//  +-CTFCSWeaponBaseGun
-//	| |
-//  | +-CTFCSWeaponShotgun
-//	| |
-//  | +-CTFCSWeaponRailgun
-//	| |
-//  | +-CTFCSWeaponAutorifle
-//	| |
-//  | +-CTFCSWeaponTranq
-//	| |
-//  | +-CTFCSWeaponSuperShotgun
-//	| |
-//  | +-CTFCSWeaponSniperrifle
-//	| |
-//  | +-CTFCSWeaponFlamethrower
-//	| |
-//  | +-CTFCSWeaponNailgun
-//	| |
-//  | +-CTFCSWeaponSuperNailgun
-//	| |
-//  | +-CTFCSWeaponGrenadeLauncher
-//	| |
-//  | +-CTFCSWeaponRocketLauncher
-//	| |
-//  | +-CTFCSWeaponPipebombLauncher
-//	| |
-//  | +-CTFCSWeaponAssaultCannon
-//	| |
-//  | +-CTFCSWeaponIncindiaryCannon
+//	|--> CTFCSWeaponBaseGrenade
+//	|		|
+//	|		|--> Rest of the throwable nades
 //	|
-//  +-CTFCSWeaponBaseGrenade
-//	  |
-//    Rest of the throwable nades
+//	|--> CTFWeaponBaseGun
+//	|		|
+//	|		|--> -CTFCSWeaponShotgun
+//	|		|--> -CTFCSWeaponRailgun
+//	|		|--> -CTFCSWeaponAutorifle
+//	|		|--> -CTFCSWeaponTranq
+//	|		|--> -CTFCSWeaponSuperShotgun
+//	|		|--> -CTFCSWeaponSniperrifle
+//	|		|--> -CTFCSWeaponFlamethrower
+//	|		|--> -CTFCSWeaponNailgun
+//	|		|--> -CTFCSWeaponSuperNailgun
+//	|		|--> -CTFCSWeaponGrenadeLauncher
+//	|		|--> -CTFCSWeaponRocketLauncher
+//	|		|--> -CTFCSWeaponPipebombLauncher
+//	|		|--> -CTFCSWeaponAssaultCannon
+//	|		|--> -CTFCSWeaponIncindiaryCannon
 //
 //***************************************************************
 
 #include "cbase.h"
 #include "tfcs_weapon_base.h"
+#ifdef CLIENT_DLL
+	#include "c_tfcs_player.h"
+#else
+	#include "tfcs_player.h"
+#endif
 
 //Data tables
 IMPLEMENT_NETWORKCLASS_ALIASED( TFCSWeaponBase, DT_TFCSWeaponBase )
@@ -83,6 +71,16 @@ CTFCSWeaponBase::CTFCSWeaponBase()
 void CTFCSWeaponBase::Spawn( void )
 {
 	BaseClass::Spawn();
+}
+
+CBasePlayer* CTFCSWeaponBase::GetPlayerOwner() const
+{
+	return dynamic_cast< CBasePlayer* >( GetOwner() );
+}
+
+CTFCSPlayer* CTFCSWeaponBase::GetTFCSPlayerOwner() const
+{
+	return ToTFCSPlayer( GetOwner() );
 }
 
 const CTFCSWeaponInfo &CTFCSWeaponBase::GetTFCSWpnData() const

@@ -92,3 +92,21 @@ bool CTFCSPlayerShared::IsButtonReleased( int btn )
 {
 	return ( ( m_pOuter->m_afButtonReleased & btn ) ) ? true : false;
 }
+
+// --------------------------------------------------------------------------------------------------- //
+// CTFCSPlayer implementation.
+// --------------------------------------------------------------------------------------------------- //
+CTFCSWeaponBase *CTFCSPlayer::Weapon_OwnsThisID( int iWeaponID )
+{
+	for ( int i = 0;i < WeaponCount(); i++ ) 
+	{
+		CTFCSWeaponBase *pWpn = ( CTFCSWeaponBase *)GetWeapon( i );
+		if ( pWpn == NULL )
+			continue;
+
+		if ( pWpn->GetWeaponID() == iWeaponID )
+			return pWpn;
+	}
+
+	return NULL;
+}
