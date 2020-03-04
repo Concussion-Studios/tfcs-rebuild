@@ -78,8 +78,14 @@ $Project "Server (TFCSOURCE)"
 
 			$Folder	"Weapons"
 			{
+				$File	"$SRCDIR\game\shared\tfcs\tfcs_projectile_nails.cpp"
+				$File	"$SRCDIR\game\shared\tfcs\tfcs_projectile_nails.h"
+				$File	"$SRCDIR\game\shared\tfcs\tfcs_projectile_base.cpp"
+				$File	"$SRCDIR\game\shared\tfcs\tfcs_projectile_base.h"
 				$File	"$SRCDIR\game\shared\tfcs\tfcs_weapon_base.cpp"
 				$File	"$SRCDIR\game\shared\tfcs\tfcs_weapon_base.h"
+				$File	"$SRCDIR\game\shared\tfcs\tfcs_weapon_base_melee.cpp"
+				$File	"$SRCDIR\game\shared\tfcs\tfcs_weapon_base_melee.h"
 				$File	"$SRCDIR\game\shared\tfcs\tfcs_weapon_parse.cpp"
 				$File	"$SRCDIR\game\shared\tfcs\tfcs_weapon_parse.h"
 			}
