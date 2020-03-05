@@ -4,6 +4,7 @@
 
 #include "basemultiplayerplayer.h"
 #include "tfcs_player_shared.h"
+#include "tfcs_playeranimstate.h"
 
 class CTFCSPlayer;
 
@@ -51,10 +52,12 @@ public:
 	void Burn();
 	void Infect();
 
+	CNetworkVar( int, m_iRealSequence );
 
 public: // called by shared code
 
-	//virtual void DoAnimationEvent( PlayerAnimEvent_t event, int nData = 0 );
+	virtual void DoAnimationEvent( PlayerAnimEvent_t event, int nData = 0 );
+	virtual void SetAnimation( PLAYER_ANIM playerAnim );
 
 	CNetworkVarEmbedded( CTFCSPlayerShared, m_Shared );
 
@@ -73,6 +76,7 @@ private:
 	EHANDLE m_hBurnAttacker;
 	EHANDLE m_hInfecAttacker;
 
+	ITFCSPlayerAnimState* m_PlayerAnimState;
 	CNetworkQAngle( m_angEyeAngles );
 	CNetworkHandle( CBaseEntity, m_hRagdoll );
 };

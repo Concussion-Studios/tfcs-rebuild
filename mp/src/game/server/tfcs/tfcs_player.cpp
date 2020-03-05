@@ -1,13 +1,43 @@
 #include "cbase.h"
 #include "tfcs_player.h"
 #include "tfcs_gamerules.h"
-#include "multiplayer_animstate.h"
 #include "keyvalues.h"
 #include "viewport_panel_names.h"
 #include "client.h"
 #include "team.h"
 
 #define TFCS_PLAYER_MODEL "models/player/scout.mdl"
+
+class CTEPlayerAnimEvent : public CBaseTempEntity
+{
+public:
+	DECLARE_CLASS( CTEPlayerAnimEvent, CBaseTempEntity );
+	DECLARE_SERVERCLASS();
+
+	CTEPlayerAnimEvent( const char *name ) : CBaseTempEntity( name ) {}
+
+	CNetworkHandle( CBasePlayer, m_hPlayer );
+	CNetworkVar( int, m_iEvent );
+	CNetworkVar( int, m_nData );
+};
+
+IMPLEMENT_SERVERCLASS_ST_NOBASE( CTEPlayerAnimEvent, DT_TEPlayerAnimEvent )
+	SendPropEHandle( SENDINFO( m_hPlayer ) ),
+	SendPropInt( SENDINFO( m_iEvent ), Q_log2( PLAYERANIMEVENT_COUNT ) + 1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nData ), 32 )
+END_SEND_TABLE()
+
+static CTEPlayerAnimEvent g_TEPlayerAnimEvent( "PlayerAnimEvent" );
+
+void TE_PlayerAnimEvent( CBasePlayer *pPlayer, PlayerAnimEvent_t event, int nData )
+{
+	CPVSFilter filter( pPlayer->EyePosition() );
+
+	g_TEPlayerAnimEvent.m_hPlayer = pPlayer;
+	g_TEPlayerAnimEvent.m_iEvent = event;
+	g_TEPlayerAnimEvent.m_nData = nData;
+	g_TEPlayerAnimEvent.Create( filter, 0 );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Filters updates to a variable so that only non-local players see
@@ -51,6 +81,19 @@ END_SEND_TABLE()
 
 IMPLEMENT_SERVERCLASS_ST( CTFCSPlayer, DT_TFCSPlayer )
 
+	SendPropExclude( "DT_BaseAnimating", "m_flPoseParameter" ),
+	SendPropExclude( "DT_BaseAnimating", "m_flPlaybackRate" ),	
+	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
+	SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
+	SendPropExclude( "DT_BaseAnimatingOverlay", "overlay_vars" ),
+	
+	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
+
+	SendPropAngle( SENDINFO_VECTORELEM(m_angEyeAngles, 0), 11 ),
+	SendPropAngle( SENDINFO_VECTORELEM(m_angEyeAngles, 1), 11 ),
+
+	SendPropInt( SENDINFO( m_iRealSequence ), 9 ),
+
 	// Data that only gets sent to the local player.
 	SendPropDataTable( SENDINFO_DT( m_Shared ), &REFERENCE_SEND_TABLE( DT_TFCSPlayerShared ) ),
 
@@ -65,14 +108,22 @@ PRECACHE_REGISTER( player );
 
 CTFCSPlayer::CTFCSPlayer()
 {
+	m_PlayerAnimState = CreatePlayerAnimState( this );
+	UseClientSideAnimation();
+	m_angEyeAngles.Init();
+
+	m_lifeState = LIFE_DEAD; // Start "dead".
+
 	m_Shared.Init( this );
+
+	//SetViewOffset( TFC_PLAYER_VIEW_OFFSET );
 
 	SetContextThink( &CTFCSPlayer::TFCSPlayerThink, gpGlobals->curtime, "TFCSPlayerThink" );
 }
 
 CTFCSPlayer::~CTFCSPlayer()
 {
-	
+	m_PlayerAnimState->Release();
 }
 
 CTFCSPlayer *CTFCSPlayer::CreatePlayer( const char *className, edict_t *ed )
@@ -124,6 +175,15 @@ void CTFCSPlayer::Think()
 void CTFCSPlayer::PostThink()
 {
 	BaseClass::PostThink();
+
+	QAngle angles = GetLocalAngles();
+	angles[PITCH] = 0;
+	SetLocalAngles( angles );
+	
+	// Store the eye angles pitch so the client can compute its animation state correctly.
+	m_angEyeAngles = EyeAngles();
+
+	m_PlayerAnimState->Update( m_angEyeAngles[YAW], m_angEyeAngles[PITCH] );
 }
 
 int CTFCSPlayer::OnTakeDamage( const CTakeDamageInfo &info )
@@ -139,6 +199,8 @@ int CTFCSPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 
 void CTFCSPlayer::Event_Killed( const CTakeDamageInfo &info )
 {
+	DoAnimationEvent( PLAYERANIMEVENT_DIE );
+
 	BaseClass::Event_Killed( info );
 }
 

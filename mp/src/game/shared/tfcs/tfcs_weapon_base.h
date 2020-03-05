@@ -44,7 +44,10 @@
 #include "tfcs_player_shared.h"
 
 #ifdef CLIENT_DLL
-#define CTFCSWeaponBase C_TFCSWeaponBase
+	#define CTFCSPlayer C_TFCSPlayer
+	#define CTFCSWeaponBase C_TFCSWeaponBase
+#else
+	class CTFCSPlayer;
 #endif
 
 class CTFCSWeaponBase : public CBaseCombatWeapon
