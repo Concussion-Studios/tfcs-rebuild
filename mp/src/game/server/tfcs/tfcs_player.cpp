@@ -1,6 +1,8 @@
 #include "cbase.h"
 #include "tfcs_player.h"
 #include "tfcs_gamerules.h"
+#include "tfcs_playerclass_parse.h"
+#include "tfcs_shareddefs.h"
 #include "multiplayer_animstate.h"
 #include "keyvalues.h"
 #include "viewport_panel_names.h"
@@ -99,11 +101,43 @@ void CTFCSPlayer::InitialSpawn( void )
 void CTFCSPlayer::Spawn()
 {
 	BaseClass::Spawn();
+	GiveDefaultItems();
 }
 
+//Give players their spawn items
 void CTFCSPlayer::GiveDefaultItems()
 {
+	//Get rid of all ammo first
+	RemoveAllAmmo();
 
+	TFCSPlayerClassInfo_t *data = GetClassData( CLASS_SCOUT );
+	int iMaxHealth = data->m_iMaxHealth;
+	//Give health and armor
+	SetMaxHealth( iMaxHealth );
+	SetHealth( iMaxHealth );
+
+	m_iMaxArmor = data->m_iMaxArmor;
+	m_iArmor = data->m_iSpawnArmor;
+	SetArmorClass( data->m_flArmorClass );
+
+	//Set max speed
+	SetMaxSpeed( data->m_flMaxSpeed );
+
+	//Give ammo
+	for ( int iAmmo = AMMO_DUMMY; iAmmo < AMMO_LAST; ++iAmmo )
+	{
+		GiveAmmo( data->m_aSpawnAmmo[iAmmo], iAmmo );
+	}
+
+	//Give weapons
+	for ( int iSlot = 0; iSlot < TFCS_MAX_WEAPON_SLOTS; ++iSlot )
+	{
+		if (data->m_aWeapons[iSlot] != 0)
+		{
+			const char *pszWeaponName = WeaponIDToAlias( data->m_aWeapons[iSlot] );
+			CTFCSWeaponBase *pWpn = (CTFCSWeaponBase *)GiveNamedItem( pszWeaponName );
+		}
+	}
 }
 
 void CTFCSPlayer::ForceRespawn()
@@ -171,5 +205,5 @@ int CTFCSPlayer::TakeArmor( float flArmor )
 
 void CTFCSPlayer::SetArmorClass( float flArmorClass )
 {
-
+	m_flArmorClass = flArmorClass;
 }

@@ -95,3 +95,11 @@ int AliasToWeaponID( const char *alias )
 	}
 	return WEAPON_NONE;
 }
+
+const char *WeaponIDToAlias( int iWeaponID )
+{
+	if ( iWeaponID <= 0 || iWeaponID > WEAPON_LAST )
+		return NULL;
+
+	return g_aWeaponNames[iWeaponID];
+}

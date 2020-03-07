@@ -93,6 +93,7 @@ extern const char* g_aProjectileNames[];
 
 //Weapon names
 int AliasToWeaponID(const char *alias);
+const char *WeaponIDToAlias( int iWeaponID );
 
 enum
 {
