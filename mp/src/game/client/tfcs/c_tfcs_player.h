@@ -25,12 +25,16 @@ public:
 	static C_TFCSPlayer* GetLocalTFCSPlayer();
 
 	virtual const QAngle& GetRenderAngles();
+	virtual const QAngle& EyeAngles();
+	virtual void UpdateClientSideAnimation();
 	//virtual int DrawModel( int flags );
 
+	int	m_iRealSequence;
 
 public: // called by shared code
 
-	//virtual void DoAnimationEvent( PlayerAnimEvent_t event, int nData = 0 );
+	virtual void DoAnimationEvent( PlayerAnimEvent_t event, int nData = 0 );
+	virtual void SetAnimation( PLAYER_ANIM playerAnim );
 
 	CTFCSPlayerShared m_Shared;
 
@@ -38,9 +42,9 @@ public: // called by shared code
 
 private:
 
-	//CTFCSPlayerAnimState *m_PlayerAnimState;
 	QAngle m_angEyeAngles;
-	CInterpolatedVar<QAngle> m_iv_angEyeAngles;
+	CInterpolatedVar< QAngle >	m_iv_angEyeAngles;
+	ITFCSPlayerAnimState* m_PlayerAnimState;
 };
 
 inline C_TFCSPlayer* ToTFCSPlayer( CBaseEntity *pPlayer )
