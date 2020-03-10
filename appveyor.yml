@@ -13,11 +13,11 @@ for:
 
   install:
     - cd mp\src
-    - devtools\bin\vpc.exe /2013 /sdk +game /mksln tfcsource.sln
-    - '"C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\IDE\devenv.com" tfcsource.sln /upgrade'
+    - devtools\bin\vpc.exe /2013 /tfcs +game /mksln games.sln
+    - '"C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\IDE\devenv.com" games.sln /upgrade'
 
   build_script:
-    - 'MsBuild.exe tfcsource.sln /p:Configuration=Release /p:Platform=Win32 /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"'
+    - 'MsBuild.exe games.sln /p:Configuration=Release /p:Platform=Win32 /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"'
 
   after_build:
     - cd %APPVEYOR_BUILD_FOLDER%\mp\game\tfcsource\bin
@@ -48,10 +48,10 @@ for:
     - sudo chmod +x ./devtools/bin/vpc_linux
     - sudo chmod +x ./devtools/bin/linux/ccache
     - sudo chmod +x ./devtools/gendbg.sh
-    - ./devtools/bin/vpc /sdk +game /mksln tfcsource_linux
+    - ./devtools/bin/vpc /sdk +game /mksln games_linux
 
   build_script:
-    - make -f tfcsource_linux.mak
+    - make -f games_linux.mak
 
   after_build:
     - cd ${APPVEYOR_BUILD_FOLDER}/mp/game/tfcsource/bin
