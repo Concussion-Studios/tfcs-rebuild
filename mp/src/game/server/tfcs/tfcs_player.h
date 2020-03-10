@@ -38,6 +38,8 @@ public:
 	virtual void Event_Killed( const CTakeDamageInfo &info );
 	virtual bool ClientCommand( const CCommand &args );
 	virtual void ChangeTeam( int iTeamNum );
+
+	void InitClass( void );
 	void GiveDefaultItems();
 
 	//TFCS Functions

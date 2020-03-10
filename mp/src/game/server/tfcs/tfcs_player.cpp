@@ -153,21 +153,46 @@ void CTFCSPlayer::InitialSpawn( void )
 void CTFCSPlayer::Spawn()
 {
 	BaseClass::Spawn();
-	GiveDefaultItems();
+
+	InitClass();
 }
 
-//Give players their spawn items
+
+// Set the player up with the default weapons, ammo, etc.
 void CTFCSPlayer::GiveDefaultItems()
 {
+	// Get the player class data.
+	TFCSPlayerClassInfo_t *data = GetClassData( CLASS_SCOUT );	
+	
 	//Get rid of all ammo first
 	RemoveAllAmmo();
 
+	//Give ammo
+	for ( int iAmmo = AMMO_DUMMY; iAmmo < AMMO_LAST; ++iAmmo )
+		GiveAmmo( data->m_aSpawnAmmo[iAmmo], iAmmo );
+
+	//Give weapons
+	for ( int iSlot = 0; iSlot < TFCS_MAX_WEAPON_SLOTS; ++iSlot )
+	{
+		if ( data->m_aWeapons[iSlot] != 0 )
+		{
+			const char *pszWeaponName = WeaponIDToAlias( data->m_aWeapons[iSlot] );
+			CTFCSWeaponBase *pWpn = ( CTFCSWeaponBase* )GiveNamedItem( pszWeaponName );
+		}
+	}
+}
+
+//Give players their spawn items
+void CTFCSPlayer::InitClass( void )
+{
 	TFCSPlayerClassInfo_t *data = GetClassData( CLASS_SCOUT );
 	int iMaxHealth = data->m_iMaxHealth;
+
 	//Give health and armor
 	SetMaxHealth( iMaxHealth );
 	SetHealth( iMaxHealth );
 
+	//Give armor
 	m_iMaxArmor = data->m_iMaxArmor;
 	m_iArmor = data->m_iSpawnArmor;
 	SetArmorClass( data->m_flArmorClass );
@@ -175,21 +200,8 @@ void CTFCSPlayer::GiveDefaultItems()
 	//Set max speed
 	SetMaxSpeed( data->m_flMaxSpeed );
 
-	//Give ammo
-	for ( int iAmmo = AMMO_DUMMY; iAmmo < AMMO_LAST; ++iAmmo )
-	{
-		GiveAmmo( data->m_aSpawnAmmo[iAmmo], iAmmo );
-	}
-
-	//Give weapons
-	for ( int iSlot = 0; iSlot < TFCS_MAX_WEAPON_SLOTS; ++iSlot )
-	{
-		if (data->m_aWeapons[iSlot] != 0)
-		{
-			const char *pszWeaponName = WeaponIDToAlias( data->m_aWeapons[iSlot] );
-			CTFCSWeaponBase *pWpn = (CTFCSWeaponBase *)GiveNamedItem( pszWeaponName );
-		}
-	}
+	// Give default items for class.
+	GiveDefaultItems();
 }
 
 void CTFCSPlayer::ForceRespawn()
