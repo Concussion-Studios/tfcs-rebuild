@@ -13,7 +13,8 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories		"$BASE;.\tfcs,.\tfcs\hud,.\tfcs\vgui,$SRCDIR\game\shared\tfcs,$SRCDIR\game\shared\Multiplayer"
+		$AdditionalIncludeDirectories		"$BASE;.\tfcs,.\tfcs\hud,.\tfcs\vgui,$SRCDIR\game\shared\tfcs"
+		//$AdditionalIncludeDirectories		"$BASE;$SRCDIR\game\shared\Multiplayer"
 		$PreprocessorDefinitions			"$BASE;TFCSOURCE_DLL"
 	}
 }
@@ -48,11 +49,11 @@ $Project "Client (TFCSOURCE)"
 		$File	"bsp_utils.cpp"
 		$File	"bsp_utils.h"
 		
-		$Folder	"Multiplayer"
-		{
-			$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.cpp"
-			$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.h"
-		}
+		//$Folder	"Multiplayer"
+		//{
+		//	$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.cpp"
+		//	$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.h"
+		//}
 
 		$Folder "TFC Source"
 		{
@@ -90,6 +91,12 @@ $Project "Client (TFCSOURCE)"
 				$File	"$SRCDIR\game\shared\tfcs\weapon_wrench.cpp"
 			}
 
+			$File	"tfcs\clientmode_tfcs.cpp"
+			$File	"tfcs\clientmode_tfcs.h"
+			$File	"tfcs\tfcs_fx.cpp"
+			$File	"tfcs\tfcs_in_main.cpp"
+			$File	"tfcs\tfcs_prediction.cpp"
+			$File	"tfcs\vgui_rootpanel_tfcs.cpp"
 			$File	"$SRCDIR\game\shared\tfcs\tfcs_gamerules.cpp"
 			$File	"$SRCDIR\game\shared\tfcs\tfcs_gamerules.h"
 			$File	"$SRCDIR\game\shared\tfcs\tfcs_shareddefs.cpp"
