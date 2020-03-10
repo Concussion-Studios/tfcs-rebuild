@@ -1,7 +1,7 @@
 #include "cbase.h"
 #include "tfcs_shareddefs.h"
 
-const char* g_aClassNames[11] =
+const char* g_aClassNames[13] =
 {
 	"None",
 	"Sniper",
@@ -13,7 +13,9 @@ const char* g_aClassNames[11] =
 	"Pyro",
 	"Spy",
 	"Engineer",
-	"Civillian"
+	"Civillian",
+	"Random",
+	NULL
 };
 
 const char* g_aTeamNames[] =

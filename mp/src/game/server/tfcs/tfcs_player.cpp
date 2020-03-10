@@ -25,9 +25,9 @@ public:
 };
 
 IMPLEMENT_SERVERCLASS_ST_NOBASE( CTEPlayerAnimEvent, DT_TEPlayerAnimEvent )
-	SendPropEHandle( SENDINFO( m_hPlayer ) ),
-	SendPropInt( SENDINFO( m_iEvent ), Q_log2( PLAYERANIMEVENT_COUNT ) + 1, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_nData ), 32 )
+SendPropEHandle( SENDINFO( m_hPlayer ) ),
+SendPropInt( SENDINFO( m_iEvent ), Q_log2( PLAYERANIMEVENT_COUNT ) + 1, SPROP_UNSIGNED ),
+SendPropInt( SENDINFO( m_nData ), 32 )
 END_SEND_TABLE()
 
 static CTEPlayerAnimEvent g_TEPlayerAnimEvent( "PlayerAnimEvent" );
@@ -55,7 +55,7 @@ void* SendProxy_SendNonLocalDataTable( const SendProp *pProp, const void *pStruc
 {
 	pRecipients->SetAllRecipients();
 	pRecipients->ClearRecipient( objectID - 1 );
-	return ( void * )pVarData;
+	return (void *)pVarData;
 }
 REGISTER_SEND_PROXY_NON_MODIFIED_POINTER( SendProxy_SendNonLocalDataTable );
 
@@ -63,20 +63,20 @@ REGISTER_SEND_PROXY_NON_MODIFIED_POINTER( SendProxy_SendNonLocalDataTable );
 // Tables.
 // -------------------------------------------------------------------------------- //
 BEGIN_DATADESC( CTFCSPlayer )
-	DEFINE_FIELD( m_flArmorClass, FIELD_FLOAT ),
-	DEFINE_FIELD( m_iArmor, FIELD_INTEGER ),
-	DEFINE_FIELD( m_iMaxArmor, FIELD_FLOAT ),
-	DEFINE_FIELD( m_flConcussTime, FIELD_FLOAT ),
-	DEFINE_FIELD( m_flCrippleTime, FIELD_FLOAT ),
-	DEFINE_FIELD( m_iCrippleLevel, FIELD_INTEGER ),
+DEFINE_FIELD( m_ArmorClass, FIELD_FLOAT ),
+//DEFINE_FIELD( m_ArmorValue, FIELD_INTEGER ),
+DEFINE_FIELD( m_MaxArmor, FIELD_INTEGER ),
+DEFINE_FIELD( m_flConcussTime, FIELD_FLOAT ),
+DEFINE_FIELD( m_flCrippleTime, FIELD_FLOAT ),
+DEFINE_FIELD( m_iCrippleLevel, FIELD_INTEGER ),
 END_DATADESC()
 
 BEGIN_SEND_TABLE_NOBASE( CTFCSPlayer, DT_TFCSLocalPlayerExclusive )
-	SendPropVector( SENDINFO( m_vecOrigin ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
-	SendPropInt( SENDINFO( m_flArmorClass ) ),
-	SendPropInt( SENDINFO( m_iArmor ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iMaxArmor ), 8, SPROP_UNSIGNED ),
-	SendPropFloat( SENDINFO( m_flConcussTime ) ),
+SendPropVector( SENDINFO( m_vecOrigin ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
+SendPropInt( SENDINFO( m_ArmorClass ) ),
+//SendPropInt( SENDINFO( m_Armor ), 8, SPROP_UNSIGNED ),
+SendPropInt( SENDINFO( m_MaxArmor ), 8, SPROP_UNSIGNED ),
+SendPropFloat( SENDINFO( m_flConcussTime ) ),
 END_SEND_TABLE()
 
 BEGIN_SEND_TABLE_NOBASE( CTFCSPlayer, DT_TFCSNonLocalPlayerExclusive )
@@ -84,25 +84,25 @@ END_SEND_TABLE()
 
 IMPLEMENT_SERVERCLASS_ST( CTFCSPlayer, DT_TFCSPlayer )
 
-	SendPropExclude( "DT_BaseAnimating", "m_flPoseParameter" ),
-	SendPropExclude( "DT_BaseAnimating", "m_flPlaybackRate" ),	
-	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
-	SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
-	SendPropExclude( "DT_BaseAnimatingOverlay", "overlay_vars" ),
-	
-	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
+SendPropExclude( "DT_BaseAnimating", "m_flPoseParameter" ),
+SendPropExclude( "DT_BaseAnimating", "m_flPlaybackRate" ),
+SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
+SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
+SendPropExclude( "DT_BaseAnimatingOverlay", "overlay_vars" ),
 
-	SendPropAngle( SENDINFO_VECTORELEM(m_angEyeAngles, 0), 11 ),
-	SendPropAngle( SENDINFO_VECTORELEM(m_angEyeAngles, 1), 11 ),
+SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
 
-	SendPropInt( SENDINFO( m_iRealSequence ), 9 ),
+SendPropAngle( SENDINFO_VECTORELEM( m_angEyeAngles, 0 ), 11 ),
+SendPropAngle( SENDINFO_VECTORELEM( m_angEyeAngles, 1 ), 11 ),
 
-	// Data that only gets sent to the local player.
-	SendPropDataTable( SENDINFO_DT( m_Shared ), &REFERENCE_SEND_TABLE( DT_TFCSPlayerShared ) ),
+SendPropInt( SENDINFO( m_iRealSequence ), 9 ),
 
-	// Data that only gets sent to the local player.
-	SendPropDataTable( "tfcs_localdata", 0, &REFERENCE_SEND_TABLE( DT_TFCSLocalPlayerExclusive ), SendProxy_SendLocalDataTable ),
-	SendPropDataTable( "tfcs_nonlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFCSNonLocalPlayerExclusive ), SendProxy_SendNonLocalDataTable ),
+// Data that only gets sent to the local player.
+SendPropDataTable( SENDINFO_DT( m_Shared ), &REFERENCE_SEND_TABLE( DT_TFCSPlayerShared ) ),
+
+// Data that only gets sent to the local player.
+SendPropDataTable( "tfcs_localdata", 0, &REFERENCE_SEND_TABLE( DT_TFCSLocalPlayerExclusive ), SendProxy_SendLocalDataTable ),
+SendPropDataTable( "tfcs_nonlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFCSNonLocalPlayerExclusive ), SendProxy_SendNonLocalDataTable ),
 
 END_SEND_TABLE()
 
@@ -132,7 +132,7 @@ CTFCSPlayer::~CTFCSPlayer()
 CTFCSPlayer *CTFCSPlayer::CreatePlayer( const char *className, edict_t *ed )
 {
 	CTFCSPlayer::s_PlayerEdict = ed;
-	return ( CTFCSPlayer* )CreateEntityByName( className );
+	return (CTFCSPlayer*)CreateEntityByName( className );
 }
 
 void CTFCSPlayer::TFCSPlayerThink()
@@ -192,16 +192,98 @@ void CTFCSPlayer::InitClass( void )
 	SetMaxHealth( iMaxHealth );
 	SetHealth( iMaxHealth );
 
-	//Give armor
-	m_iMaxArmor = data->m_iMaxArmor;
-	m_iArmor = data->m_iSpawnArmor;
+	m_MaxArmor = data->m_iMaxArmor;
+	m_ArmorValue = data->m_iSpawnArmor;
+
 	SetArmorClass( data->m_flArmorClass );
 
 	//Set max speed
 	SetMaxSpeed( data->m_flMaxSpeed );
 
+
 	// Give default items for class.
 	GiveDefaultItems();
+
+	//Give ammo
+	for ( int iAmmo = AMMO_DUMMY; iAmmo < AMMO_LAST; ++iAmmo )
+	{
+		GiveAmmo( data->m_aSpawnAmmo[iAmmo], iAmmo );
+	}
+
+	//Give weapons
+	for ( int iSlot = 0; iSlot < TFCS_MAX_WEAPON_SLOTS; ++iSlot )
+	{
+		if ( data->m_aWeapons[iSlot] != 0 )
+		{
+			const char *pszWeaponName = WeaponIDToAlias( data->m_aWeapons[iSlot] );
+			CTFCSWeaponBase *pWpn = (CTFCSWeaponBase *)GiveNamedItem( pszWeaponName );
+		}
+	}
+}
+
+bool CTFCSPlayer::HandleCommand_JoinClass( int iClass )
+{
+	Assert( GetTeamNumber() != TEAM_SPECTATOR );
+	Assert( GetTeamNumber() != TEAM_UNASSIGNED );
+
+	if ( GetTeamNumber() == TEAM_SPECTATOR )
+	{
+		return false;
+	}
+
+	if ( iClass == CLASS_LAST )
+	{
+		return false;
+	}
+
+	int iOldPlayerClass = m_Shared.DesiredPlayerClass();
+	const char *classname = g_aClassNames[iClass];
+
+	// Trying to join current class
+	if ( iClass == iOldPlayerClass )
+	{
+		return true;
+	}
+
+	//TODO: Determine if certain classes are allowed on certain gamemodes and maps through tfcs_gamerules
+
+	//Random class
+	if ( iClass == CLASS_RANDOM )
+	{
+		if ( IsAlive() )
+		{
+			ClientPrint( this, HUD_PRINTTALK, "#game_respawn_asrandom" );
+		}
+		else
+		{
+			ClientPrint( this, HUD_PRINTTALK, "#game_spawn_asrandom" );
+		}
+	}
+	else
+	{
+		if ( IsAlive() )
+		{
+			ClientPrint( this, HUD_PRINTTALK, "#game_respawn_as", classname );
+		}
+		else
+		{
+			ClientPrint( this, HUD_PRINTTALK, "#game_spawn_as", classname );
+		}
+	}
+
+	//Create a game event
+	IGameEvent *event = gameeventmanager->CreateEvent( "player_changeclass" );
+	if ( event )
+	{
+		event->SetInt( "userid", GetUserID() );
+		event->SetInt( "class", iClass );
+	}
+
+	//Kill the player so that they join class (gives timed respawn penalty)
+	//TODO: Toggle suicide on choose playerclass in settings/convar
+	CommitSuicide();
+
+	return true;
 }
 
 void CTFCSPlayer::ForceRespawn()
@@ -226,7 +308,7 @@ void CTFCSPlayer::PostThink()
 	QAngle angles = GetLocalAngles();
 	angles[PITCH] = 0;
 	SetLocalAngles( angles );
-	
+
 	// Store the eye angles pitch so the client can compute its animation state correctly.
 	m_angEyeAngles = EyeAngles();
 
@@ -238,15 +320,38 @@ int CTFCSPlayer::OnTakeDamage( const CTakeDamageInfo &info )
 	return BaseClass::OnTakeDamage( info );
 }
 
-int CTFCSPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
+int CTFCSPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 {
+	CTakeDamageInfo info = inputInfo;
+	float flDamage = info.GetDamage();
 
+	// Early out if no damage
+	if ( flDamage == 0 )
+	{
+		return 0;
+	}
+
+	// Deal with Armour
+	if ( ArmorValue() && !(info.GetDamageType() & (DMG_FALL | DMG_DROWN | DMG_POISON | DMG_RADIATION)) )	// armor doesn't protect against fall or drown damage!
+	{
+		float flArmorDamage = flDamage * m_ArmorClass;
+		float flCurrentArmor = ArmorValue();
+		flDamage = flDamage * (1 - m_ArmorClass) - min( 0, flCurrentArmor - flArmorDamage );
+
+		SetArmorValue( max( 0, flCurrentArmor - flArmorDamage ) );
+
+		info.SetDamage( flDamage );
+	}
+
+	// Deal with protection powerup; Player takes only armor damage
+	
+	
 	return BaseClass::OnTakeDamage_Alive( info );
 }
 
 void CTFCSPlayer::Event_Killed( const CTakeDamageInfo &info )
 {
-	DoAnimationEvent( PLAYERANIMEVENT_DIE );
+	//DoAnimationEvent( PLAYERANIMEVENT_DIE );
 
 	BaseClass::Event_Killed( info );
 }
@@ -260,6 +365,22 @@ void CTFCSPlayer::CommitSuicide( bool bExplode /* = false */, bool bForce /*= fa
 
 bool CTFCSPlayer::ClientCommand( const CCommand &args )
 {
+	const char *pcmd = args[0];
+
+	if ( FStrEq( pcmd, "jointeam" ) )
+	{
+
+	}
+	else if ( FStrEq( pcmd, "joinclass" ) )
+	{
+		if ( args.ArgC < 2 )
+		{
+			Warning( "Player sent bad joinclass sntax\n" );
+		}
+		int iClass = atoi( args[1] );
+		HandleCommand_JoinClass( iClass );
+	}
+
 	return BaseClass::ClientCommand( args );
 }
 
@@ -275,10 +396,11 @@ int CTFCSPlayer::TakeHealth( float flHealth )
 
 int CTFCSPlayer::TakeArmor( float flArmor )
 {
+	m_ArmorValue += flArmor;
 	return 0;
 }
 
 void CTFCSPlayer::SetArmorClass( float flArmorClass )
 {
-	m_flArmorClass = flArmorClass;
+	m_ArmorClass = flArmorClass;
 }

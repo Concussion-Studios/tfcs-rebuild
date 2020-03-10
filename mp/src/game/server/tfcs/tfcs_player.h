@@ -53,6 +53,7 @@ public:
 	void SaveMe();
 	void Burn();
 	void Infect();
+	bool HandleCommand_JoinClass(int iClass);
 
 	CNetworkVar( int, m_iRealSequence );
 
@@ -68,9 +69,9 @@ public: // called by shared code
 private:
 
 	//TFCS related vars
-	CNetworkVar( float, m_flArmorClass );
-	CNetworkVar( int, m_iArmor );
-	CNetworkVar( int, m_iMaxArmor );
+	CNetworkVar( float, m_ArmorClass );
+	CNetworkVarForDerived( int, m_ArmorValue );
+	CNetworkVar( int, m_MaxArmor );
 	CNetworkVar( float, m_flConcussTime );
 	CNetworkVar( float, m_flCrippleTime );
 	CNetworkVar( int, m_iCrippleLevel );

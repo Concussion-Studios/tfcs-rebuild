@@ -50,6 +50,12 @@ public:
 
 	CTFCSWeaponBase *GetActiveTFCSWeapon() const;
 
+	// Player class stuff
+	void SetDesiredPlayerClass( int playerclass ) { m_iDesiredPlayerClass = playerclass; }
+	int DesiredPlayerClass( void ) { return m_iDesiredPlayerClass; }
+	int GetClassIndex( void ){ return m_iPlayerClass; }
+	void SetPlayerClass( int playerclass ) { m_iPlayerClass = playerclass; }
+
 	// Utils.
 	bool	IsDucking( void ) const; 
 	bool	IsOnGround( void ) const;
@@ -60,7 +66,8 @@ public:
 	bool	IsButtonReleased( int btn );
 
 private:
-
+	CNetworkVar( int, m_iPlayerClass );
+	CNetworkVar( int, m_iDesiredPlayerClass );
 	OuterClass *m_pOuter;
 };			   
 
