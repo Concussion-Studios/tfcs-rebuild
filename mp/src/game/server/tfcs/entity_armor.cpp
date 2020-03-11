@@ -34,6 +34,14 @@ bool CEntityArmor::MyTouch( CBasePlayer *pPlayer )
 	bool bSuccess = false;
 
 	CTFCSPlayer *pTFCSPlayer = ToTFCSPlayer( pPlayer );
+
+	//Engineers can convert armor to metal
+	if ( pTFCSPlayer->m_Shared.GetClassIndex() == CLASS_ENGINEER )
+	{
+		pTFCSPlayer->GiveAmmo( GetArmorMetal(), AMMO_CELLS, true );
+		bSuccess = true;
+	}
+
 	if ( pTFCSPlayer )
 	{
 		//Attempt to give armor
