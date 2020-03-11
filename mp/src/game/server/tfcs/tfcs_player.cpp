@@ -10,6 +10,10 @@
 #include "team.h"
 
 #define TFCS_PLAYER_MODEL "models/player/scout.mdl"
+#define TFCS_SELF_DAMAGE_MULTIPLIER 0.75
+#define TFCS_MEDIKIT_HEAL 200
+#define TFCS_MEDIKIT_OVERHEAL 10
+#define TFCS_MEDIKIT_MAX_OVERHEAL 50
 
 class CTEPlayerAnimEvent : public CBaseTempEntity
 {
@@ -331,8 +335,16 @@ int CTFCSPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 		return 0;
 	}
 
+	// Self damage (rocket/grenade jumps) do less damage to yourself
+	if ( info.GetAttacker() == this )
+	{
+		flDamage *= TFCS_SELF_DAMAGE_MULTIPLIER;
+	}
+
+	//If attacker has quad damage, increase flDamage here
+
 	// Deal with Armour
-	if ( ArmorValue() && !(info.GetDamageType() & (DMG_FALL | DMG_DROWN | DMG_POISON | DMG_RADIATION)) )	// armor doesn't protect against fall or drown damage!
+	if ( !(info.GetDamageType() & (DMG_FALL | DMG_DROWN | DMG_POISON | DMG_RADIATION)) && flDamage > 0)	// armor doesn't protect against fall or drown damage! also don't increase armor incase of negative damage
 	{
 		float flArmorDamage = flDamage * m_ArmorClass;
 		float flCurrentArmor = ArmorValue();
@@ -391,13 +403,42 @@ void CTFCSPlayer::ChangeTeam( int iTeamNum )
 
 int CTFCSPlayer::TakeHealth( float flHealth )
 {
-	return 0;
+	return BaseClass::TakeHealth( flHealth, DMG_GENERIC );
 }
 
-int CTFCSPlayer::TakeArmor( float flArmor )
+void CTFCSPlayer::Heal( void )
 {
-	m_ArmorValue += flArmor;
-	return 0;
+	//TODO: Make this take a healer handle for assists later on
+	int iCurrentHealth = GetHealth();
+	int iMaxHealth = GetMaxHealth();
+
+	//Heal very quickly if below max health else overheal slightly
+	if ( iCurrentHealth < iMaxHealth )
+	{
+		SetHealth( min( iMaxHealth, iCurrentHealth + TFCS_MEDIKIT_HEAL ) );
+	}
+	else
+	{
+		SetHealth( min( iCurrentHealth + TFCS_MEDIKIT_OVERHEAL, iMaxHealth + TFCS_MEDIKIT_MAX_OVERHEAL ) );
+	}
+}
+
+int CTFCSPlayer::TakeArmor( int iArmor )
+{
+	int iMax = GetClassData( m_Shared.GetClassIndex() )->m_iMaxArmor;
+	
+	IncrementArmorValue( iArmor, iMax );
+
+	return min( iArmor, iMax - iArmor );
+}
+
+int CTFCSPlayer::GiveAmmo( int iCount, int iAmmoIndex, bool bSupressSound )
+{
+	//Don't take more than our class data says
+	int iMax = GetClassData(m_Shared.GetClassIndex())->m_aMaxAmmo[iAmmoIndex];
+	int iCurrent = GetAmmoCount( iAmmoIndex );
+
+	return BaseClass::GiveAmmo( min( iCount, iMax - iCurrent ), iAmmoIndex, bSupressSound );
 }
 
 void CTFCSPlayer::SetArmorClass( float flArmorClass )

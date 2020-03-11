@@ -45,7 +45,8 @@ public:
 	//TFCS Functions
 	void TFCSPlayerThink();
 	virtual int TakeHealth( float flHealth );
-	int TakeArmor( float flArmor );
+	virtual int GiveAmmo( int iAmmo, int iAmmoIndex, bool bSuppressSound = false );
+	int TakeArmor( int iArmor );
 	void SetArmorClass( float flClass );
 	void Concuss();
 	void Cripple( int iCrippleLevel );
@@ -53,6 +54,7 @@ public:
 	void SaveMe();
 	void Burn();
 	void Infect();
+	void Heal( void );		//medic healing
 	bool HandleCommand_JoinClass(int iClass);
 
 	CNetworkVar( int, m_iRealSequence );
@@ -78,6 +80,7 @@ private:
 
 	EHANDLE m_hBurnAttacker;
 	EHANDLE m_hInfecAttacker;
+	EHANDLE m_hHealer;		//store healers for assists
 
 	ITFCSPlayerAnimState* m_PlayerAnimState;
 	CNetworkQAngle( m_angEyeAngles );
