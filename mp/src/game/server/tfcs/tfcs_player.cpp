@@ -11,6 +11,7 @@
 
 #define TFCS_PLAYER_MODEL "models/player/scout.mdl"
 #define TFCS_SELF_DAMAGE_MULTIPLIER 0.75
+#define TFCS_DEMOMAN_EXPLOSION_MULTIPLIER 0.85
 #define TFCS_MEDIKIT_HEAL 200
 #define TFCS_MEDIKIT_OVERHEAL 10
 #define TFCS_MEDIKIT_MAX_OVERHEAL 50
@@ -425,11 +426,12 @@ void CTFCSPlayer::Heal( void )
 
 int CTFCSPlayer::TakeArmor( int iArmor )
 {
+	int iOldArmor = ArmorValue();
 	int iMax = GetClassData( m_Shared.GetClassIndex() )->m_iMaxArmor;
 	
 	IncrementArmorValue( iArmor, iMax );
 
-	return min( iArmor, iMax - iArmor );
+	return min(iArmor, ArmorValue() - iOldArmor);
 }
 
 int CTFCSPlayer::GiveAmmo( int iCount, int iAmmoIndex, bool bSupressSound )
@@ -443,5 +445,12 @@ int CTFCSPlayer::GiveAmmo( int iCount, int iAmmoIndex, bool bSupressSound )
 
 void CTFCSPlayer::SetArmorClass( float flArmorClass )
 {
-	m_ArmorClass = flArmorClass;
+	float flMaxArmorClass = GetClassData( m_Shared.GetClassIndex() )->m_flArmorClass;
+	m_ArmorClass = min( flArmorClass, flMaxArmorClass );
+	//m_ArmorClass = flArmorClass;
+}
+
+int CTFCSPlayer::GetMaxArmor( void )
+{
+	return GetClassData( m_Shared.GetClassIndex() )->m_iMaxArmor;
 }

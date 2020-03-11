@@ -48,6 +48,7 @@ public:
 	virtual int GiveAmmo( int iAmmo, int iAmmoIndex, bool bSuppressSound = false );
 	int TakeArmor( int iArmor );
 	void SetArmorClass( float flClass );
+	int GetMaxArmor( void );
 	void Concuss();
 	void Cripple( int iCrippleLevel );
 	int GetCrippleLevel();

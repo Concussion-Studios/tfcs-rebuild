@@ -97,7 +97,8 @@ $Project "Server (TFCSOURCE)"
 				$File	"$SRCDIR\game\shared\tfcs\weapon_umbrella.cpp"
 				$File	"$SRCDIR\game\shared\tfcs\weapon_wrench.cpp"
 			}
-
+			$File	"tfcs\entity_armor.cpp"
+			$File	"tfcs\entity_armor.h"
 			$File	"tfcs\tfcs_client.cpp"
 			$File	"tfcs\tfcs_eventlog.cpp"
 			$File	"tfcs\tfcs_playermove.cpp"
