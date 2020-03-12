@@ -1,5 +1,6 @@
 #include "cbase.h"
 #include "tfcs_player_shared.h"
+#include "tfcs_playeranimstate.h"
 
 #ifdef CLIENT_DLL
 	#include "c_tfcs_player.h"
@@ -113,6 +114,13 @@ CTFCSWeaponBase *CTFCSPlayer::Weapon_OwnsThisID( int iWeaponID )
 	return NULL;
 }
 
+ITFCSPlayerAnimState* CreatePlayerAnimState( CTFCSPlayer *pPlayer )
+{
+	CTFCSPlayerAnimState *pRet = new CTFCSPlayerAnimState();
+	pRet->Init( pPlayer );
+	return pRet;
+}
+
 void CTFCSPlayer::DoAnimationEvent( PlayerAnimEvent_t event, int nData )
 {
 	m_PlayerAnimState->DoAnimationEvent( event, nData );
@@ -124,6 +132,7 @@ void CTFCSPlayer::DoAnimationEvent( PlayerAnimEvent_t event, int nData )
 
 void CTFCSPlayer::SetAnimation( PLAYER_ANIM playerAnim )
 {
+#ifndef CLIENT_DLL
 	if ( playerAnim == PLAYER_ATTACK1 )
 		DoAnimationEvent( PLAYERANIMEVENT_FIRE_GUN );
 
@@ -257,4 +266,7 @@ void CTFCSPlayer::SetAnimation( PLAYER_ANIM playerAnim )
 	// Reset to first frame of desired animation
 	ResetSequence( animDesired );
 	SetCycle( 0 );
+#else
+	return; // This is handle in the server
+#endif
 }

@@ -8,60 +8,6 @@
 	#include "tfcs_player.h"
 #endif
 
-ITFCSPlayerAnimState* CreatePlayerAnimState( CTFCSPlayer *pPlayer )
-{
-	CTFCSPlayerAnimState *pRet = new CTFCSPlayerAnimState;
-	pRet->Init( pPlayer );
-	return pRet;
-}
-
-class CTFCSPlayerAnimState : public ITFCSPlayerAnimState, public CBasePlayerAnimState
-{
-public:
-	
-	DECLARE_CLASS( CTFCSPlayerAnimState, CBasePlayerAnimState );
-
-	CTFCSPlayerAnimState();
-	void Init( CTFCSPlayer *pPlayer );
-
-	// This is called by both the client and the server in the same way to trigger events for
-	// players firing, jumping, throwing grenades, etc.
-	virtual void DoAnimationEvent( PlayerAnimEvent_t event, int nData );
-	virtual int CalcAimLayerSequence( float *flCycle, float *flAimSequenceWeight, bool bForceIdle );
-	virtual float SetOuterBodyYaw( float flValue );
-	virtual Activity CalcMainActivity();
-	virtual float GetCurrentMaxGroundSpeed();
-	virtual void ClearAnimationState();
-	virtual bool ShouldUpdateAnimState();
-	virtual int SelectWeightedSequence( Activity activity ) ;
-
-	float CalcMovementPlaybackRate( bool *bIsMoving );
-
-	virtual void ComputePoseParam_BodyPitch( CStudioHdr *pStudioHdr );
-
-
-private:
-	
-	const char* GetWeaponSuffix();
-	bool HandleJumping();
-	bool HandleDeath( Activity *deathActivity );
-
-
-private:
-	
-	CTFCSPlayer *m_pOuter;
-	
-	bool m_bJumping;
-	bool m_bFirstJumpFrame;
-	float m_flJumpStartTime;
-
-	bool m_bFiring;
-	float m_flFireStartTime;
-
-	bool m_bDying;
-	Activity m_DeathActivity;
-};
-
 CTFCSPlayerAnimState::CTFCSPlayerAnimState()
 {
 	m_pOuter = NULL;
@@ -70,7 +16,7 @@ CTFCSPlayerAnimState::CTFCSPlayerAnimState()
 	m_bFiring = false;
 }
 
-void CTFCSPlayerAnimState::Init( CTFCSPlayer *pPlayer )
+void CTFCSPlayerAnimState::Init( OuterClass* pPlayer )
 {
 	m_pOuter = pPlayer;
 	
@@ -142,7 +88,6 @@ int CTFCSPlayerAnimState::CalcAimLayerSequence( float *flCycle, float *flAimSequ
 	return iSequence;
 }
 
-
 void CTFCSPlayerAnimState::DoAnimationEvent( PlayerAnimEvent_t event, int nData )
 {
 	if ( event == PLAYERANIMEVENT_JUMP )
@@ -160,7 +105,6 @@ void CTFCSPlayerAnimState::DoAnimationEvent( PlayerAnimEvent_t event, int nData 
 	}
 }
 
-
 float CTFCSPlayerAnimState::SetOuterBodyYaw( float flValue )
 {
 //	m_pOuter->SetBoneController( 0, flValue );
@@ -172,7 +116,6 @@ float CTFCSPlayerAnimState::SetOuterBodyYaw( float flValue )
 
 	return flValue;
 }
-
 
 bool CTFCSPlayerAnimState::HandleJumping()
 {

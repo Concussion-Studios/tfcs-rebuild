@@ -40,7 +40,60 @@ public:
 	virtual void DoAnimationEvent( PlayerAnimEvent_t event, int nData ) = 0;
 };
 
-ITFCSPlayerAnimState* CreatePlayerAnimState( CTFCSPlayer *pPlayer );
+class CTFCSPlayerAnimState : public ITFCSPlayerAnimState, public CBasePlayerAnimState
+{
+public:
+
+#ifdef CLIENT_DLL
+	friend class C_TFCSPlayer;
+	typedef C_TFCSPlayer OuterClass;
+#else
+	friend class CTFCSPlayer;
+	typedef CTFCSPlayer OuterClass;
+#endif
+	
+	DECLARE_CLASS( CTFCSPlayerAnimState, CBasePlayerAnimState );
+
+	CTFCSPlayerAnimState();
+	void Init( OuterClass* pPlayer );
+
+	// This is called by both the client and the server in the same way to trigger events for
+	// players firing, jumping, throwing grenades, etc.
+	virtual void DoAnimationEvent( PlayerAnimEvent_t event, int nData );
+	virtual int CalcAimLayerSequence( float *flCycle, float *flAimSequenceWeight, bool bForceIdle );
+	virtual float SetOuterBodyYaw( float flValue );
+	virtual Activity CalcMainActivity();
+	virtual float GetCurrentMaxGroundSpeed();
+	virtual void ClearAnimationState();
+	virtual bool ShouldUpdateAnimState();
+	virtual int SelectWeightedSequence( Activity activity ) ;
+
+	float CalcMovementPlaybackRate( bool *bIsMoving );
+
+	virtual void ComputePoseParam_BodyPitch( CStudioHdr *pStudioHdr );
+
+
+private:
+	
+	const char* GetWeaponSuffix();
+	bool HandleJumping();
+	bool HandleDeath( Activity *deathActivity );
+
+
+private:
+	
+	OuterClass *m_pOuter;
+	
+	bool m_bJumping;
+	bool m_bFirstJumpFrame;
+	float m_flJumpStartTime;
+
+	bool m_bFiring;
+	float m_flFireStartTime;
+
+	bool m_bDying;
+	Activity m_DeathActivity;
+};
 
 // If this is set, then the game code needs to make sure to send player animation events
 // to the local player if he's the one being watched.

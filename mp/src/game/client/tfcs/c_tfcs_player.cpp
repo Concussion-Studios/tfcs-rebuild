@@ -1,12 +1,12 @@
 #include "cbase.h"
 #include "c_tfcs_player.h"
 #include "c_basetempentity.h"
-#include "multiplayer_animstate.h"
+//#include "multiplayer_animstate.h"
 
 #include "tier0/memdbgon.h"
 
 #ifdef CTFCSPlayer
-#undef CTFCSPlayer
+	#undef CTFCSPlayer
 #endif
 
 class C_TEPlayerAnimEvent : public C_BaseTempEntity
@@ -59,6 +59,8 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFCSPlayer, DT_TFCSPlayer, CTFCSPlayer )
 	RecvPropDataTable( "tfcs_localdata", 0, 0, &REFERENCE_RECV_TABLE( DT_TFCSLocalPlayerExclusive ) ),
 	RecvPropDataTable( "tfcs_nonlocaldata", 0, 0, &REFERENCE_RECV_TABLE( DT_TFCSNonLocalPlayerExclusive ) ),
 END_RECV_TABLE()
+
+ITFCSPlayerAnimState* CreatePlayerAnimState( C_TFCSPlayer *pPlayer );
 
 C_TFCSPlayer::C_TFCSPlayer() : m_iv_angEyeAngles( "C_TFCSPlayer::m_iv_angEyeAngles" )
 {

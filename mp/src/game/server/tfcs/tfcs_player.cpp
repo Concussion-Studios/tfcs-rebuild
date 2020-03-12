@@ -3,7 +3,7 @@
 #include "tfcs_gamerules.h"
 #include "tfcs_playerclass_parse.h"
 #include "tfcs_shareddefs.h"
-#include "multiplayer_animstate.h"
+//#include "multiplayer_animstate.h"
 #include "keyvalues.h"
 #include "viewport_panel_names.h"
 #include "client.h"
@@ -33,9 +33,9 @@ public:
 };
 
 IMPLEMENT_SERVERCLASS_ST_NOBASE( CTEPlayerAnimEvent, DT_TEPlayerAnimEvent )
-SendPropEHandle( SENDINFO( m_hPlayer ) ),
-SendPropInt( SENDINFO( m_iEvent ), Q_log2( PLAYERANIMEVENT_COUNT ) + 1, SPROP_UNSIGNED ),
-SendPropInt( SENDINFO( m_nData ), 32 )
+	SendPropEHandle( SENDINFO( m_hPlayer ) ),
+	SendPropInt( SENDINFO( m_iEvent ), Q_log2( PLAYERANIMEVENT_COUNT ) + 1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nData ), 32 )
 END_SEND_TABLE()
 
 static CTEPlayerAnimEvent g_TEPlayerAnimEvent( "PlayerAnimEvent" );
@@ -71,20 +71,20 @@ REGISTER_SEND_PROXY_NON_MODIFIED_POINTER( SendProxy_SendNonLocalDataTable );
 // Tables.
 // -------------------------------------------------------------------------------- //
 BEGIN_DATADESC( CTFCSPlayer )
-DEFINE_FIELD( m_ArmorClass, FIELD_FLOAT ),
-//DEFINE_FIELD( m_ArmorValue, FIELD_INTEGER ),
-DEFINE_FIELD( m_MaxArmor, FIELD_INTEGER ),
-DEFINE_FIELD( m_flConcussTime, FIELD_FLOAT ),
-DEFINE_FIELD( m_flCrippleTime, FIELD_FLOAT ),
-DEFINE_FIELD( m_iCrippleLevel, FIELD_INTEGER ),
+	DEFINE_FIELD( m_ArmorClass, FIELD_FLOAT ),
+	//DEFINE_FIELD( m_ArmorValue, FIELD_INTEGER ),
+	DEFINE_FIELD( m_MaxArmor, FIELD_INTEGER ),
+	DEFINE_FIELD( m_flConcussTime, FIELD_FLOAT ),
+	DEFINE_FIELD( m_flCrippleTime, FIELD_FLOAT ),
+	DEFINE_FIELD( m_iCrippleLevel, FIELD_INTEGER ),
 END_DATADESC()
 
 BEGIN_SEND_TABLE_NOBASE( CTFCSPlayer, DT_TFCSLocalPlayerExclusive )
-SendPropVector( SENDINFO( m_vecOrigin ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
-SendPropInt( SENDINFO( m_ArmorClass ) ),
-//SendPropInt( SENDINFO( m_Armor ), 8, SPROP_UNSIGNED ),
-SendPropInt( SENDINFO( m_MaxArmor ), 8, SPROP_UNSIGNED ),
-SendPropFloat( SENDINFO( m_flConcussTime ) ),
+	SendPropVector( SENDINFO( m_vecOrigin ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
+	SendPropInt( SENDINFO( m_ArmorClass ) ),
+	//SendPropInt( SENDINFO( m_Armor ), 8, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_MaxArmor ), 8, SPROP_UNSIGNED ),
+	SendPropFloat( SENDINFO( m_flConcussTime ) ),
 END_SEND_TABLE()
 
 BEGIN_SEND_TABLE_NOBASE( CTFCSPlayer, DT_TFCSNonLocalPlayerExclusive )
@@ -92,30 +92,32 @@ END_SEND_TABLE()
 
 IMPLEMENT_SERVERCLASS_ST( CTFCSPlayer, DT_TFCSPlayer )
 
-SendPropExclude( "DT_BaseAnimating", "m_flPoseParameter" ),
-SendPropExclude( "DT_BaseAnimating", "m_flPlaybackRate" ),
-SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
-SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
-SendPropExclude( "DT_BaseAnimatingOverlay", "overlay_vars" ),
+	SendPropExclude( "DT_BaseAnimating", "m_flPoseParameter" ),
+	SendPropExclude( "DT_BaseAnimating", "m_flPlaybackRate" ),
+	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
+	SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
+	SendPropExclude( "DT_BaseAnimatingOverlay", "overlay_vars" ),
 
-SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
+	SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
 
-SendPropAngle( SENDINFO_VECTORELEM( m_angEyeAngles, 0 ), 11 ),
-SendPropAngle( SENDINFO_VECTORELEM( m_angEyeAngles, 1 ), 11 ),
+	SendPropAngle( SENDINFO_VECTORELEM( m_angEyeAngles, 0 ), 11 ),
+	SendPropAngle( SENDINFO_VECTORELEM( m_angEyeAngles, 1 ), 11 ),
 
-SendPropInt( SENDINFO( m_iRealSequence ), 9 ),
+	SendPropInt( SENDINFO( m_iRealSequence ), 9 ),
 
-// Data that only gets sent to the local player.
-SendPropDataTable( SENDINFO_DT( m_Shared ), &REFERENCE_SEND_TABLE( DT_TFCSPlayerShared ) ),
+	// Data that only gets sent to the local player.
+	SendPropDataTable( SENDINFO_DT( m_Shared ), &REFERENCE_SEND_TABLE( DT_TFCSPlayerShared ) ),
 
-// Data that only gets sent to the local player.
-SendPropDataTable( "tfcs_localdata", 0, &REFERENCE_SEND_TABLE( DT_TFCSLocalPlayerExclusive ), SendProxy_SendLocalDataTable ),
-SendPropDataTable( "tfcs_nonlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFCSNonLocalPlayerExclusive ), SendProxy_SendNonLocalDataTable ),
+	// Data that only gets sent to the local player.
+	SendPropDataTable( "tfcs_localdata", 0, &REFERENCE_SEND_TABLE( DT_TFCSLocalPlayerExclusive ), SendProxy_SendLocalDataTable ),
+	SendPropDataTable( "tfcs_nonlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFCSNonLocalPlayerExclusive ), SendProxy_SendNonLocalDataTable ),
 
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( player, CTFCSPlayer );
 PRECACHE_REGISTER( player );
+
+ITFCSPlayerAnimState* CreatePlayerAnimState( CTFCSPlayer *pPlayer );
 
 CTFCSPlayer::CTFCSPlayer()
 {
