@@ -90,6 +90,32 @@ ConVar sk_plr_dmg_grenade( "sk_plr_dmg_grenade", "0" );
 
 ConVar ammo_max( "ammo_max", "5000", FCVAR_REPLICATED );
 
+#ifdef GAME_DLL
+// --------------------------------------------------------------------------------------------------- //
+// Voice helper
+// --------------------------------------------------------------------------------------------------- //
+class CVoiceGameMgrHelper : public IVoiceGameMgrHelper
+{
+public:
+	virtual bool		CanPlayerHearPlayer( CBasePlayer *pListener, CBasePlayer *pTalker, bool &bProximity )
+	{
+		// Dead players can only be heard by other dead team mates but only if a match is in progress
+		if ( TFCSGameRules()->State_Get() != GR_STATE_TEAM_WIN && TFCSGameRules()->State_Get() != GR_STATE_GAME_OVER ) 
+		{
+			if ( pTalker->IsAlive() == false )
+			{
+				if ( pListener->IsAlive() == false )
+					return ( pListener->InSameTeam( pTalker ) );
+				return false;
+			}
+		}
+		return ( pListener->InSameTeam( pTalker ) );
+	}
+};
+CVoiceGameMgrHelper g_VoiceGameMgrHelper;
+IVoiceGameMgrHelper *g_pVoiceGameMgrHelper = &g_VoiceGameMgrHelper;
+#endif
+
 CTFCSGameRules::CTFCSGameRules()
 {
 #ifdef GAME_DLL
