@@ -5,7 +5,7 @@
 #endif
 
 #include "networkvar.h"
-#include "tfcs_weapon_base.h"
+//#include "tfcs_weapon_base.h"
 
 #ifdef CLIENT_DLL
 	class C_TFCSPlayer;
@@ -48,7 +48,7 @@ public:
 
 	virtual void Init( OuterClass *pOuter );
 
-	CTFCSWeaponBase *GetActiveTFCSWeapon() const;
+	//CTFCSWeaponBase *GetActiveTFCSWeapon() const;
 
 	// Player class stuff
 	void SetDesiredPlayerClass( int playerclass ) { m_iDesiredPlayerClass = playerclass; }

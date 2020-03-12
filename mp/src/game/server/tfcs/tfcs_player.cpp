@@ -19,6 +19,8 @@
 #define TFCS_MEDIKIT_OVERHEAL 10
 #define TFCS_MEDIKIT_MAX_OVERHEAL 50
 
+#pragma warning(disable:4189) // TODO: fix this error
+
 class CTEPlayerAnimEvent : public CBaseTempEntity
 {
 public:
@@ -401,7 +403,7 @@ bool CTFCSPlayer::ClientCommand( const CCommand &args )
 	}
 	else if ( FStrEq( pcmd, "joinclass" ) )
 	{
-		if ( args.ArgC < 2 )
+		if  (args.ArgC() < 2 )
 		{
 			Warning( "Player sent bad joinclass sntax\n" );
 		}

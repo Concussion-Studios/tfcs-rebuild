@@ -5,6 +5,7 @@
 #include "basemultiplayerplayer.h"
 #include "tfcs_player_shared.h"
 #include "tfcs_playeranimstate.h"
+#include "tfcs_weapon_base.h"
 
 class CTFCSPlayer;
 
@@ -69,6 +70,7 @@ public: // called by shared code
 	CNetworkVarEmbedded( CTFCSPlayerShared, m_Shared );
 
 	CTFCSWeaponBase* Weapon_OwnsThisID( int iWeaponID );
+	CTFCSWeaponBase* GetActiveTFCSWeapon() const;
 
 private:
 

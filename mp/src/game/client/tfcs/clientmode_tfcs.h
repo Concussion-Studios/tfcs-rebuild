@@ -44,14 +44,6 @@ private:
 
 protected:
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
-	{
-		BaseClass::ApplySchemeSettings( pScheme );
-
-		gHUD.InitColors( pScheme );
-
-		SetPaintBackgroundEnabled( false );
-	}
-
 	virtual void CreateDefaultPanels( void ) { /* don't create any panels yet*/ };
 };
 

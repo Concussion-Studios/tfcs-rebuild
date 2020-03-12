@@ -49,7 +49,7 @@ void CTFCSPlayerShared::Init( OuterClass* pPlayer )
 	m_pOuter = pPlayer;
 }
 
-CTFCSWeaponBase* CTFCSPlayerShared::GetActiveTFCSWeapon() const
+/*CTFCSWeaponBase* CTFCSPlayerShared::GetActiveTFCSWeapon() const
 {
 	CBaseCombatWeapon *pWeapon = m_pOuter->GetActiveWeapon();
 	if ( pWeapon )
@@ -59,7 +59,7 @@ CTFCSWeaponBase* CTFCSPlayerShared::GetActiveTFCSWeapon() const
 	}
 	else
 		return NULL;
-}
+}*/
 
 bool CTFCSPlayerShared::IsDucking( void ) const
 {
@@ -113,6 +113,12 @@ CTFCSWeaponBase *CTFCSPlayer::Weapon_OwnsThisID( int iWeaponID )
 
 	return NULL;
 }
+
+CTFCSWeaponBase* CTFCSPlayer::GetActiveTFCSWeapon() const
+{
+	return dynamic_cast< CTFCSWeaponBase* >( GetActiveWeapon() );
+}
+
 
 ITFCSPlayerAnimState* CreatePlayerAnimState( CTFCSPlayer *pPlayer )
 {

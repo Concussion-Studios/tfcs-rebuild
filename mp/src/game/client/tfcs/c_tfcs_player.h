@@ -8,6 +8,7 @@
 #include "c_baseplayer.h"
 #include "baseparticleentity.h"
 #include "tfcs_player_shared.h"
+#include "tfcs_weapon_base.h"
 #include "beamdraw.h"
 #include "flashlighteffect.h"
 
@@ -39,6 +40,7 @@ public: // called by shared code
 	CTFCSPlayerShared m_Shared;
 
 	CTFCSWeaponBase* Weapon_OwnsThisID( int iWeaponID );
+	CTFCSWeaponBase* GetActiveTFCSWeapon() const;
 
 private:
 
