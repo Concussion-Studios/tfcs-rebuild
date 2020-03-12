@@ -10,8 +10,11 @@
 #include "team.h"
 
 #define TFCS_PLAYER_MODEL "models/player/scout.mdl"
+
 #define TFCS_SELF_DAMAGE_MULTIPLIER 0.75
 #define TFCS_DEMOMAN_EXPLOSION_MULTIPLIER 0.85
+#define TFCS_PYRO_FIRE_RESIST_MULTIPLIER 0.5
+
 #define TFCS_MEDIKIT_HEAL 200
 #define TFCS_MEDIKIT_OVERHEAL 10
 #define TFCS_MEDIKIT_MAX_OVERHEAL 50
@@ -337,12 +340,22 @@ int CTFCSPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 	}
 
 	// Self damage (rocket/grenade jumps) do less damage to yourself
-	if ( info.GetAttacker() == this )
+	if ( info.GetAttacker() == this && (info.GetDamageType() & DMG_BLAST))
 	{
 		flDamage *= TFCS_SELF_DAMAGE_MULTIPLIER;
 	}
 
-	//If attacker has quad damage, increase flDamage here
+	// Demomen are more resistant to explosions
+	if ( m_Shared.GetClassIndex() == CLASS_DEMOMAN && (info.GetDamageType() & DMG_BLAST))
+	{
+		flDamage *= TFCS_DEMOMAN_EXPLOSION_MULTIPLIER;
+	}
+
+	// Pyros take less direct fire damage
+	if ( m_Shared.GetClassIndex() == CLASS_PYRO && (info.GetDamageType() & DMG_BURN) )
+	{
+		flDamage *= TFCS_PYRO_FIRE_RESIST_MULTIPLIER;
+	}
 
 	// Deal with Armour
 	if ( !(info.GetDamageType() & (DMG_FALL | DMG_DROWN | DMG_POISON | DMG_RADIATION)) && flDamage > 0)	// armor doesn't protect against fall or drown damage! also don't increase armor incase of negative damage
@@ -356,8 +369,8 @@ int CTFCSPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 		info.SetDamage( flDamage );
 	}
 
-	// Deal with protection powerup; Player takes only armor damage
-	
+	// TODO: Deal with protection powerup; Player takes only armor damage
+	// TODO: Deal with biosuit powerup; Player does not take drown or nervegas damage
 	
 	return BaseClass::OnTakeDamage_Alive( info );
 }
@@ -443,6 +456,7 @@ int CTFCSPlayer::GiveAmmo( int iCount, int iAmmoIndex, bool bSupressSound )
 	return BaseClass::GiveAmmo( min( iCount, iMax - iCurrent ), iAmmoIndex, bSupressSound );
 }
 
+//Sets the player's armor class to either the picked up armor class or the class's max armor class
 void CTFCSPlayer::SetArmorClass( float flArmorClass )
 {
 	float flMaxArmorClass = GetClassData( m_Shared.GetClassIndex() )->m_flArmorClass;

@@ -47,6 +47,7 @@ public:
 	virtual int TakeHealth( float flHealth );
 	virtual int GiveAmmo( int iAmmo, int iAmmoIndex, bool bSuppressSound = false );
 	int TakeArmor( int iArmor );
+	float GetArmorClass( void ) { return m_ArmorClass; }
 	void SetArmorClass( float flClass );
 	int GetMaxArmor( void );
 	void Concuss();

@@ -35,27 +35,44 @@ bool CEntityArmor::MyTouch( CBasePlayer *pPlayer )
 
 	CTFCSPlayer *pTFCSPlayer = ToTFCSPlayer( pPlayer );
 
-	//Engineers can convert armor to metal
-	if ( pTFCSPlayer->m_Shared.GetClassIndex() == CLASS_ENGINEER )
-	{
-		pTFCSPlayer->GiveAmmo( GetArmorMetal(), AMMO_CELLS, true );
-		bSuccess = true;
-	}
-
 	if ( pTFCSPlayer )
 	{
-		//Attempt to give armor
-		//TODO: Don't downgrade armor unless below a certian value
-		int iArmorGiven = pTFCSPlayer->TakeArmor( GetArmorCount() );
-
-		if ( iArmorGiven > 0 )
+		//Engineers can convert armor to metal
+		if ( pTFCSPlayer->m_Shared.GetClassIndex() == CLASS_ENGINEER )
 		{
+			int iCells = pTFCSPlayer->GiveAmmo( GetArmorMetal(), AMMO_CELLS, true );
+			if ( iCells )
+			{
+				bSuccess = true;
+			}
+		}
+		
+		float flCurrentArmorClass = pTFCSPlayer->GetArmorClass();
+		int iCurrentArmor = pTFCSPlayer->ArmorValue();
+		//Attempt to give armor
+		
+		//Upgrading or downgrading armor does not increment the player's current armor points
+		//Don't downgrade armor unless the amount of extra protection offered by the lower class armor exceeds the amount of protection offered by the player's current armor (taken from Quake 1)
+		if ( GetArmorClass() > flCurrentArmorClass || flCurrentArmorClass * iCurrentArmor < GetArmorClass() * GetArmorCount() )
+		{
+			pTFCSPlayer->SetArmorValue( GetArmorCount() );
 			pTFCSPlayer->SetArmorClass( GetArmorClass() );
+			bSuccess = true;
+		}
+		else
+		{
+			int iArmorGiven = pTFCSPlayer->TakeArmor( GetArmorCount() );
+			if ( iArmorGiven > 0 )
+			{
+				bSuccess = true;
+			}
+		}
 
+		//Play sound
+		if ( bSuccess )
+		{
 			CPASAttenuationFilter filter( this, ARMOR_PICKUP_SOUND );
 			EmitSound( filter, entindex(), ARMOR_PICKUP_SOUND );
-
-			bSuccess = true;
 		}
 	}
 
