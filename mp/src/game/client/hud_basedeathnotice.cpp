@@ -18,9 +18,11 @@
 #include "clientmode_shared.h"
 #include "c_baseplayer.h"
 #include "c_team.h"
+#if 0
 #include "tf_shareddefs.h"
 #include "tf_shareddefs.h"
 #include "tf_gamerules.h"
+#endif
 
 #include "hud_basedeathnotice.h"
 
@@ -29,9 +31,7 @@
 
 static ConVar hud_deathnotice_time( "hud_deathnotice_time", "6", 0 );
 
-
 using namespace vgui;
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -61,11 +61,13 @@ void CHudBaseDeathNotice::ApplySchemeSettings( IScheme *scheme )
 void CHudBaseDeathNotice::Init( void )
 {
 	ListenForGameEvent( "player_death" );
+#if 0
 	ListenForGameEvent( "object_destroyed" );	
 	ListenForGameEvent( "teamplay_point_captured" );
 	ListenForGameEvent( "teamplay_capture_blocked" );
 	ListenForGameEvent( "teamplay_flag_event" );
 	ListenForGameEvent( "rd_robot_killed" );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -382,6 +384,8 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 	const char *pszEventName = event->GetName();
 	
 	bool bPlayerDeath = EventIsPlayerDeath( pszEventName );
+
+#if 0
 	bool bObjectDeath = FStrEq( pszEventName, "object_destroyed" );
 
 	bool bIsFeignDeath = event->GetInt( "death_flags" ) & TF_DEATH_FEIGN_DEATH;
@@ -409,6 +413,7 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 			}
 		}
 	}
+#endif // 0
 
 	// Add a new death message.  Note we always look it up by index rather than create a reference or pointer to it;
 	// additional messages may get added during this function that cause the underlying array to get realloced, so don't
@@ -423,19 +428,21 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 		iMsg = AddDeathNoticeItem();
 	}
 
-	if ( bPlayerDeath || bObjectDeath )
+	if ( bPlayerDeath /*|| bObjectDeath*/ )
 	{
 		int victim = engine->GetPlayerForUserID( event->GetInt( "userid" ) );
 		int killer = engine->GetPlayerForUserID( event->GetInt( "attacker" ) );
 		const char *killedwith = event->GetString( "weapon" );
 		const char *killedwithweaponlog = event->GetString( "weapon_logclassname" );
 
+#if 0
 		if ( bObjectDeath && victim == 0 )
 		{
 			// for now, no death notices of map placed objects
 			m_DeathNotices.Remove( iMsg );
 			return;
 		}
+#endif // 0
 
 		// Get the names of the players
 		const char *killer_name = ( killer > 0 ) ? g_PR->GetPlayerName( killer ) : "";
@@ -457,6 +464,7 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 			bLocalPlayerInvolved = true;
 		}
 
+#if 0
 		if ( event->GetInt( "death_flags" ) & TF_DEATH_AUSTRALIUM )
 		{
 			m_DeathNotices[iMsg].bCrit= true;
@@ -468,6 +476,8 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 			m_DeathNotices[iMsg].iconCritDeath = GetIcon( "d_crit", bLocalPlayerInvolved ? kDeathNoticeIcon_Inverted : kDeathNoticeIcon_Standard );
 		}
 		else
+#endif // 0
+
 		{
 			m_DeathNotices[iMsg].bCrit= false;
 			m_DeathNotices[iMsg].iconCritDeath = NULL;
@@ -487,12 +497,12 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 			m_DeathNotices[iMsg].bSelfInflicted = true;
 			m_DeathNotices[iMsg].Killer.szName[0] = 0;
 
-			if ( event->GetInt( "death_flags" ) & TF_DEATH_PURGATORY )
+			/*if ( event->GetInt( "death_flags" ) & TF_DEATH_PURGATORY )
 			{
 				// special case icon for dying in purgatory
 				Q_strncpy( m_DeathNotices[iMsg].szIcon, "d_purgatory", ARRAYSIZE( m_DeathNotices[iMsg].szIcon ) );
 			}
-			else if ( event->GetInt( "damagebits" ) & DMG_FALL )
+			else*/ if ( event->GetInt( "damagebits" ) & DMG_FALL )
 			{
 				// special case text for falling death
 				V_wcsncpy( m_DeathNotices[iMsg].wzInfoText, g_pVGuiLocalize->Find( "#DeathMsg_Fall" ), sizeof( m_DeathNotices[iMsg].wzInfoText ) );
@@ -501,7 +511,22 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 			{
 				// special case icon for hit-by-vehicle death
 				Q_strncpy( m_DeathNotices[iMsg].szIcon, "d_vehicle", ARRAYSIZE( m_DeathNotices[iMsg].szIcon ) );
-			}			
+			}
+			else if ( ( event->GetInt( "damagebits" ) & DMG_BLAST ) && !killer )
+			{
+				// environmental explosive death
+				V_wcsncpy( m_DeathNotices[iMsg].wzInfoText, g_pVGuiLocalize->Find( "#DeathMsg_Blast" ), sizeof( m_DeathNotices[iMsg].wzInfoText ) );
+			}
+			else if ( event->GetInt( "damagebits" ) & DMG_DROWN )
+			{
+				// drowned
+				V_wcsncpy( m_DeathNotices[iMsg].wzInfoText, g_pVGuiLocalize->Find( "#DeathMsg_Drown" ), sizeof( m_DeathNotices[iMsg].wzInfoText ) );
+			}
+			else if ( event->GetInt( "damagebits" ) & DMG_RADIATION )
+			{
+				// special case icon for toxic slime death
+				Q_strncpy( m_DeathNotices[iMsg].szIcon, "d_radiation", ARRAYSIZE( m_DeathNotices[iMsg].szIcon ) );
+			}
 		}
 
 		m_DeathNotices[iMsg].iWeaponID = event->GetInt( "weaponid" );
@@ -548,6 +573,7 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 			}
 		}
 	} 
+#if 0
 	else if ( FStrEq( "teamplay_point_captured", pszEventName ) )
 	{
 		GetLocalizedControlPointName( event, m_DeathNotices[iMsg].Victim.szName, ARRAYSIZE( m_DeathNotices[iMsg].Victim.szName ) );
@@ -673,6 +699,7 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 		if ( iLocalPlayerIndex == iPlayerIndex )
 			m_DeathNotices[iMsg].bLocalPlayerInvolved = true;
 	}
+#endif
 
 	OnGameEvent( event, iMsg );
 
@@ -689,7 +716,7 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 		if ( !m_DeathNotices[iMsg].iconDeath )
 		{
 			// Can't find it, so use the default skull & crossbones icon
-			m_DeathNotices[iMsg].iconDeath = GetIcon( "d_skull_tf", m_DeathNotices[iMsg].bLocalPlayerInvolved ? kDeathNoticeIcon_Inverted : kDeathNoticeIcon_Standard );
+			m_DeathNotices[iMsg].iconDeath = GetIcon( "d_skull", m_DeathNotices[iMsg].bLocalPlayerInvolved ? kDeathNoticeIcon_Inverted : kDeathNoticeIcon_Standard );
 		}
 	}
 }

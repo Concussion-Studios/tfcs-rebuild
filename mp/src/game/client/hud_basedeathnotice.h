@@ -18,9 +18,12 @@ struct DeathNoticePlayer
 	{
 		szName[0] = 0;
 		iTeam = TEAM_UNASSIGNED;
+		iPlayerID = 0;
 	}
+
 	char		szName[MAX_PLAYER_NAME_LENGTH*2];	// big enough for player name and additional information
 	int			iTeam;								// team #	
+	int			iPlayerID;
 };
 
 // Contents of each entry in our list of death notices
@@ -52,6 +55,8 @@ struct DeathNoticeItem
 
 	DeathNoticePlayer	Killer;
 	DeathNoticePlayer   Victim;
+	DeathNoticePlayer   Assister;
+
 	char		szIcon[32];		// name of icon to display
 	wchar_t		wzInfoText[32];	// any additional text to display next to icon
 	wchar_t		wzInfoTextEnd[32];	// any additional text to display next to victim name
