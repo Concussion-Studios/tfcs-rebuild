@@ -20,8 +20,6 @@ class C_BaseEntity;
 class CViewSetup;
 class CMatRenderContextPtr;
 
-static const int GLOW_FOR_ALL_SPLIT_SCREEN_SLOTS = -1;
-
 class CGlowObjectManager
 {
 public:
@@ -30,7 +28,7 @@ public:
 	{
 	}
 
-	int RegisterGlowObject( C_BaseEntity *pEntity, const Vector &vGlowColor, float flGlowAlpha, bool bRenderWhenOccluded, bool bRenderWhenUnoccluded, int nSplitScreenSlot )
+	int RegisterGlowObject( C_BaseEntity *pEntity, const Vector &vGlowColor, float flGlowAlpha, bool bRenderWhenOccluded, bool bRenderWhenUnoccluded )
 	{
 		int nIndex;
 		if ( m_nFirstFreeSlot == GlowObjectDefinition_t::END_OF_FREE_LIST )
@@ -48,7 +46,6 @@ public:
 		m_GlowObjectDefinitions[nIndex].m_flGlowAlpha = flGlowAlpha;
 		m_GlowObjectDefinitions[nIndex].m_bRenderWhenOccluded = bRenderWhenOccluded;
 		m_GlowObjectDefinitions[nIndex].m_bRenderWhenUnoccluded = bRenderWhenUnoccluded;
-		m_GlowObjectDefinitions[nIndex].m_nSplitScreenSlot = nSplitScreenSlot;
 		m_GlowObjectDefinitions[nIndex].m_nNextFreeSlot = GlowObjectDefinition_t::ENTRY_IN_USE;
 
 		return nIndex;
@@ -113,19 +110,18 @@ public:
 		return false;
 	}
 
-	void RenderGlowEffects( const CViewSetup *pSetup, int nSplitScreenSlot );
+	void RenderGlowEffects( const CViewSetup *pSetup );
 
 private:
 
-	void RenderGlowModels( const CViewSetup *pSetup, int nSplitScreenSlot, CMatRenderContextPtr &pRenderContext );
-	void ApplyEntityGlowEffects( const CViewSetup *pSetup, int nSplitScreenSlot, CMatRenderContextPtr &pRenderContext, float flBloomScale, int x, int y, int w, int h );
+	void RenderGlowModels( const CViewSetup *pSetup, CMatRenderContextPtr &pRenderContext );
+	void ApplyEntityGlowEffects( const CViewSetup *pSetup, CMatRenderContextPtr &pRenderContext, float flBloomScale, int x, int y, int w, int h );
 
 	struct GlowObjectDefinition_t
 	{
 		bool ShouldDraw( int nSlot ) const
 		{
 			return m_hEntity.Get() && 
-				   ( m_nSplitScreenSlot == GLOW_FOR_ALL_SPLIT_SCREEN_SLOTS || m_nSplitScreenSlot == nSlot ) && 
 				   ( m_bRenderWhenOccluded || m_bRenderWhenUnoccluded ) && 
 				   m_hEntity->ShouldDraw() && 
 				   !m_hEntity->IsDormant();
@@ -140,7 +136,6 @@ private:
 
 		bool m_bRenderWhenOccluded;
 		bool m_bRenderWhenUnoccluded;
-		int m_nSplitScreenSlot;
 
 		// Linked list of free slots
 		int m_nNextFreeSlot;
@@ -159,9 +154,9 @@ extern CGlowObjectManager g_GlowObjectManager;
 class CGlowObject
 {
 public:
-	CGlowObject( C_BaseEntity *pEntity, const Vector &vGlowColor = Vector( 1.0f, 1.0f, 1.0f ), float flGlowAlpha = 1.0f, bool bRenderWhenOccluded = false, bool bRenderWhenUnoccluded = false, int nSplitScreenSlot = GLOW_FOR_ALL_SPLIT_SCREEN_SLOTS )
+	CGlowObject( C_BaseEntity *pEntity, const Vector &vGlowColor = Vector( 1.0f, 1.0f, 1.0f ), float flGlowAlpha = 1.0f, bool bRenderWhenOccluded = false, bool bRenderWhenUnoccluded = false )
 	{
-		m_nGlowObjectHandle = g_GlowObjectManager.RegisterGlowObject( pEntity, vGlowColor, flGlowAlpha, bRenderWhenOccluded, bRenderWhenUnoccluded, nSplitScreenSlot );
+		m_nGlowObjectHandle = g_GlowObjectManager.RegisterGlowObject( pEntity, vGlowColor, flGlowAlpha, bRenderWhenOccluded, bRenderWhenUnoccluded );
 	}
 
 	~CGlowObject()
