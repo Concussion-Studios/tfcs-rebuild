@@ -2,6 +2,7 @@
 #include "c_tfcs_player.h"
 #include "c_basetempentity.h"
 //#include "multiplayer_animstate.h"
+#include "view.h"
 
 #include "tier0/memdbgon.h"
 
@@ -85,6 +86,56 @@ C_TFCSPlayer* C_TFCSPlayer::GetLocalTFCSPlayer()
 	return ToTFCSPlayer( C_BasePlayer::GetLocalPlayer() );
 }
 
+void C_TFCSPlayer::ClientThink()
+{
+	// Pass on through to the base class.
+	BaseClass::ClientThink();
+
+	UpdateIDTarget();
+}
+
+void C_TFCSPlayer::TeamChange( int iNewTeam )
+{
+	BaseClass::TeamChange( iNewTeam );
+
+	// The team number hasn't been updated yet.
+	int iOldTeam = GetTeamNumber();
+	C_BaseEntity::ChangeTeam( iNewTeam );
+
+	// Reset back to old team just in case something uses it.
+	C_BaseEntity::ChangeTeam( iOldTeam );
+
+	TeamChangeStatic( iNewTeam );
+}
+
+void C_TFCSPlayer::TeamChangeStatic( int iNewTeam )
+{
+	// It's possible to receive events from the server before our local player is created.
+	// All crucial things that don't rely on local player
+	// should be put here.
+	const char *pTeamConfig = "exec team_red.cfg";
+
+	switch ( iNewTeam )
+	{
+	case TEAM_RED:
+		pTeamConfig = "exec team_red.cfg";
+		break;
+	case TEAM_BLUE:
+		pTeamConfig = "exec team_blue.cfg";
+		break;
+	case TEAM_GREEN:
+		pTeamConfig = "exec team_green.cfg";
+		break;
+	case TEAM_YELLOW:
+		pTeamConfig = "exec team_yellow.cfg";
+		break;
+	}
+
+	if ( !( iNewTeam == TEAM_UNASSIGNED || iNewTeam == TEAM_SPECTATOR ) )
+		engine->ClientCmd_Unrestricted( pTeamConfig );
+
+}
+
 const QAngle& C_TFCSPlayer::GetRenderAngles()
 {
 	if ( IsRagdoll() )
@@ -111,4 +162,32 @@ void C_TFCSPlayer::UpdateClientSideAnimation()
 		m_PlayerAnimState->Update( m_angEyeAngles[YAW], m_angEyeAngles[PITCH] );
 
 	BaseClass::UpdateClientSideAnimation();
+}
+
+// Purpose: Update this client's target entity
+void C_TFCSPlayer::UpdateIDTarget()
+{
+	if ( !IsLocalPlayer() )
+		return;
+
+	// Clear old target and find a new one
+	m_iIDEntIndex = 0;
+
+	// don't show id's in any state but active.
+	//if ( State_Get() != STATE_ACTIVE )
+	//	return;
+
+	trace_t tr;
+	Vector vecStart, vecEnd;
+	VectorMA( MainViewOrigin(), 1500, MainViewForward(), vecEnd );
+	VectorMA( MainViewOrigin(), 10,   MainViewForward(), vecStart );
+	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, this, COLLISION_GROUP_NONE, &tr );
+
+	if ( !tr.startsolid && tr.DidHitNonWorldEntity() )
+	{
+		C_BaseEntity *pEntity = tr.m_pEnt;
+
+		if ( pEntity && (pEntity != this) )
+			m_iIDEntIndex = pEntity->entindex();
+	}
 }

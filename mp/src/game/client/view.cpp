@@ -51,10 +51,6 @@
 #include "replay/ienginereplay.h"
 #endif
 
-#if defined( HL2_CLIENT_DLL ) || defined( CSTRIKE_DLL )
-#define USE_MONITORS
-#endif
-
 #ifdef PORTAL
 #include "c_prop_portal.h" //portal surface rendering functions
 #endif

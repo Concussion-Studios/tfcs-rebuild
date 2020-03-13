@@ -16,7 +16,7 @@ $Configuration
 	{
 		$AdditionalIncludeDirectories		"$BASE;.\tfcs,$SRCDIR\game\shared\tfcs,$SRCDIR\game\shared\Multiplayer"
 		//$AdditionalIncludeDirectories		"$BASE;$SRCDIR\game\shared\Multiplayer"
-		$PreprocessorDefinitions			"$BASE;TFCSOURCE_DLL"
+		$PreprocessorDefinitions			"$BASE;TFCSOURCE_DLL;GLOWS_ENABLE"
 	}
 }
 

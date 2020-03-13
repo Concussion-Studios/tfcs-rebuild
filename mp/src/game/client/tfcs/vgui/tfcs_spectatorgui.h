@@ -5,8 +5,8 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#ifndef CSDKSPECTATORGUI_H
-#define CSDKSPECTATORGUI_H
+#ifndef TFCS_SPECTATORGUI_H
+#define TFCS_SPECTATORGUI_H
 #ifdef _WIN32
 #pragma once
 #endif
@@ -17,17 +17,16 @@
 extern ConVar mp_forcecamera; // in gamevars_shared.h
 extern ConVar mp_fadetoblack;
 
-
 //-----------------------------------------------------------------------------
 // Purpose: Cstrike Spectator UI
 //-----------------------------------------------------------------------------
-class CSDKSpectatorGUI : public CSpectatorGUI
+class CTFCSSpectatorGUI : public CSpectatorGUI
 {
 private:
-	DECLARE_CLASS_SIMPLE( CSDKSpectatorGUI, CSpectatorGUI );
+	DECLARE_CLASS_SIMPLE( CTFCSSpectatorGUI, CSpectatorGUI );
 
 public:
-	CSDKSpectatorGUI( IViewPort *pViewPort );
+	CTFCSSpectatorGUI( IViewPort *pViewPort );
 		
 	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
 	virtual void UpdateSpectatorPlayerList( void );
@@ -50,10 +49,6 @@ protected:
 	vgui::Label *m_pBlueScore;
 	vgui::Label *m_pRedLabel;
 	vgui::Label *m_pRedScore;
-	vgui::Label *m_pGreenLabel;
-	vgui::Label *m_pGreenScore;
-	vgui::Label *m_pYellowLabel;
-	vgui::Label *m_pYellowScore;
 
 	vgui::Panel *m_pTimer;
 	vgui::Label *m_pTimerLabel;
@@ -69,9 +64,9 @@ protected:
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 
-class CSDKMapOverview : public CMapOverview
+class CTFCSMapOverview : public CMapOverview
 {
-	DECLARE_CLASS_SIMPLE( CSDKMapOverview, CMapOverview );
+	DECLARE_CLASS_SIMPLE( CTFCSMapOverview, CMapOverview );
 
 public:	
 
@@ -83,8 +78,8 @@ public:
 		MAP_ICON_COUNT
 	};
 
-	CSDKMapOverview( const char *pElementName );
-	virtual ~CSDKMapOverview();
+	CTFCSMapOverview( const char *pElementName );
+	virtual ~CTFCSMapOverview();
 
 	virtual bool ShouldDraw( void );
 	vgui::Panel *GetAsPanel(){ return this; }
@@ -103,7 +98,7 @@ protected:	// private structures & types
 	} FootStep_t;	
 
 	// Extra stuff in a this-level parallel array
-	typedef struct SDKMapPlayer_s {
+	typedef struct TFCSMapPlayer_s {
 		int		overrideIcon; // if not -1, the icon to use instead
 		int		overrideIconOffscreen; // to use with overrideIcon
 		float	overrideFadeTime; // Time to start fading the override icon
@@ -113,7 +108,7 @@ protected:	// private structures & types
 		bool	isDead;		// Death latch, since client can be behind the times on health messages.
 		float	timeLastSeen; // curtime that we last saw this guy.
 		float	timeFirstSeen; // curtime that we started seeing this guy
-	} SDKMapPlayer_t;
+	} TFCSMapPlayer_t;
 
 
 public: // IViewPortPanel interface:
@@ -160,7 +155,7 @@ protected:
 	virtual bool	RunHudAnimations(){ return false; }
 
 private:
-	bool			DrawIconSDK(	int textureID,
+	bool			DrawIconTFCS(	int textureID,
 		int offscreenTextureID,
 		Vector pos,
 		float scale,
@@ -175,10 +170,10 @@ private:
 
 	int GetMasterAlpha( void );// The main alpha that the map part should be, determined by using the mode to look at the right convar
 	int GetBorderSize( void );// How far in from the edge of the panel we draw, based on mode.  Let's the background fancy corners show.
-	SDKMapPlayer_t* GetSDKInfoForPlayerIndex( int index );
-	SDKMapPlayer_t* GetSDKInfoForPlayer(MapPlayer_t *player);
+	TFCSMapPlayer_t* GetTFCSInfoForPlayerIndex( int index );
+	TFCSMapPlayer_t* GetTFCSInfoForPlayer(MapPlayer_t *player);
 
-	SDKMapPlayer_t	m_PlayersSDKInfo[MAX_PLAYERS];
+	TFCSMapPlayer_t	m_PlayersTFCSInfo[MAX_PLAYERS];
 
 	int		m_TeamIconsSelf[MAP_ICON_COUNT];
 	int		m_TeamIconsDead[MAP_ICON_COUNT];
@@ -193,4 +188,4 @@ private:
 	int m_playerPreferredMode;
 };
 
-#endif // CSDKSPECTATORGUI_H
+#endif // TFCS_SPECTATORGUI_H

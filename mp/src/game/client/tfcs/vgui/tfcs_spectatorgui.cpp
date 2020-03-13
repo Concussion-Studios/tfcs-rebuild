@@ -6,23 +6,23 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "sdk_spectatorgui.h"
+#include "tfcs_spectatorgui.h"
 #include "hud.h"
 
 #include <vgui/ILocalize.h>
 #include <vgui/ISurface.h>
 #include <filesystem.h>
-#include "sdk_gamerules.h"
-#include "c_sdk_team.h"
-#include "c_sdk_player_resource.h"
+#include "tfcs_gamerules.h"
+//#include "c_tfcs_team.h"
+//#include "c_tfcs_player_resource.h"
 #include "vtf/vtf.h"
 #include "clientmode.h"
 #include <vgui_controls/AnimationController.h>
 #include "voice_status.h"
-#include "c_sdk_player.h"
+#include "c_tfcs_player.h"
 
 using namespace vgui;
-DECLARE_HUDELEMENT( CSDKMapOverview )
+DECLARE_HUDELEMENT( CTFCSMapOverview )
 
 extern ConVar overview_health;
 extern ConVar overview_names;
@@ -49,7 +49,7 @@ ConVar overview_preferred_view_size( "overview_preferred_view_size", "600", FCVA
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CSDKSpectatorGUI::CSDKSpectatorGUI(IViewPort *pViewPort) : CSpectatorGUI(pViewPort)
+CTFCSSpectatorGUI::CTFCSSpectatorGUI(IViewPort *pViewPort) : CSpectatorGUI(pViewPort)
 {
 	m_pBlueLabel =		NULL;
 	m_pBlueScore =		NULL;
@@ -77,7 +77,7 @@ CSDKSpectatorGUI::CSDKSpectatorGUI(IViewPort *pViewPort) : CSpectatorGUI(pViewPo
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CSDKSpectatorGUI::ApplySchemeSettings(vgui::IScheme *pScheme)
+void CTFCSSpectatorGUI::ApplySchemeSettings(vgui::IScheme *pScheme)
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
@@ -103,9 +103,9 @@ void CSDKSpectatorGUI::ApplySchemeSettings(vgui::IScheme *pScheme)
 //-----------------------------------------------------------------------------
 // Purpose: Resets the list of players
 //-----------------------------------------------------------------------------
-void CSDKSpectatorGUI::UpdateSpectatorPlayerList()
+void CTFCSSpectatorGUI::UpdateSpectatorPlayerList()
 {
-	C_SDKTeam *blue = GetGlobalSDKTeam( SDK_TEAM_BLUE );
+	/*C_TFCSTeam *blue = GetGlobalTFCSTeam( TFCS_TEAM_BLUE );
 	if ( blue )
 	{
 		wchar_t frags[ 10 ];
@@ -114,54 +114,24 @@ void CSDKSpectatorGUI::UpdateSpectatorPlayerList()
 		SetLabelText( "BlueScoreValue", frags );
 	}
 
-	C_SDKTeam *red = GetGlobalSDKTeam( SDK_TEAM_RED );
+	C_TFCSTeam *red = GetGlobalTFCSTeam( TFCS_TEAM_RED );
 	if ( red )
 	{
 		wchar_t frags[ 10 ];
 		_snwprintf( frags, sizeof( frags ), L"%i", red->Get_Score()  );
 		
 		SetLabelText( "RedScoreValue", frags );
-	}
-
-
-	/*C_SDKTeam *green = GetGlobalSDKTeam( SDK_TEAM_GREEN );
-	if ( green )
-	{
-		wchar_t frags[ 10 ];
-		_snwprintf( frags, sizeof( frags ), L"%i",  green->Get_Score()  );
-
-		SetLabelText( "GreenScoreValue", frags );
-	}
-
-	C_SDKTeam *yellow = GetGlobalSDKTeam( SDK_TEAM_YELLOW );
-	if ( yellow )
-	{
-		wchar_t frags[ 10 ];
-		_snwprintf( frags, sizeof( frags ), L"%i", yellow->Get_Score()  );
-		
-		SetLabelText( "YellowScoreValue", frags );
 	}*/
-
-	//m_pBlueLabel->SetVisible( false );
-	//m_pBlueScore->SetVisible( false );
-	//m_pRedLabel->SetVisible( false );
-	//m_pRedScore->SetVisible( false );
-
-	/*m_pGreenLabel->SetVisible( false );
-	m_pGreenScore->SetVisible( false );
-	m_pYellowLabel->SetVisible( false );
-	m_pYellowScore->SetVisible( false );*/
-
 }
 
-bool CSDKSpectatorGUI::NeedsUpdate( void )
+bool CTFCSSpectatorGUI::NeedsUpdate( void )
 {
-	C_SDKPlayer *player = C_SDKPlayer::GetLocalSDKPlayer();
+	C_TFCSPlayer *player = C_TFCSPlayer::GetLocalTFCSPlayer();
 	if ( !player )
 		return false;
 
-	if ( m_nLastTime != (int)SDKGameRules()->GetMapRemainingTime() )
-		return true;
+	//if ( m_nLastTime != (int)TFCSGameRules()->GetMapRemainingTime() )
+	//	return true;
 
 	if ( m_nLastSpecMode != player->GetObserverMode() )
 		return true;
@@ -175,12 +145,12 @@ bool CSDKSpectatorGUI::NeedsUpdate( void )
 //-----------------------------------------------------------------------------
 // Purpose: Updates the timer label if one exists
 //-----------------------------------------------------------------------------
-void CSDKSpectatorGUI::UpdateTimer()
+void CTFCSSpectatorGUI::UpdateTimer()
 {
 	wchar_t szText[ 63 ];
 
 	
-	m_nLastTime = (int)( SDKGameRules()->GetMapRemainingTime() );
+	//m_nLastTime = (int)( TFCSGameRules()->GetMapRemainingTime() );
 
 	if ( m_nLastTime < 0 )
 		 m_nLastTime  = 0;
@@ -191,7 +161,7 @@ void CSDKSpectatorGUI::UpdateTimer()
 	SetLabelText("timerlabel", szText );
 }
 
-void CSDKSpectatorGUI::Update()
+void CTFCSSpectatorGUI::Update()
 {
 	BaseClass::Update();
 	
@@ -218,7 +188,7 @@ void CSDKSpectatorGUI::Update()
 //-----------------------------------------------------------------------------
 // Purpose: Save off widths for sizing calculations
 //-----------------------------------------------------------------------------
-void CSDKSpectatorGUI::StoreWidths( void )
+void CTFCSSpectatorGUI::StoreWidths( void )
 {
 	if ( !ControlsPresent() )
 		return;
@@ -240,7 +210,7 @@ void CSDKSpectatorGUI::StoreWidths( void )
 //-----------------------------------------------------------------------------
 // Purpose: Resize controls so scores & map names are not cut off
 //-----------------------------------------------------------------------------
-void CSDKSpectatorGUI::ResizeControls( void )
+void CTFCSSpectatorGUI::ResizeControls( void )
 {
 	if ( !ControlsPresent() )
 		return;
@@ -324,7 +294,7 @@ void CSDKSpectatorGUI::ResizeControls( void )
 //-----------------------------------------------------------------------------
 // Purpose: Verify controls are present to resize
 //-----------------------------------------------------------------------------
-bool CSDKSpectatorGUI::ControlsPresent( void ) const
+bool CTFCSSpectatorGUI::ControlsPresent( void ) const
 {
 	return ( m_pBlueLabel != NULL &&
 		m_pBlueScore != NULL &&
@@ -359,7 +329,7 @@ static int AdjustValue( int curValue, int targetValue, int amount )
 	return curValue;
 }
 
-void CSDKMapOverview::InitTeamColorsAndIcons()
+void CTFCSMapOverview::InitTeamColorsAndIcons()
 {
 	BaseClass::InitTeamColorsAndIcons();
 
@@ -405,7 +375,7 @@ void CSDKMapOverview::InitTeamColorsAndIcons()
 }
 
 //-----------------------------------------------------------------------------
-void CSDKMapOverview::ApplySchemeSettings(vgui::IScheme *scheme)
+void CTFCSMapOverview::ApplySchemeSettings(vgui::IScheme *scheme)
 {
 	BaseClass::ApplySchemeSettings( scheme );
 
@@ -413,7 +383,7 @@ void CSDKMapOverview::ApplySchemeSettings(vgui::IScheme *scheme)
 }
 
 //-----------------------------------------------------------------------------
-void CSDKMapOverview::Update( void )
+void CTFCSMapOverview::Update( void )
 {
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 
@@ -439,16 +409,16 @@ void CSDKMapOverview::Update( void )
 }
 
 //-----------------------------------------------------------------------------
-CSDKMapOverview::SDKMapPlayer_t* CSDKMapOverview::GetSDKInfoForPlayerIndex( int index )
+CTFCSMapOverview::TFCSMapPlayer_t* CTFCSMapOverview::GetTFCSInfoForPlayerIndex( int index )
 {
 	if ( index < 0 || index >= MAX_PLAYERS )
 		return NULL;
 
-	return &m_PlayersSDKInfo[ index ];
+	return &m_PlayersTFCSInfo[ index ];
 }
 
 //-----------------------------------------------------------------------------
-CSDKMapOverview::SDKMapPlayer_t* CSDKMapOverview::GetSDKInfoForPlayer(MapPlayer_t *player)
+CTFCSMapOverview::TFCSMapPlayer_t* CTFCSMapOverview::GetTFCSInfoForPlayer(MapPlayer_t *player)
 {
 	if( player == NULL )
 		return NULL;
@@ -456,7 +426,7 @@ CSDKMapOverview::SDKMapPlayer_t* CSDKMapOverview::GetSDKInfoForPlayer(MapPlayer_
 	for( int i = 0; i < MAX_PLAYERS; i++ )
 	{
 		if( &m_Players[i] == player )
-			return &m_PlayersSDKInfo[i];
+			return &m_PlayersTFCSInfo[i];
 	}
 
 	return NULL;
@@ -466,7 +436,7 @@ CSDKMapOverview::SDKMapPlayer_t* CSDKMapOverview::GetSDKInfoForPlayer(MapPlayer_
 #define TIME_SPOTS_STAY_SEEN (0.5f)
 #define TIME_UNTIL_ENEMY_SEEN (0.5f)
 // rules that define if you can see a player on the overview or not
-bool CSDKMapOverview::CanPlayerBeSeen( MapPlayer_t *player )
+bool CTFCSMapOverview::CanPlayerBeSeen( MapPlayer_t *player )
 {
 	C_BasePlayer *localPlayer = C_BasePlayer::GetLocalPlayer();
 
@@ -477,22 +447,22 @@ bool CSDKMapOverview::CanPlayerBeSeen( MapPlayer_t *player )
 	if (localPlayer->GetTeamNumber() == TEAM_SPECTATOR )
 		return BaseClass::CanPlayerBeSeen(player);
 
-	SDKMapPlayer_t *sdkPlayer = GetSDKInfoForPlayer(player);
+	TFCSMapPlayer_t *TFCSPlayer = GetTFCSInfoForPlayer(player);
 		
-	if ( !sdkPlayer )
+	if ( !TFCSPlayer )
 		return false;
 
 	if( player->health <= 0 )
 	{
 		// Have to be under the overriden icon time to draw when dead.
-		if ( sdkPlayer->overrideExpirationTime == -1  ||  sdkPlayer->overrideExpirationTime <= gpGlobals->curtime )
+		if ( TFCSPlayer->overrideExpirationTime == -1  ||  TFCSPlayer->overrideExpirationTime <= gpGlobals->curtime )
 			return false;
 	}
 	
 	return BaseClass::CanPlayerBeSeen(player);
 }
 
-CSDKMapOverview::CSDKMapOverview( const char *pElementName ) : BaseClass( pElementName )
+CTFCSMapOverview::CTFCSMapOverview( const char *pElementName ) : BaseClass( pElementName )
 {
 	g_pMapOverview = this;  // for cvars access etc
 
@@ -512,23 +482,23 @@ CSDKMapOverview::CSDKMapOverview( const char *pElementName ) : BaseClass( pEleme
 	}
 }
 
-void CSDKMapOverview::Init( void )
+void CTFCSMapOverview::Init( void )
 {
 	BaseClass::Init();
 }
 
-CSDKMapOverview::~CSDKMapOverview()
+CTFCSMapOverview::~CTFCSMapOverview()
 {
 	g_pMapOverview = NULL;
 
 	//TODO release Textures ? clear lists
 }
 
-void CSDKMapOverview::UpdatePlayers()
+void CTFCSMapOverview::UpdatePlayers()
 {
-	C_SDK_PlayerResource *pSDKPR = (C_SDK_PlayerResource*)GameResources();
-	if ( !pSDKPR )
-		return;
+	//C_TFCS_PlayerResource *pTFCSPR = (C_TFCS_PlayerResource*)GameResources();
+	//if ( !pTFCSPR )
+	//	return;
 
 	CBasePlayer *localPlayer = C_BasePlayer::GetLocalPlayer();
 	if( localPlayer == NULL )
@@ -541,26 +511,26 @@ void CSDKMapOverview::UpdatePlayers()
 	for ( int i = 1; i<= gpGlobals->maxClients; i++)
 	{
 		MapPlayer_t *player = &m_Players[i-1];
-		SDKMapPlayer_t *playerSDK = GetSDKInfoForPlayerIndex(i-1);
+		TFCSMapPlayer_t *playerTFCS = GetTFCSInfoForPlayerIndex(i-1);
 
-		if ( !playerSDK )
+		if ( !playerTFCS )
 			continue;
 
 		// update from global player resources
-		if ( pSDKPR->IsConnected(i) )
+		/*if ( pTFCSPR->IsConnected(i) )
 		{
-			player->health = pSDKPR->GetHealth( i );
+			player->health = pTFCSPR->GetHealth( i );
 
-			if ( !pSDKPR->IsAlive( i ) )
+			if ( !pTFCSPR->IsAlive( i ) )
 			{
 				// Safety actually happens after a TKPunish.
 				player->health = 0;
-				playerSDK->isDead = true;
+				playerTFCS->isDead = true;
 			}
 
-			if ( player->team != pSDKPR->GetTeam( i ) )
+			if ( player->team != pTFCSPR->GetTeam( i ) )
 			{
-				player->team = pSDKPR->GetTeam( i );
+				player->team = pTFCSPR->GetTeam( i );
 
 				if( player == localMapPlayer )
 					player->icon = m_TeamIconsSelf[ GetIconNumberFromTeamNumber(player->team) ];
@@ -569,7 +539,7 @@ void CSDKMapOverview::UpdatePlayers()
 
 				player->color = m_TeamColors[ GetIconNumberFromTeamNumber(player->team) ];
 			}
-		}
+		}*/
 
 		Vector position = player->position;
 		QAngle angles = player->angle;
@@ -586,10 +556,10 @@ void CSDKMapOverview::UpdatePlayers()
 
 }
 
-bool CSDKMapOverview::ShouldDraw( void )
+bool CTFCSMapOverview::ShouldDraw( void )
 {
 	//Tony; don't draw the map unless it's a spectator - you could turn this into a radar if you wanted by using the other modes!
-	C_SDKPlayer *pPlayer = C_SDKPlayer::GetLocalSDKPlayer();
+	C_TFCSPlayer *pPlayer = C_TFCSPlayer::GetLocalTFCSPlayer();
 	if (!pPlayer)
 		return false;
 
@@ -603,7 +573,7 @@ bool CSDKMapOverview::ShouldDraw( void )
 	return BaseClass::ShouldDraw();
 }
 
-CSDKMapOverview::MapPlayer_t* CSDKMapOverview::GetPlayerByEntityID( int entityID )
+CTFCSMapOverview::MapPlayer_t* CTFCSMapOverview::GetPlayerByEntityID( int entityID )
 {
 	C_BasePlayer *realPlayer = UTIL_PlayerByIndex(entityID);
 
@@ -622,7 +592,7 @@ CSDKMapOverview::MapPlayer_t* CSDKMapOverview::GetPlayerByEntityID( int entityID
 }
 
 #define BORDER_WIDTH 4
-bool CSDKMapOverview::AdjustPointToPanel(Vector2D *pos)
+bool CTFCSMapOverview::AdjustPointToPanel(Vector2D *pos)
 {
 	if( pos == NULL )
 		return false;
@@ -661,7 +631,7 @@ bool CSDKMapOverview::AdjustPointToPanel(Vector2D *pos)
 	return madeChange;
 }
 
-void CSDKMapOverview::DrawMapTexture()
+void CTFCSMapOverview::DrawMapTexture()
 {
 	int alpha = GetMasterAlpha();
 
@@ -711,7 +681,7 @@ void CSDKMapOverview::DrawMapTexture()
 	}
 }
 
-bool CSDKMapOverview::DrawIconSDK( int textureID, int offscreenTextureID, Vector pos, float scale, float angle, int alpha, bool allowRotation, const char *text, Color *textColor, float status, Color *statusColor )
+bool CTFCSMapOverview::DrawIconTFCS( int textureID, int offscreenTextureID, Vector pos, float scale, float angle, int alpha, bool allowRotation, const char *text, Color *textColor, float status, Color *statusColor )
 {
 	if( alpha <= 0 )
 		return false;
@@ -843,7 +813,7 @@ bool CSDKMapOverview::DrawIconSDK( int textureID, int offscreenTextureID, Vector
 	return true;
 }
 
-void CSDKMapOverview::DrawMapPlayers()
+void CTFCSMapOverview::DrawMapPlayers()
 {
 	surface()->DrawSetTextFont( m_hIconFont );
 
@@ -854,9 +824,9 @@ void CSDKMapOverview::DrawMapPlayers()
 	{
 		int alpha = 255;
 		MapPlayer_t *player = &m_Players[i];
-		SDKMapPlayer_t *playerSDK = GetSDKInfoForPlayerIndex(i);
+		TFCSMapPlayer_t *playerTFCS = GetTFCSInfoForPlayerIndex(i);
 
-		if ( !playerSDK )
+		if ( !playerTFCS )
 			continue;
 
 		if ( !CanPlayerBeSeen( player ) )
@@ -873,18 +843,18 @@ void CSDKMapOverview::DrawMapPlayers()
 
 
 		// Now draw them
-		if( playerSDK->overrideExpirationTime > gpGlobals->curtime )// If dead, an X, if alive, an alpha'd normal icon
+		if( playerTFCS->overrideExpirationTime > gpGlobals->curtime )// If dead, an X, if alive, an alpha'd normal icon
 		{
 			int alphaToUse = alpha;
-			if( playerSDK->overrideFadeTime != -1 && playerSDK->overrideFadeTime <= gpGlobals->curtime )
+			if( playerTFCS->overrideFadeTime != -1 && playerTFCS->overrideFadeTime <= gpGlobals->curtime )
 			{
 				// Fade linearly from fade start to disappear
-				alphaToUse *= 1 - (float)(gpGlobals->curtime - playerSDK->overrideFadeTime) / (float)(playerSDK->overrideExpirationTime - playerSDK->overrideFadeTime);
+				alphaToUse *= 1 - (float)(gpGlobals->curtime - playerTFCS->overrideFadeTime) / (float)(playerTFCS->overrideExpirationTime - playerTFCS->overrideFadeTime);
 			}
 
-			DrawIconSDK( playerSDK->overrideIcon, playerSDK->overrideIconOffscreen, playerSDK->overridePosition, m_flIconSize * 1.1f, GetViewAngle(), player->health > 0 ? alphaToUse / 2 : alphaToUse, true, name, &player->color, -1, &colorGreen );
+			DrawIconTFCS( playerTFCS->overrideIcon, playerTFCS->overrideIconOffscreen, playerTFCS->overridePosition, m_flIconSize * 1.1f, GetViewAngle(), player->health > 0 ? alphaToUse / 2 : alphaToUse, true, name, &player->color, -1, &colorGreen );
 			if( player->health > 0 )
-				DrawIconSDK( m_playerFacing, -1, playerSDK->overridePosition, m_flIconSize * 1.1f, playerSDK->overrideAngle[YAW], player->health > 0 ? alphaToUse / 2 : alphaToUse, true, name, &player->color, status, &colorGreen );
+				DrawIconTFCS( m_playerFacing, -1, playerTFCS->overridePosition, m_flIconSize * 1.1f, playerTFCS->overrideAngle[YAW], player->health > 0 ? alphaToUse / 2 : alphaToUse, true, name, &player->color, status, &colorGreen );
 		}
 		else
 		{
@@ -942,18 +912,18 @@ void CSDKMapOverview::DrawMapPlayers()
 				angleForPlayer = player->angle[YAW];// And, the self icon now rotates, natch.
 			}
 
-			DrawIconSDK( normalIcon, offscreenIcon, player->position, sizeForPlayer, angleForPlayer, alpha, true, name, &player->color, status, &colorGreen );
+			DrawIconTFCS( normalIcon, offscreenIcon, player->position, sizeForPlayer, angleForPlayer, alpha, true, name, &player->color, status, &colorGreen );
 			if( !doingLocalPlayer )
 			{
 				// Draw the facing for everyone but the local player.
 				if( player->health > 0 )
-					DrawIconSDK( m_playerFacing, -1, player->position, sizeForPlayer, player->angle[YAW], alpha, true, name, &player->color, status, &colorGreen );
+					DrawIconTFCS( m_playerFacing, -1, player->position, sizeForPlayer, player->angle[YAW], alpha, true, name, &player->color, status, &colorGreen );
 			}
 		}
 	}
 }
 
-void CSDKMapOverview::SetMap(const char * levelname)
+void CTFCSMapOverview::SetMap(const char * levelname)
 {
 	BaseClass::SetMap(levelname);
 
@@ -966,13 +936,13 @@ void CSDKMapOverview::SetMap(const char * levelname)
 	}
 }
 
-void CSDKMapOverview::ResetRound()
+void CTFCSMapOverview::ResetRound()
 {
 	BaseClass::ResetRound();
 
 	for (int i=0; i<MAX_PLAYERS; i++)
 	{
-		SDKMapPlayer_t *p = &m_PlayersSDKInfo[i];
+		TFCSMapPlayer_t *p = &m_PlayersTFCSInfo[i];
 
 		p->isDead = false;
 
@@ -988,7 +958,7 @@ void CSDKMapOverview::ResetRound()
 	}
 }
 
-void CSDKMapOverview::DrawCamera()
+void CTFCSMapOverview::DrawCamera()
 {
 	C_BasePlayer *localPlayer = C_BasePlayer::GetLocalPlayer();
 
@@ -999,7 +969,7 @@ void CSDKMapOverview::DrawCamera()
 	{
 		// Instead of the programmer-art red dot, we'll draw an icon for when our camera is roaming.
 		int alpha = 255;
-		DrawIconSDK(m_cameraIconFree, m_cameraIconFree, localPlayer->GetAbsOrigin(), m_flIconSize * 3.0f, localPlayer->EyeAngles()[YAW], alpha);
+		DrawIconTFCS(m_cameraIconFree, m_cameraIconFree, localPlayer->GetAbsOrigin(), m_flIconSize * 3.0f, localPlayer->EyeAngles()[YAW], alpha);
 	}
 	else if( localPlayer->GetObserverMode() == OBS_MODE_IN_EYE )
 	{
@@ -1007,7 +977,7 @@ void CSDKMapOverview::DrawCamera()
 		{
 			// Fade it if it is on top of a player dot.  And don't rotate it.
 			int alpha = 255 * 0.5f;
-			DrawIconSDK(m_cameraIconFirst, m_cameraIconFirst, localPlayer->GetObserverTarget()->GetAbsOrigin(), m_flIconSize * 1.5f, GetViewAngle(), alpha);
+			DrawIconTFCS(m_cameraIconFirst, m_cameraIconFirst, localPlayer->GetObserverTarget()->GetAbsOrigin(), m_flIconSize * 1.5f, GetViewAngle(), alpha);
 		}
 	}
 	else if( localPlayer->GetObserverMode() == OBS_MODE_CHASE )
@@ -1016,12 +986,12 @@ void CSDKMapOverview::DrawCamera()
 		{
 			// Or Draw the third-camera a little bigger. (Needs room to be off the dot being followed)
 			int alpha = 255;
-			DrawIconSDK(m_cameraIconThird, m_cameraIconThird, localPlayer->GetObserverTarget()->GetAbsOrigin(), m_flIconSize * 3.0f, localPlayer->EyeAngles()[YAW], alpha);
+			DrawIconTFCS(m_cameraIconThird, m_cameraIconThird, localPlayer->GetObserverTarget()->GetAbsOrigin(), m_flIconSize * 3.0f, localPlayer->EyeAngles()[YAW], alpha);
 		}
 	}
 }
 
-void CSDKMapOverview::FireGameEvent( IGameEvent *event )
+void CTFCSMapOverview::FireGameEvent( IGameEvent *event )
 {
 	const char * type = event->GetName();
 
@@ -1035,18 +1005,18 @@ void CSDKMapOverview::FireGameEvent( IGameEvent *event )
 		player->health = 0;
 		Q_memset( player->trail, 0, sizeof(player->trail) ); // clear trails
 
-		SDKMapPlayer_t *playerSDK = GetSDKInfoForPlayer(player);
+		TFCSMapPlayer_t *playerTFCS = GetTFCSInfoForPlayer(player);
 
-		if ( !playerSDK )
+		if ( !playerTFCS )
 			return;
 
-		playerSDK->isDead = true;
-		playerSDK->overrideIcon = m_TeamIconsDead[GetIconNumberFromTeamNumber(player->team)];
-		playerSDK->overrideIconOffscreen = playerSDK->overrideIcon;
-		playerSDK->overridePosition = player->position;
-		playerSDK->overrideAngle = player->angle;
-		playerSDK->overrideFadeTime = gpGlobals->curtime + DEATH_ICON_FADE;
-		playerSDK->overrideExpirationTime = gpGlobals->curtime + DEATH_ICON_DURATION;
+		playerTFCS->isDead = true;
+		playerTFCS->overrideIcon = m_TeamIconsDead[GetIconNumberFromTeamNumber(player->team)];
+		playerTFCS->overrideIconOffscreen = playerTFCS->overrideIcon;
+		playerTFCS->overridePosition = player->position;
+		playerTFCS->overrideAngle = player->angle;
+		playerTFCS->overrideFadeTime = gpGlobals->curtime + DEATH_ICON_FADE;
+		playerTFCS->overrideExpirationTime = gpGlobals->curtime + DEATH_ICON_DURATION;
 	}
 	else if ( Q_strcmp(type,"player_team") == 0 )
 	{
@@ -1075,7 +1045,7 @@ void CSDKMapOverview::FireGameEvent( IGameEvent *event )
 	}
 }
 
-void CSDKMapOverview::SetMode(int mode)
+void CTFCSMapOverview::SetMode(int mode)
 {
 	if ( mode == MAP_MODE_INSET )
 	{
@@ -1097,7 +1067,7 @@ void CSDKMapOverview::SetMode(int mode)
 	BaseClass::SetMode(mode);
 }
 
-void CSDKMapOverview::UpdateSizeAndPosition()
+void CTFCSMapOverview::UpdateSizeAndPosition()
 {
 	int x,y,w,h;
 
@@ -1162,9 +1132,9 @@ void CSDKMapOverview::UpdateSizeAndPosition()
 	SetBounds( x,y,w,h );
 }
 
-void CSDKMapOverview::SetPlayerSeen( int index )
+void CTFCSMapOverview::SetPlayerSeen( int index )
 {
-	SDKMapPlayer_t *pCS = GetSDKInfoForPlayerIndex(index);
+	TFCSMapPlayer_t *pCS = GetTFCSInfoForPlayerIndex(index);
 
 	float now = gpGlobals->curtime;
 
@@ -1178,7 +1148,7 @@ void CSDKMapOverview::SetPlayerSeen( int index )
 }
 
 //-----------------------------------------------------------------------------
-void CSDKMapOverview::SetPlayerPreferredMode( int mode )
+void CTFCSMapOverview::SetPlayerPreferredMode( int mode )
 {
 	// A player has given an explicit overview_mode command
 	m_playerPreferredMode = mode;
@@ -1200,21 +1170,21 @@ void CSDKMapOverview::SetPlayerPreferredMode( int mode )
 }
 
 //-----------------------------------------------------------------------------
-void CSDKMapOverview::SetPlayerPreferredViewSize( float viewSize )
+void CTFCSMapOverview::SetPlayerPreferredViewSize( float viewSize )
 {
 	overview_preferred_view_size.SetValue( viewSize );
 }
 
 
 //-----------------------------------------------------------------------------
-int CSDKMapOverview::GetIconNumberFromTeamNumber( int teamNumber )
+int CTFCSMapOverview::GetIconNumberFromTeamNumber( int teamNumber )
 {
 	switch(teamNumber) 
 	{
-	case SDK_TEAM_BLUE:
+	case TEAM_BLUE:
 		return MAP_ICON_BLUE;
 
-	case SDK_TEAM_RED:
+	case TEAM_RED:
 		return MAP_ICON_RED;
 	case 0:
 	default:
@@ -1223,7 +1193,7 @@ int CSDKMapOverview::GetIconNumberFromTeamNumber( int teamNumber )
 }
 
 //-----------------------------------------------------------------------------
-int CSDKMapOverview::GetMasterAlpha( void )
+int CTFCSMapOverview::GetMasterAlpha( void )
 {
 	// The master alpha is the alpha that the map wants to draw at.  The background will be at half that, and the icons
 	// will always be full.  (The icons fade themselves for functional reasons like seen-recently.)
@@ -1233,7 +1203,7 @@ int CSDKMapOverview::GetMasterAlpha( void )
 }
 
 //-----------------------------------------------------------------------------
-int CSDKMapOverview::GetBorderSize( void )
+int CTFCSMapOverview::GetBorderSize( void )
 {
 	switch( GetMode() )
 	{
@@ -1246,7 +1216,7 @@ int CSDKMapOverview::GetBorderSize( void )
 }
 
 //-----------------------------------------------------------------------------
-Vector2D CSDKMapOverview::PanelToMap( const Vector2D &panelPos )
+Vector2D CTFCSMapOverview::PanelToMap( const Vector2D &panelPos )
 {
 	// This is the reversing of baseclass's MapToPanel
 	int pwidth, pheight; 

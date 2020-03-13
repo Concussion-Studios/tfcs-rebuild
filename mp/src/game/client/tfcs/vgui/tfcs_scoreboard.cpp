@@ -7,14 +7,14 @@
 
 #include "cbase.h"
 #include "hud.h"
-#include "sdk_scoreboard.h"
+#include "tfcs_scoreboard.h"
 #include "c_team.h"
 #include "c_playerresource.h"
-#include "c_sdk_player.h"
-#include "c_sdk_team.h"
-#include "sdk_backgroundpanel.h"
-#include "sdk_gamerules.h"
-#include "c_sdk_player_resource.h"
+#include "c_tfcs_player.h"
+//#include "c_tfcs_team.h"
+#include "tfcs_backgroundpanel.h"
+#include "tfcs_gamerules.h"
+//#include "c_tfcs_player_resource.h"
 
 #include <KeyValues.h>
 
@@ -33,13 +33,9 @@ using namespace vgui;
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CSDKScoreboard::CSDKScoreboard( IViewPort *pViewPort ) : CClientScoreBoardDialog( pViewPort )
+CTFCSScoreboard::CTFCSScoreboard( IViewPort *pViewPort ) : CClientScoreBoardDialog( pViewPort )
 {
 	m_iImageDead = 0;
-
-	m_pPlayerListDM = new SectionedListPanel( this, "PlayerListDM" );
-	m_pPlayerCountLabel_DM = new Label( this, "DM_PlayerCount", "" );
-	m_pPingLabel_DM = new Label( this, "DM_Latency", "" );
 
 	m_pPlayerListRed = new SectionedListPanel( this, "PlayerListRed" );
 	m_pPlayerCountLabel_Red = new Label( this, "Red_PlayerCount", "" );
@@ -61,14 +57,14 @@ CSDKScoreboard::CSDKScoreboard( IViewPort *pViewPort ) : CClientScoreBoardDialog
 //-----------------------------------------------------------------------------
 // Purpose: Destructor
 //-----------------------------------------------------------------------------
-CSDKScoreboard::~CSDKScoreboard()
+CTFCSScoreboard::~CTFCSScoreboard()
 {
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Paint background for rounded corners
 //-----------------------------------------------------------------------------
-void CSDKScoreboard::PaintBackground()
+void CTFCSScoreboard::PaintBackground()
 {
 	int wide, tall;
 	GetSize( wide, tall );
@@ -79,7 +75,7 @@ void CSDKScoreboard::PaintBackground()
 //-----------------------------------------------------------------------------
 // Purpose: Paint border for rounded corners
 //-----------------------------------------------------------------------------
-void CSDKScoreboard::PaintBorder()
+void CTFCSScoreboard::PaintBorder()
 {
 	int wide, tall;
 	GetSize( wide, tall );
@@ -90,7 +86,7 @@ void CSDKScoreboard::PaintBorder()
 //-----------------------------------------------------------------------------
 // Purpose: Apply scheme settings
 //-----------------------------------------------------------------------------
-void CSDKScoreboard::ApplySchemeSettings( vgui::IScheme *pScheme )
+void CTFCSScoreboard::ApplySchemeSettings( vgui::IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
@@ -114,14 +110,6 @@ void CSDKScoreboard::ApplySchemeSettings( vgui::IScheme *pScheme )
 		}
 	}
 
-	if ( m_pPlayerListDM )
-	{
-		m_pPlayerListDM->SetImageList( m_pImageList, false );
-		m_pPlayerListDM->SetBgColor( Color( 0, 0, 0, 0 ) );
-		m_pPlayerListDM->SetBorder( NULL );
-		m_pPlayerListDM->SetVisible( false );
-	}
-
 	if ( m_pPlayerListRed )
 	{
 		m_pPlayerListRed->SetImageList( m_pImageList, false );
@@ -142,18 +130,6 @@ void CSDKScoreboard::ApplySchemeSettings( vgui::IScheme *pScheme )
 	if ( m_pPlayerList )
 		m_pPlayerList->SetVisible( false );
 
-	m_pScoreHeader_DM = (Label*)FindChildByName( "DM_ScoreHeader" );
-	m_pDeathsHeader_DM = (Label*)FindChildByName( "DM_DeathsHeader" );
-	m_pPingHeader_DM = (Label*)FindChildByName( "DM_PingHeader" );
-
-	if ( m_pPlayerCountLabel_DM && m_pScoreHeader_DM && m_pDeathsHeader_DM && m_pPingHeader_DM && m_pPingLabel_DM )
-	{
-		m_pPlayerCountLabel_DM->SetFgColor( COLOR_YELLOW );
-		m_pScoreHeader_DM->SetFgColor( COLOR_YELLOW );
-		m_pDeathsHeader_DM->SetFgColor( COLOR_YELLOW );
-		m_pPingHeader_DM->SetFgColor( COLOR_YELLOW );
-		m_pPingLabel_DM->SetFgColor( COLOR_YELLOW );
-	}
 	m_pScoreHeader_Red = (Label*)FindChildByName( "Red_ScoreHeader" );
 	m_pDeathsHeader_Red = (Label*)FindChildByName( "Red_DeathsHeader" );
 	m_pPingHeader_Red = (Label*)FindChildByName( "Red_PingHeader" );
@@ -192,17 +168,16 @@ void CSDKScoreboard::ApplySchemeSettings( vgui::IScheme *pScheme )
 //-----------------------------------------------------------------------------
 // Purpose: Resets the scoreboard panel
 //-----------------------------------------------------------------------------
-void CSDKScoreboard::Reset()
+void CTFCSScoreboard::Reset()
 {
-	InitPlayerList( m_pPlayerListDM, TEAM_UNASSIGNED );
-	InitPlayerList( m_pPlayerListRed, SDK_TEAM_RED );
-	InitPlayerList( m_pPlayerListBlue, SDK_TEAM_BLUE );
+	InitPlayerList( m_pPlayerListRed, TEAM_RED );
+	InitPlayerList( m_pPlayerListBlue, TEAM_BLUE );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Used for sorting players
 //-----------------------------------------------------------------------------
-bool CSDKScoreboard::SDKPlayerSortFunc( vgui::SectionedListPanel *list, int itemID1, int itemID2 )
+bool CTFCSScoreboard::SDKPlayerSortFunc( vgui::SectionedListPanel *list, int itemID1, int itemID2 )
 {
 	KeyValues *it1 = list->GetItemData( itemID1 );
 	KeyValues *it2 = list->GetItemData( itemID2 );
@@ -233,7 +208,7 @@ bool CSDKScoreboard::SDKPlayerSortFunc( vgui::SectionedListPanel *list, int item
 //-----------------------------------------------------------------------------
 // Purpose: Inits the player list in a list panel
 //-----------------------------------------------------------------------------
-void CSDKScoreboard::InitPlayerList( SectionedListPanel *pPlayerList, int teamNumber )
+void CTFCSScoreboard::InitPlayerList( SectionedListPanel *pPlayerList, int teamNumber )
 {
 	pPlayerList->SetVerticalScrollbar( false );
 	pPlayerList->RemoveAll();
@@ -263,7 +238,7 @@ void CSDKScoreboard::InitPlayerList( SectionedListPanel *pPlayerList, int teamNu
 //-----------------------------------------------------------------------------
 // Purpose: Updates the dialog
 //-----------------------------------------------------------------------------
-void CSDKScoreboard::Update()
+void CTFCSScoreboard::Update()
 {
 	UpdateItemVisibiity();
 	UpdateTeamInfo();
@@ -278,15 +253,13 @@ void CSDKScoreboard::Update()
 //-----------------------------------------------------------------------------
 // Purpose: Updates information about teams
 //-----------------------------------------------------------------------------
-void CSDKScoreboard::UpdateTeamInfo()
+void CTFCSScoreboard::UpdateTeamInfo()
 {
 	// update the team sections in the scoreboard
 	int startTeam = TEAM_UNASSIGNED;
+	startTeam = TEAM_BLUE;
 
-	if ( SDKGameRules()->IsTeamplay() )
-		startTeam = SDK_TEAM_BLUE;
-
-	for ( int teamIndex = startTeam; teamIndex <= SDK_TEAM_RED; teamIndex++ )
+	for ( int teamIndex = startTeam; teamIndex <= TEAM_RED; teamIndex++ )
 	{
 		// Make sure spectator is always skipped here.
 		if ( teamIndex == TEAM_SPECTATOR )
@@ -302,13 +275,13 @@ void CSDKScoreboard::UpdateTeamInfo()
 			const char *pDialogVarTeamPing = NULL;
 			switch ( teamIndex ) 
 			{
-				case SDK_TEAM_RED:
+				case TEAM_RED:
 					teamName = g_pVGuiLocalize->Find( "#SDK_ScoreBoard_Red" );
 					pDialogVarTeamScore = "red_teamscore";
 					pDialogVarTeamPlayerCount = "red_teamplayercount";
 					pDialogVarTeamPing = "red_teamping";
 					break;
-				case SDK_TEAM_BLUE:
+				case TEAM_BLUE:
 					teamName = g_pVGuiLocalize->Find( "#SDK_ScoreBoard_Blue" );
 					pDialogVarTeamScore = "blue_teamscore";
 					pDialogVarTeamPlayerCount = "blue_teamplayercount";
@@ -379,13 +352,12 @@ void CSDKScoreboard::UpdateTeamInfo()
 //-----------------------------------------------------------------------------
 // Purpose: Updates the player list
 //-----------------------------------------------------------------------------
-void CSDKScoreboard::UpdatePlayerList()
+void CTFCSScoreboard::UpdatePlayerList()
 {
-	m_pPlayerListDM->RemoveAll();
 	m_pPlayerListRed->RemoveAll();
 	m_pPlayerListBlue->RemoveAll();
 
-	C_SDKPlayer *pLocalPlayer = C_SDKPlayer::GetLocalSDKPlayer();
+	C_TFCSPlayer *pLocalPlayer = C_TFCSPlayer::GetLocalTFCSPlayer();
 	if ( !pLocalPlayer )
 		return;
 
@@ -395,20 +367,14 @@ void CSDKScoreboard::UpdatePlayerList()
 		{
 			SectionedListPanel *pPlayerList = NULL;
 			
-			// Not teamplay, use the DM playerlist
-			if ( !SDKGameRules()->IsTeamplay() )
-				pPlayerList = m_pPlayerListDM;
-			else
+			switch ( g_PR->GetTeam( playerIndex ) )
 			{
-				switch ( g_PR->GetTeam( playerIndex ) )
-				{
-				case SDK_TEAM_RED:
-					pPlayerList = m_pPlayerListRed;
-					break;
-				case SDK_TEAM_BLUE:
-					pPlayerList = m_pPlayerListBlue;
-					break;
-				}
+			case TEAM_RED:
+				pPlayerList = m_pPlayerListRed;
+				break;
+			case TEAM_BLUE:
+				pPlayerList = m_pPlayerListBlue;
+				break;
 			}
 
 			if ( pPlayerList == NULL )
@@ -429,9 +395,9 @@ void CSDKScoreboard::UpdatePlayerList()
 //-----------------------------------------------------------------------------
 // Purpose: Updates the spectator list
 //-----------------------------------------------------------------------------
-void CSDKScoreboard::UpdateSpectatorList()
+void CTFCSScoreboard::UpdateSpectatorList()
 {
-	C_SDKPlayer *pLocalPlayer = C_SDKPlayer::GetLocalSDKPlayer();
+	C_TFCSPlayer *pLocalPlayer = C_TFCSPlayer::GetLocalTFCSPlayer();
 	if ( !pLocalPlayer )
 		return;
 
@@ -469,17 +435,13 @@ void CSDKScoreboard::UpdateSpectatorList()
 //-----------------------------------------------------------------------------
 // Purpose: Returns whether the specified player index is a spectator
 //-----------------------------------------------------------------------------
-bool CSDKScoreboard::ShouldShowAsSpectator( int iPlayerIndex )
+bool CTFCSScoreboard::ShouldShowAsSpectator( int iPlayerIndex )
 {
 	// see if player is connected
 	if ( g_PR->IsConnected( iPlayerIndex ) ) 
 	{
 		// spectators show in spectator list
 		int iTeam = g_PR->GetTeam( iPlayerIndex );
-
-		// In team play the DM playerlist is invisible, so show unassigned in the spectator list.
-		if ( SDKGameRules()->IsTeamplay() && TEAM_UNASSIGNED == iTeam )
-			return true;
 
 		if ( TEAM_SPECTATOR == iTeam )
 			return true;
@@ -490,7 +452,7 @@ bool CSDKScoreboard::ShouldShowAsSpectator( int iPlayerIndex )
 //-----------------------------------------------------------------------------
 // Purpose: Event handler
 //-----------------------------------------------------------------------------
-void CSDKScoreboard::FireGameEvent( IGameEvent *event )
+void CTFCSScoreboard::FireGameEvent( IGameEvent *event )
 {
 	const char *type = event->GetName();
 
@@ -514,11 +476,11 @@ void CSDKScoreboard::FireGameEvent( IGameEvent *event )
 //-----------------------------------------------------------------------------
 // Purpose: Adds a new row to the scoreboard, from the playerinfo structure
 //-----------------------------------------------------------------------------
-bool CSDKScoreboard::GetPlayerScoreInfo( int playerIndex, KeyValues *kv )
+bool CTFCSScoreboard::GetPlayerScoreInfo( int playerIndex, KeyValues *kv )
 {
-	C_SDK_PlayerResource *sdk_PR = dynamic_cast<C_SDK_PlayerResource *>( g_PR );
-	if ( !sdk_PR )
-		return true;
+	//C_TFCSPlayerResource *tfcs_PR = dynamic_cast<C_TFCSPlayerResource *>( g_PR );
+	//if ( !tfcs_PR )
+	//	return true;
 
 	// Clean up the player name
 	const char *oldName = g_PR->GetPlayerName( playerIndex );
@@ -550,7 +512,7 @@ bool CSDKScoreboard::GetPlayerScoreInfo( int playerIndex, KeyValues *kv )
 		kv->SetInt( "ping", g_PR->GetPing( playerIndex ) );
 	}
 
-	C_SDKPlayer *pLocalPlayer = C_SDKPlayer::GetLocalSDKPlayer();
+	C_TFCSPlayer *pLocalPlayer = C_TFCSPlayer::GetLocalTFCSPlayer();
 	if ( !pLocalPlayer )
 		return true;
 
@@ -563,11 +525,11 @@ bool CSDKScoreboard::GetPlayerScoreInfo( int playerIndex, KeyValues *kv )
 		// class name
 		if( g_PR->IsConnected( playerIndex ) )
 		{
-			C_SDKTeam *pTeam = dynamic_cast<C_SDKTeam *>( GetGlobalTeam( team ) );
+			/*C_SDKTeam *pTeam = dynamic_cast<C_SDKTeam *>( GetGlobalTeam( team ) );
 
 			Assert( pTeam );
 
-			int cls = sdk_PR->GetPlayerClass( playerIndex );
+			int cls = tfcs_PR->GetPlayerClass( playerIndex );
 
 			char szClassName[64];
 			szClassName[0] = '\0';
@@ -579,7 +541,7 @@ bool CSDKScoreboard::GetPlayerScoreInfo( int playerIndex, KeyValues *kv )
 				g_pVGuiLocalize->ConvertUnicodeToANSI( g_pVGuiLocalize->Find( info.m_szPrintName ), szClassName, sizeof(szClassName) );
 			}
 
-			kv->SetString( "class", szClassName );
+			kv->SetString( "class", szClassName );*/
 		}
 		else
 		{
@@ -602,79 +564,29 @@ bool CSDKScoreboard::GetPlayerScoreInfo( int playerIndex, KeyValues *kv )
 	return true;
 }
 
-void CSDKScoreboard::UpdateItemVisibiity()
+void CTFCSScoreboard::UpdateItemVisibiity()
 {
-	// Need to do this in Update, ensure the correct player lists/headers are visible.
-	if ( SDKGameRules()->IsTeamplay() )
-	{
-		// Red Labels _ON_
-		m_pPlayerListRed->SetVisible( true );
-		m_pPlayerCountLabel_Red->SetVisible( true );
-		m_pScoreHeader_Red->SetVisible( true );
-		m_pScoreLabel_Red->SetVisible( true );
-		m_pDeathsHeader_Red->SetVisible( true );
-		m_pPingHeader_Red->SetVisible( true );
-		m_pPingLabel_Red->SetVisible( true );
+	// Red Labels _ON_
+	m_pPlayerListRed->SetVisible( true );
+	m_pPlayerCountLabel_Red->SetVisible( true );
+	m_pScoreHeader_Red->SetVisible( true );
+	m_pScoreLabel_Red->SetVisible( true );
+	m_pDeathsHeader_Red->SetVisible( true );
+	m_pPingHeader_Red->SetVisible( true );
+	m_pPingLabel_Red->SetVisible( true );
 
-		// Blue Labels _ON_
-		m_pPlayerListBlue->SetVisible( true );
-		m_pPlayerCountLabel_Blue->SetVisible( true );
-		m_pScoreHeader_Blue->SetVisible( true );
-		m_pScoreLabel_Blue->SetVisible( true );
-		m_pDeathsHeader_Blue->SetVisible( true );
-		m_pPingHeader_Blue->SetVisible( true );
-		m_pPingLabel_Blue->SetVisible( true );
+	// Blue Labels _ON_
+	m_pPlayerListBlue->SetVisible( true );
+	m_pPlayerCountLabel_Blue->SetVisible( true );
+	m_pScoreHeader_Blue->SetVisible( true );
+	m_pScoreLabel_Blue->SetVisible( true );
+	m_pDeathsHeader_Blue->SetVisible( true );
+	m_pPingHeader_Blue->SetVisible( true );
+	m_pPingLabel_Blue->SetVisible( true );
 
-		// Vertical Line _ON_
-		m_pVertLine->SetVisible( true );
+	// Vertical Line _ON_
+	m_pVertLine->SetVisible( true );
 
-		// DM Labels _OFF_
-		m_pPlayerListDM->SetVisible( false );
-		m_pPlayerCountLabel_DM->SetVisible( false );
-		m_pScoreHeader_DM->SetVisible( false );
-		m_pDeathsHeader_DM->SetVisible( false );
-		m_pPingHeader_DM->SetVisible( false );
-		m_pPingLabel_DM->SetVisible( false );
-
-		// Restore the size to the original incase we've switched from DM -> Teams and back.
-		SetSize(m_iStoredScoreboardWidth, GetTall() );
-	}
-	else
-	{
-		// Red Labels _OFF_
-		m_pPlayerListRed->SetVisible( false );
-		m_pPlayerCountLabel_Red->SetVisible( false );
-		m_pScoreHeader_Red->SetVisible( false );
-		m_pScoreLabel_Red->SetVisible( false );
-		m_pDeathsHeader_Red->SetVisible( false );
-		m_pPingHeader_Red->SetVisible( false );
-		m_pPingLabel_Red->SetVisible( false );
-
-		// Blue Labels _OFF_
-		m_pPlayerListBlue->SetVisible( false );
-		m_pPlayerCountLabel_Blue->SetVisible( false );
-		m_pScoreHeader_Blue->SetVisible( false );
-		m_pScoreLabel_Blue->SetVisible( false );
-		m_pDeathsHeader_Blue->SetVisible( false );
-		m_pPingHeader_Blue->SetVisible( false );
-		m_pPingLabel_Blue->SetVisible( false );
-
-		// Vertical Line _OFF_
-		m_pVertLine->SetVisible( false );
-
-		// DM Labels _ON_
-		m_pPlayerListDM->SetVisible( true );
-		m_pPlayerCountLabel_DM->SetVisible( true );
-		m_pScoreHeader_DM->SetVisible( true );
-		m_pDeathsHeader_DM->SetVisible( true );
-		m_pPingHeader_DM->SetVisible( true );
-		m_pPingLabel_DM->SetVisible( true );
-
-		// Because we have a multi-pane player list, in deathmatch shrink the width of the scoreboard to match the one player list, so it looks nicer.
-		int wide, tall;
-		m_pPlayerListDM->GetContentSize(wide, tall);
-		tall = GetTall();
-		SetSize(wide+4, tall);
-		m_pPlayerListDM->SetSize(wide, tall);
-	}
+	// Restore the size to the original incase we've switched from DM -> Teams and back.
+	SetSize(m_iStoredScoreboardWidth, GetTall() );
 }

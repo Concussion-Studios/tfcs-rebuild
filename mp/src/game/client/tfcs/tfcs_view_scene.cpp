@@ -5,7 +5,7 @@
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
-#include "tfc_view_scene.h"
+#include "tfcs_view_scene.h"
 
 #include "materialsystem/imesh.h"
 #include "materialsystem/itexture.h"

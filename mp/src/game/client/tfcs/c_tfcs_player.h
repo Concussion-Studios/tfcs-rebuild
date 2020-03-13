@@ -25,12 +25,22 @@ public:
 
 	static C_TFCSPlayer* GetLocalTFCSPlayer();
 
+	virtual void TeamChange( int iNewTeam ) OVERRIDE;
+	static void TeamChangeStatic( int iNewTeam );
+
+	virtual void ClientThink();
+
 	virtual const QAngle& GetRenderAngles();
 	virtual const QAngle& EyeAngles();
 	virtual void UpdateClientSideAnimation();
 	//virtual int DrawModel( int flags );
 
+	// Target ID
+	int GetIDTarget() const	{ return m_iIDEntIndex;	}
+	void UpdateIDTarget( void );
+
 	int	m_iRealSequence;
+	int	  m_iIDEntIndex;
 
 public: // called by shared code
 

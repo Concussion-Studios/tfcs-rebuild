@@ -14,7 +14,7 @@
 #include <vgui_controls/AnimationController.h>
 #include "hudelement.h"
 #include "hud_numericdisplay.h"
-#include "c_sdk_player.h"
+#include "c_tfcs_player.h"
 
 using namespace vgui;
 

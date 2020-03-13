@@ -9,7 +9,7 @@
 #include "text_message.h"
 #include "vguicenterprint.h"
 #include "vgui/ILocalize.h"
-#include "engine/IEngineSound.h"
+#include "vgui/IScheme.h"
 #include "c_playerresource.h"
 #include "c_tfcs_player.h"
 #include "tfcs_gamerules.h"
@@ -18,11 +18,16 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+using namespace vgui;
+
 DECLARE_HUDELEMENT( CHudChat );
 DECLARE_HUD_MESSAGE( CHudChat, SayText );
 DECLARE_HUD_MESSAGE( CHudChat, SayText2 );
 DECLARE_HUD_MESSAGE( CHudChat, TextMsg );
 DECLARE_HUD_MESSAGE( CHudChat, VoiceSubtitle );
+
+static CHudChat *g_pTFCChatHud = NULL;
+CHudChat *GetTFCChatHud( void ) { return g_pTFCChatHud; }
 
 //=====================
 //CHudChatLine
@@ -138,7 +143,7 @@ Color CHudChat::GetClientColor( int clientIndex )
 				return pScheme->GetColor( "TFCSColors.ChatTextBlue", g_ColorBlue );
 			case TEAM_GREEN: 
 				return pScheme->GetColor( "TFCSColors.ChatTextGreen", g_ColorGreen );
-			case TEAM_YELLLOW: 
+			case TEAM_YELLOW:
 				return pScheme->GetColor( "TFCSColors.ChatTextYellow", g_ColorYellow );
 
 			default: 

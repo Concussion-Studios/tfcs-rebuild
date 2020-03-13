@@ -62,4 +62,6 @@ public:
 	virtual const char *GetDisplayedSubtitlePlayerName( int clientIndex );
 };
 
+CHudChat* GetTFCChatHud( void );
+
 #endif	//TFCS_HUD_CHAT_H

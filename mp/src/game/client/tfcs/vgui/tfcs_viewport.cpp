@@ -31,49 +31,49 @@
 
 // viewport definitions
 #include <baseviewport.h>
-#include "SDKViewport.h"
+#include "tfcs_viewport.h"
 
 #include "vguicenterprint.h"
 #include "text_message.h"
-#include "c_sdk_player.h"
-#include "sdk_scoreboard.h"
-#include "sdk_textwindow.h"
-#include "sdk_spectatorgui.h"
-#include "sdk_classmenu.h"
-#include "sdk_teammenu.h"
+#include "c_tfcs_player.h"
+#include "tfcs_scoreboard.h"
+#include "tfcs_textwindow.h"
+#include "tfcs_spectatorgui.h"
+//#include "tfcs_classmenu.h"
+#include "tfcs_teammenu.h"
 
-CON_COMMAND_F( changeteam, "Choose a new team", FCVAR_SERVER_CAN_EXECUTE|FCVAR_CLIENTCMD_CAN_EXECUTE )
+/*CON_COMMAND_F( changeteam, "Choose a new team", FCVAR_SERVER_CAN_EXECUTE|FCVAR_CLIENTCMD_CAN_EXECUTE )
 {
-	C_SDKPlayer *pPlayer = C_SDKPlayer::GetLocalSDKPlayer();
+	C_TFCSPlayer *pPlayer = C_TFCSPlayer::GetLocalTFCSPlayer();
 	if ( pPlayer && pPlayer->CanShowTeamMenu() )
 		gViewPortInterface->ShowPanel( PANEL_TEAM, true );
 }
 
 CON_COMMAND_F( changeclass, "Choose a new class", FCVAR_SERVER_CAN_EXECUTE|FCVAR_CLIENTCMD_CAN_EXECUTE )
 {
-	C_SDKPlayer *pPlayer = C_SDKPlayer::GetLocalSDKPlayer();
+	C_TFCSPlayer *pPlayer = C_TFCSPlayer::GetLocalTFCSPlayer();
 
 	if ( pPlayer && pPlayer->CanShowClassMenu())
 	{
 		switch( pPlayer->GetTeamNumber() )
 		{
-		case SDK_TEAM_BLUE:
+		case TEAM_BLUE:
 			gViewPortInterface->ShowPanel( PANEL_CLASS_BLUE, true );
 			break;
-		case SDK_TEAM_RED:
+		case TEAM_RED:
 			gViewPortInterface->ShowPanel( PANEL_CLASS_RED, true );
 			break;
-		case SDK_TEAM_GREEN:
+		case TEAM_GREEN:
 			gViewPortInterface->ShowPanel( PANEL_CLASS_GREEN, true );
 			break;
-		case SDK_TEAM_YELLOW:
+		case TEAM_YELLOW:
 			gViewPortInterface->ShowPanel( PANEL_CLASS_YELLOW, true );
 			break;
 		default:
 			break;
 		}
 	}
-}
+}*/
 
 CON_COMMAND_F( spec_help, "Show spectator help screen", FCVAR_CLIENTCMD_CAN_EXECUTE)
 {
@@ -85,7 +85,7 @@ CON_COMMAND_F( spec_menu, "Activates spectator menu", FCVAR_CLIENTCMD_CAN_EXECUT
 {
 	bool bShowIt = true;
 
-	C_SDKPlayer *pPlayer = C_SDKPlayer::GetLocalSDKPlayer();
+	C_TFCSPlayer *pPlayer = C_TFCSPlayer::GetLocalTFCSPlayer();
 	if ( pPlayer && !pPlayer->IsObserver() )
 		return;
 
@@ -117,7 +117,7 @@ CON_COMMAND_F( togglescores, "Toggles score panel", FCVAR_CLIENTCMD_CAN_EXECUTE)
 	}
 }
 
-void SDKViewport::ApplySchemeSettings( vgui::IScheme *pScheme )
+void TFCSViewport::ApplySchemeSettings( vgui::IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
@@ -127,26 +127,26 @@ void SDKViewport::ApplySchemeSettings( vgui::IScheme *pScheme )
 }
 
 
-IViewPortPanel* SDKViewport::CreatePanelByName( const char *szPanelName )
+IViewPortPanel* TFCSViewport::CreatePanelByName( const char *szPanelName )
 {
 	IViewPortPanel* newpanel = NULL;
 
 	if ( Q_strcmp( PANEL_SCOREBOARD, szPanelName) == 0 )
-		newpanel = new CSDKScoreboard( this );
+		newpanel = new CTFCSScoreboard( this );
 	else if ( Q_strcmp( PANEL_INFO, szPanelName) == 0 )
-		newpanel = new CSDKTextWindow( this );
+		newpanel = new CTFCSTextWindow( this );
 	else if ( Q_strcmp(PANEL_SPECGUI, szPanelName) == 0 )
-		newpanel = new CSDKSpectatorGUI( this );	
-	else if ( Q_strcmp( PANEL_CLASS_BLUE, szPanelName) == 0 )
-		newpanel = new CSDKClassMenu_Blue( this );
+		newpanel = new CTFCSSpectatorGUI( this );	
+	/*else if ( Q_strcmp( PANEL_CLASS_BLUE, szPanelName) == 0 )
+		newpanel = new CTFCSClassMenu_Blue( this );
 	else if ( Q_strcmp( PANEL_CLASS_RED, szPanelName) == 0 )
-		newpanel = new CSDKClassMenu_Red( this );
+		newpanel = new CTFCSClassMenu_Red( this );
 	else if ( Q_strcmp( PANEL_CLASS_GREEN, szPanelName) == 0 )
-		newpanel = new CSDKClassMenu_Green( this );
+		newpanel = new CTFCSClassMenu_Green( this );
 	else if ( Q_strcmp( PANEL_CLASS_YELLOW, szPanelName) == 0 )
-		newpanel = new CSDKClassMenu_Yellow( this );
+		newpanel = new CTFCSClassMenu_Yellow( this );*/
 	else if ( Q_strcmp( PANEL_TEAM, szPanelName) == 0 )
-		newpanel = new CSDKTeamMenu( this );
+		newpanel = new CTFCSTeamMenu( this );
 	else
 		// create a generic base panel, don't add twice
 		newpanel = BaseClass::CreatePanelByName( szPanelName );
@@ -154,18 +154,18 @@ IViewPortPanel* SDKViewport::CreatePanelByName( const char *szPanelName )
 	return newpanel; 
 }
 
-void SDKViewport::CreateDefaultPanels( void )
+void TFCSViewport::CreateDefaultPanels( void )
 {
-	AddNewPanel( CreatePanelByName( PANEL_CLASS_BLUE ), "PANEL_CLASS_BLUE" );
-	AddNewPanel( CreatePanelByName( PANEL_CLASS_RED ), "PANEL_CLASS_RED" );
-	AddNewPanel( CreatePanelByName( PANEL_CLASS_GREEN ), "PANEL_CLASS_GREEN" );
-	AddNewPanel( CreatePanelByName( PANEL_CLASS_YELLOW ), "PANEL_CLASS_YELLOW" );
+	//AddNewPanel( CreatePanelByName( PANEL_CLASS_BLUE ), "PANEL_CLASS_BLUE" );
+	//AddNewPanel( CreatePanelByName( PANEL_CLASS_RED ), "PANEL_CLASS_RED" );
+	//AddNewPanel( CreatePanelByName( PANEL_CLASS_GREEN ), "PANEL_CLASS_GREEN" );
+	//AddNewPanel( CreatePanelByName( PANEL_CLASS_YELLOW ), "PANEL_CLASS_YELLOW" );
 	AddNewPanel( CreatePanelByName( PANEL_TEAM ), "PANEL_TEAM" );
 
 	BaseClass::CreateDefaultPanels();
 }
 
-int SDKViewport::GetDeathMessageStartHeight( void )
+int TFCSViewport::GetDeathMessageStartHeight( void )
 {
 	int x = YRES(2);
 

@@ -5,8 +5,8 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#ifndef SDK_SCOREBOARD_H
-#define SDK_SCOREBOARD_H
+#ifndef TFCS_SCOREBOARD_H
+#define TFCS_SCOREBOARD_H
 #ifdef _WIN32
 #pragma once
 #endif
@@ -16,14 +16,14 @@
 //-----------------------------------------------------------------------------
 // Purpose: Game ScoreBoard
 //-----------------------------------------------------------------------------
-class CSDKScoreboard : public CClientScoreBoardDialog
+class CTFCSScoreboard : public CClientScoreBoardDialog
 {
 private:
-	DECLARE_CLASS_SIMPLE( CSDKScoreboard, CClientScoreBoardDialog );
+	DECLARE_CLASS_SIMPLE( CTFCSScoreboard, CClientScoreBoardDialog );
 
 public:
-	CSDKScoreboard( IViewPort *pViewPort );
-	~CSDKScoreboard();
+	CTFCSScoreboard( IViewPort *pViewPort );
+	~CTFCSScoreboard();
 
 	virtual void Reset();
 	virtual void Update();
@@ -56,18 +56,11 @@ private:
 	int m_iStoredScoreboardWidth; // Store the full scoreboard width.
 
 	// player lists
-	vgui::SectionedListPanel *m_pPlayerListDM;	//Deathmatch Player list.
 	vgui::SectionedListPanel *m_pPlayerListRed;
 	vgui::SectionedListPanel *m_pPlayerListBlue;
 
 	CPanelAnimationVarAliasType( int, m_iStatusWidth, "status_width", "35", "proportional_int" );
 	CPanelAnimationVarAliasType( int, m_iFragsWidth, "frags_width", "30", "proportional_int" );
-
-	vgui::Label	*m_pPlayerCountLabel_DM;
-	vgui::Label *m_pScoreHeader_DM;
-	vgui::Label	*m_pDeathsHeader_DM;
-	vgui::Label	*m_pPingHeader_DM;
-	vgui::Label	*m_pPingLabel_DM;
 
 	vgui::Label	*m_pPlayerCountLabel_Red;
 	vgui::Label	*m_pScoreHeader_Red;
@@ -87,4 +80,4 @@ private:
 	vgui::ImagePanel *m_pVertLine;
 };
 
-#endif // SDK_SCOREBOARD_H
+#endif // TFCS_SCOREBOARD_H

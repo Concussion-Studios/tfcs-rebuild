@@ -5,8 +5,8 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#ifndef CSDK_TEXTWINDOW_H
-#define CSDK_TEXTWINDOW_H
+#ifndef TFCS_TEXTWINDOW_H
+#define TFCS_TEXTWINDOW_H
 #ifdef _WIN32
 #pragma once
 #endif
@@ -16,13 +16,13 @@
 //-----------------------------------------------------------------------------
 // Purpose: Game ScoreBoard
 //-----------------------------------------------------------------------------
-class CSDKTextWindow : public CTextWindow
+class CTFCSTextWindow : public CTextWindow
 {
 private:
-	DECLARE_CLASS_SIMPLE(CSDKTextWindow, CTextWindow);
+	DECLARE_CLASS_SIMPLE(CTFCSTextWindow, CTextWindow);
 	
 public:
-	CSDKTextWindow( IViewPort *pViewPort );
+	CTFCSTextWindow( IViewPort *pViewPort );
 
 	virtual void Update();
 	virtual void SetVisible( bool state );
@@ -39,4 +39,4 @@ public:
 };
 
 
-#endif // CSDK_TEXTWINDOW_H
+#endif // TFCS_TEXTWINDOW_H

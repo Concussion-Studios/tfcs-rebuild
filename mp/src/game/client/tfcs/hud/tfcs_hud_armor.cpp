@@ -9,7 +9,7 @@
 #include <vgui/isurface.h>
 #include <vgui/ISystem.h>
 #include "hud_numericdisplay.h"
-#include "c_sdk_player.h"
+#include "c_tfcs_player.h"
 
 using namespace vgui;
 
@@ -72,13 +72,13 @@ void CHudArmor::ApplySchemeSettings( IScheme *scheme )
 void CHudArmor::Paint()
 {
 	// Update the time.
-	auto *pPlayer = C_SDKPlayer::GetLocalSDKPlayer();
+	auto *pPlayer = C_TFCSPlayer::GetLocalTFCSPlayer();
 	if ( pPlayer )
 	{
 		if( m_pArmorIcon )
 			m_pArmorIcon->DrawSelf( icon_xpos, icon_ypos, icon_wide, icon_tall, GetFgColor() );
 
-		SetDisplayValue( (int)pPlayer->GetArmorValue() );
+		//SetDisplayValue( (int)pPlayer->GetArmorValue() ); // TODO
 		SetShouldDisplayValue( true );
 		BaseClass::Paint();
 	}

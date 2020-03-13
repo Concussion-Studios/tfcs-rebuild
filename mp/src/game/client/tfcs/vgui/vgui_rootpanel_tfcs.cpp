@@ -7,13 +7,13 @@
 #include "cbase.h"
 #include "vgui_int.h"
 #include "ienginevgui.h"
-#include "vgui_rootpanel_sdk.h"
+#include "vgui_rootpanel_tfcs.h"
 #include "vgui/ivgui.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-C_SDKRootPanel *g_pRootPanel = NULL;
+C_TFCSRootPanel *g_pRootPanel = NULL;
 
 
 //-----------------------------------------------------------------------------
@@ -21,7 +21,7 @@ C_SDKRootPanel *g_pRootPanel = NULL;
 //-----------------------------------------------------------------------------
 void VGUI_CreateClientDLLRootPanel( void )
 {
-	g_pRootPanel = new C_SDKRootPanel( enginevgui->GetPanel( PANEL_CLIENTDLL ) );
+	g_pRootPanel = new C_TFCSRootPanel( enginevgui->GetPanel( PANEL_CLIENTDLL ) );
 }
 
 void VGUI_DestroyClientDLLRootPanel( void )
@@ -37,10 +37,10 @@ vgui::VPANEL VGui_GetClientDLLRootPanel( void )
 
 
 //-----------------------------------------------------------------------------
-// C_SDKRootPanel implementation.
+// C_TFCSRootPanel implementation.
 //-----------------------------------------------------------------------------
-C_SDKRootPanel::C_SDKRootPanel( vgui::VPANEL parent )
-	: BaseClass( NULL, "SDK Root Panel" )
+C_TFCSRootPanel::C_TFCSRootPanel( vgui::VPANEL parent )
+	: BaseClass( NULL, "TFCS Root Panel" )
 {
 	SetParent( parent );
 	SetPaintEnabled( false );
@@ -60,47 +60,11 @@ C_SDKRootPanel::C_SDKRootPanel( vgui::VPANEL parent )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-C_SDKRootPanel::~C_SDKRootPanel( void )
-{
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void C_SDKRootPanel::PostChildPaint()
+void C_TFCSRootPanel::PostChildPaint()
 {
 	BaseClass::PostChildPaint();
 
 	// Draw all panel effects
 	RenderPanelEffects();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: For each panel effect, check if it wants to draw and draw it on
-//  this panel/surface if so
-//-----------------------------------------------------------------------------
-void C_SDKRootPanel::RenderPanelEffects( void )
-{
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void C_SDKRootPanel::OnTick( void )
-{
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Reset effects on level load/shutdown
-//-----------------------------------------------------------------------------
-void C_SDKRootPanel::LevelInit( void )
-{
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void C_SDKRootPanel::LevelShutdown( void )
-{
 }
 

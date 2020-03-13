@@ -19,10 +19,10 @@
 #include <vgui_controls/RichText.h>
 #include "cdll_util.h"
 #include <game/client/iviewport.h>
-#include "sdk_backgroundpanel.h"
-#include "sdk_teammenu.h"
-#include "sdk_gamerules.h"
-#include "c_sdk_player.h"
+#include "tfcs_backgroundpanel.h"
+#include "tfcs_teammenu.h"
+#include "tfcs_gamerules.h"
+#include "c_tfcs_player.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -32,35 +32,35 @@ using namespace vgui;
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CSDKTeamMenu::CSDKTeamMenu( IViewPort *pViewPort ) : CTeamMenu( pViewPort )
+CTFCSTeamMenu::CTFCSTeamMenu( IViewPort *pViewPort ) : CTeamMenu( pViewPort )
 {
 	CreateBackground( this );
 	m_backgroundLayoutFinished = false;
 
-	if ( SDKGameRules() && SDKGameRules()->IsTDMGamemode() )
-		LoadControlSettings( "Resource/UI/4TeamsMenu.res" );
-	else
+	//if ( TFCSGameRules() && TFCSGameRules()->IsTDMGamemode() )
+	//	LoadControlSettings( "Resource/UI/4TeamsMenu.res" );
+	//else
 		LoadControlSettings( "Resource/UI/TeamMenu.res" );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Destructor
 //-----------------------------------------------------------------------------
-CSDKTeamMenu::~CSDKTeamMenu()
+CTFCSTeamMenu::~CTFCSTeamMenu()
 {
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: called to update the menu with new information
 //-----------------------------------------------------------------------------
-void CSDKTeamMenu::Update( void )
+void CTFCSTeamMenu::Update( void )
 {
 	BaseClass::Update();
 
 	const ConVar *allowspecs =  cvar->FindVar( "mp_allowspectators" );
 
-	C_SDKPlayer *pPlayer = C_SDKPlayer::GetLocalSDKPlayer();
-	if ( !pPlayer || !SDKGameRules() )
+	C_TFCSPlayer *pPlayer = C_TFCSPlayer::GetLocalTFCSPlayer();
+	if ( !pPlayer || !TFCSGameRules() )
 		return;
 
 	if ( allowspecs && allowspecs->GetBool() )
@@ -78,12 +78,12 @@ void CSDKTeamMenu::Update( void )
 	else
 		SetVisibleButton("CancelButton", true); 
 
-	if( SDKGameRules() && SDKGameRules()->IsTDMGamemode() ) // we don't had 4teams on
+	/*if( TFCSGameRules() && TFCSGameRules()->IsTDMGamemode() ) // we don't had 4teams on
 	{
 		SetVisibleButton("yellowbutton", false);
 		SetVisibleButton("greenbutton", false);
 	}
-	else
+	else*/
 	{
 		SetVisibleButton("yellowbutton", true);
 		SetVisibleButton("greenbutton", true);
@@ -93,7 +93,7 @@ void CSDKTeamMenu::Update( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CSDKTeamMenu::SetVisible( bool state )
+void CTFCSTeamMenu::SetVisible( bool state )
 {
 	BaseClass::SetVisible(state);
 
@@ -109,7 +109,7 @@ void CSDKTeamMenu::SetVisible( bool state )
 // Purpose: When a team button is pressed it triggers this function to 
 //			cause the player to join a team
 //-----------------------------------------------------------------------------
-void CSDKTeamMenu::OnCommand( const char *command )
+void CTFCSTeamMenu::OnCommand( const char *command )
 {
 	if ( Q_stricmp( command, "vguicancel" ) )
 		engine->ClientCmd( command );
@@ -123,7 +123,7 @@ void CSDKTeamMenu::OnCommand( const char *command )
 //-----------------------------------------------------------------------------
 // Purpose: Sets the visibility of a button by name
 //-----------------------------------------------------------------------------
-void CSDKTeamMenu::SetVisibleButton( const char *textEntryName, bool state )
+void CTFCSTeamMenu::SetVisibleButton( const char *textEntryName, bool state )
 {
 	Button *entry = dynamic_cast<Button *>( FindChildByName( textEntryName ) );
 	if ( entry )
@@ -133,7 +133,7 @@ void CSDKTeamMenu::SetVisibleButton( const char *textEntryName, bool state )
 //-----------------------------------------------------------------------------
 // Purpose: Scale / center the window
 //-----------------------------------------------------------------------------
-void CSDKTeamMenu::PerformLayout()
+void CTFCSTeamMenu::PerformLayout()
 {
 	BaseClass::PerformLayout();
 
@@ -146,7 +146,7 @@ void CSDKTeamMenu::PerformLayout()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CSDKTeamMenu::ApplySchemeSettings( vgui::IScheme *pScheme )
+void CTFCSTeamMenu::ApplySchemeSettings( vgui::IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 	ApplyBackgroundSchemeSettings( this, pScheme );

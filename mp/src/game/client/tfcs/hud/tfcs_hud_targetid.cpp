@@ -7,12 +7,12 @@
 #include "cbase.h"
 #include "hud.h"
 #include "hudelement.h"
-#include "c_sdk_player.h"
+#include "c_tfcs_player.h"
 #include "c_playerresource.h"
 #include "vgui_EntityPanel.h"
 #include "iclientmode.h"
 #include "vgui/ILocalize.h"
-#include "sdk_gamerules.h"
+#include "tfcs_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -106,8 +106,7 @@ void CSDKTargetId::Paint()
 	wchar_t sIDString[ MAX_ID_STRING ];
 	sIDString[0] = 0;
 
-	C_SDKPlayer *pPlayer = C_SDKPlayer::GetLocalSDKPlayer();
-
+	auto *pPlayer = C_TFCSPlayer::GetLocalTFCSPlayer();
 	if ( !pPlayer )
 		return;
 
@@ -115,6 +114,7 @@ void CSDKTargetId::Paint()
 
 	// Get our target's ent index
 	int iEntIndex = pPlayer->GetIDTarget();
+
 	// Didn't find one?
 	if ( !iEntIndex )
 	{
@@ -158,7 +158,7 @@ void CSDKTargetId::Paint()
 			bShowPlayerName = true;
 			g_pVGuiLocalize->ConvertANSIToUnicode( pPlayer->GetPlayerName(),  wszPlayerName, sizeof(wszPlayerName) );
 			
-			if ( SDKGameRules()->IsTeamplay() == true && pPlayer->InSameTeam(pLocalPlayer) )
+			if ( pPlayer->InSameTeam( pLocalPlayer ) )
 			{
 				printFormatString = "#SDK_Playerid_sameteam";
 				bShowHealth = true;

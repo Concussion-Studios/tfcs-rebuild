@@ -6,14 +6,14 @@
 //====================================================================================//
 
 #include "cbase.h"
-#include "sdk_textwindow.h"
+#include "tfcs_textwindow.h"
 #include <cdll_client_int.h>
 #include <KeyValues.h>
 #include <vgui/IScheme.h>
 #include <vgui/ILocalize.h>
 #include <vgui/ISurface.h>
 #include <vgui/IVgui.h>
-#include "sdk_backgroundpanel.h"
+#include "tfcs_backgroundpanel.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -23,7 +23,7 @@ using namespace vgui;
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CSDKTextWindow::CSDKTextWindow(IViewPort *pViewPort) : CTextWindow( pViewPort )
+CTFCSTextWindow::CTFCSTextWindow(IViewPort *pViewPort) : CTextWindow( pViewPort )
 {
 	SetProportional( true );
 	CreateBackground( this );
@@ -34,7 +34,7 @@ CSDKTextWindow::CSDKTextWindow(IViewPort *pViewPort) : CTextWindow( pViewPort )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CSDKTextWindow::Update()
+void CTFCSTextWindow::Update()
 {
 	BaseClass::Update();
 
@@ -44,7 +44,7 @@ void CSDKTextWindow::Update()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CSDKTextWindow::SetVisible( bool state )
+void CTFCSTextWindow::SetVisible( bool state )
 {
 	BaseClass::SetVisible( state );
 
@@ -55,7 +55,7 @@ void CSDKTextWindow::SetVisible( bool state )
 //-----------------------------------------------------------------------------
 // Purpose: Scale / center the window
 //-----------------------------------------------------------------------------
-void CSDKTextWindow::PerformLayout()
+void CTFCSTextWindow::PerformLayout()
 {
 	BaseClass::PerformLayout();
 
@@ -69,7 +69,7 @@ void CSDKTextWindow::PerformLayout()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CSDKTextWindow::ApplySchemeSettings( vgui::IScheme *pScheme )
+void CTFCSTextWindow::ApplySchemeSettings( vgui::IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 	ApplyBackgroundSchemeSettings( this, pScheme );

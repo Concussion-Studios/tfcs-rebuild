@@ -4,19 +4,21 @@
 //
 // $NoKeywords: $
 //=================================================================================//
-
-#ifndef SDK_TEAMMENU_H
-#define SDK_TEAMMENU_H
+#ifndef TFCS_TEAMMENU_H
+#define TFCS_TEAMMENU_H
+#ifdef _WIN32
+#pragma once
+#endif
 
 #include "teammenu.h"
 
-class CSDKTeamMenu : public CTeamMenu
+class CTFCSTeamMenu : public CTeamMenu
 {
 private:
-	DECLARE_CLASS_SIMPLE( CSDKTeamMenu, CTeamMenu );
+	DECLARE_CLASS_SIMPLE( CTFCSTeamMenu, CTeamMenu );
 
-	CSDKTeamMenu( IViewPort *pViewPort );
-	virtual ~CSDKTeamMenu();
+	CTFCSTeamMenu( IViewPort *pViewPort );
+	virtual ~CTFCSTeamMenu();
 
 	void Update();
 	virtual void SetVisible( bool state );
@@ -40,4 +42,4 @@ public:
 	// End background panel ---------------------------------------------------
 };
 
-#endif //SDK_CLASSMENU_H
+#endif //TFCS_CLASSMENU_H

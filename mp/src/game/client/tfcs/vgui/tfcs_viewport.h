@@ -5,9 +5,11 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#ifndef SDKVIEWPORT_H
-#define SDKVIEWPORT_H
-
+#ifndef TFCS_VIEWPORT_H
+#define TFCS_VIEWPORT_H
+#ifdef _WIN32
+#pragma once
+#endif
 
 #include "baseviewport.h"
 
@@ -19,11 +21,11 @@ namespace vgui
 	class Panel;
 }
 
-class SDKViewport : public CBaseViewport
+class TFCSViewport : public CBaseViewport
 {
 
 private:
-	DECLARE_CLASS_SIMPLE( SDKViewport, CBaseViewport );
+	DECLARE_CLASS_SIMPLE( TFCSViewport, CBaseViewport );
 
 public:
 
@@ -36,4 +38,4 @@ public:
 };
 
 
-#endif // SDKViewport_H
+#endif // TFCSViewport_H

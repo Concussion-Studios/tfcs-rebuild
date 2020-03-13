@@ -17,19 +17,19 @@
 #include "c_baseplayer.h"
 #include "c_team.h"
 #include "hud_basedeathnotice.h"
-#include "clientmode_sdk.h"
-#include "c_sdk_player.h"
-#include "c_sdk_player_resource.h"
-#include "sdk_gamerules.h"
+#include "clientmode_tfcs.h"
+#include "c_tfcs_player.h"
+//#include "c_tfcs_player_resource.h"
+#include "tfcs_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-class SDKHudDeathNotice : public CHudBaseDeathNotice
+class TFCSHudDeathNotice : public CHudBaseDeathNotice
 {
-	DECLARE_CLASS_SIMPLE( SDKHudDeathNotice, CHudBaseDeathNotice );
+	DECLARE_CLASS_SIMPLE( TFCSHudDeathNotice, CHudBaseDeathNotice );
 public:
-	SDKHudDeathNotice( const char *pElementName ) : CHudBaseDeathNotice( pElementName ) {};
+	TFCSHudDeathNotice( const char *pElementName ) : CHudBaseDeathNotice( pElementName ) {};
 
 	virtual void Init( void );
 	virtual void Paint( void );
@@ -54,12 +54,12 @@ private:
 
 };
 
-DECLARE_HUDELEMENT( SDKHudDeathNotice );
+DECLARE_HUDELEMENT( TFCSHudDeathNotice );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void SDKHudDeathNotice::Init( void )
+void TFCSHudDeathNotice::Init( void )
 {
 	BaseClass::Init();
 
@@ -69,7 +69,7 @@ void SDKHudDeathNotice::Init( void )
 //-----------------------------------------------------------------------------
 // Purpose: Server's told us that someone's died
 //-----------------------------------------------------------------------------
-/*void SDKHudDeathNotice::FireGameEvent( IGameEvent *event )
+/*void TFCSHudDeathNotice::FireGameEvent( IGameEvent *event )
 {
 	const char *pszEventName = event->GetName();
 
@@ -106,7 +106,7 @@ void SDKHudDeathNotice::Init( void )
 //			displayed.  This method can examine the event and death notice and
 //			make game-specific tweaks to it before it is displayed
 //-----------------------------------------------------------------------------
-void SDKHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
+void TFCSHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 {
 	const char *pszEventName = event->GetName();
 	bool bPlayerDeath = EventIsPlayerDeath( pszEventName );
@@ -133,10 +133,10 @@ void SDKHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 				m_DeathNotices[iDeathNoticeMsg].bLocalPlayerInvolved = true;
 		}
 
-		const wchar_t *pMsg = NULL;
+		//const wchar_t *pMsg = NULL;
 		switch ( iCustomDamage )
 		{
-		case SDK_DMG_CUSTOM_SUICIDE:
+		/*case TFCS_DMG_CUSTOM_SUICIDE:
 		{
 			// display a different message if this was suicide, or assisted suicide (suicide w/recent damage, kill awarded to damager)
 			bool bAssistedSuicide = event->GetInt( "userid" ) != event->GetInt( "attacker" );
@@ -145,7 +145,8 @@ void SDKHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 				V_wcsncpy( m_DeathNotices[iDeathNoticeMsg].wzInfoText, pMsg, sizeof( m_DeathNotices[iDeathNoticeMsg].wzInfoText ) );
 
 			break;
-		}
+		}*/
+		case 0:
 		default:
 			break;
 		}
@@ -160,7 +161,7 @@ void SDKHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 //-----------------------------------------------------------------------------
 // Purpose: Adds an additional death message
 //-----------------------------------------------------------------------------
-void SDKHudDeathNotice::AddAdditionalMsg( int iKillerID, int iVictimID, const char *pMsgKey )
+void TFCSHudDeathNotice::AddAdditionalMsg( int iKillerID, int iVictimID, const char *pMsgKey )
 {
 	DeathNoticeItem &msg2 = m_DeathNotices[AddDeathNoticeItem()];
 	Q_strncpy( msg2.Killer.szName, g_PR->GetPlayerName( iKillerID ), ARRAYSIZE( msg2.Killer.szName ) );
@@ -185,12 +186,12 @@ void SDKHudDeathNotice::AddAdditionalMsg( int iKillerID, int iVictimID, const ch
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void SDKHudDeathNotice::Paint()
+void TFCSHudDeathNotice::Paint()
 {
 	// Retire any death notices that have expired
 	RetireExpiredDeathNotices();
 
-	int yStart = GetClientModeSDKNormal()->GetDeathMessageStartHeight();
+	int yStart = GetClientModeTFCS()->GetDeathMessageStartHeight();
 
 	surface()->DrawSetTextFont( m_hTextFont );
 
@@ -406,20 +407,20 @@ void SDKHudDeathNotice::Paint()
 //-----------------------------------------------------------------------------
 // Purpose: returns the color to draw text in for this team.  
 //-----------------------------------------------------------------------------
-Color SDKHudDeathNotice::GetTeamColor( int iTeamNumber, bool bLocalPlayerInvolved /* = false */ )
+Color TFCSHudDeathNotice::GetTeamColor( int iTeamNumber, bool bLocalPlayerInvolved /* = false */ )
 {
 	switch ( iTeamNumber )
 	{
-	case SDK_TEAM_BLUE:
+	case TEAM_BLUE:
 		return m_clrBlueText;
 		break;
-	case SDK_TEAM_RED:
+	case TEAM_RED:
 		return m_clrRedText;
 		break;
-	case SDK_TEAM_GREEN:
+	case TEAM_GREEN:
 		return m_clrGreenText;
 		break;
-	case SDK_TEAM_YELLOW:
+	case TEAM_YELLOW:
 		return m_clrYellowText;
 		break;
 	case TEAM_UNASSIGNED:

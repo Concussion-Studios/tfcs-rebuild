@@ -6,7 +6,7 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "sdk_backgroundpanel.h"
+#include "tfcs_backgroundpanel.h"
 
 #include <vgui/IVGui.h>
 #include <vgui/IScheme.h>
