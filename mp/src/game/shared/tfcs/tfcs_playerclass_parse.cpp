@@ -6,17 +6,49 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#define TFCS_CLASS_UNDEFINED_FILE		""
+#define TFCS_CLASS_SCOUT_FILE			"scripts/playerclasses/scout"
+#define TFCS_CLASS_SNIPER_FILE			"scripts/playerclasses/sniper"
+#define TFCS_CLASS_SOLDIER_FILE			"scripts/playerclasses/soldier"
+#define TFCS_CLASS_DEMOMAN_FILE			"scripts/playerclasses/demoman"
+#define TFCS_CLASS_MEDIC_FILE			"scripts/playerclasses/medic"
+#define TFCS_CLASS_HEAVYWEAPONS_FILE	"scripts/playerclasses/heavyweapons"
+#define TFCS_CLASS_PYRO_FILE			"scripts/playerclasses/pyro"
+#define TFCS_CLASS_SPY_FILE				"scripts/playerclasses/spy"
+#define TFCS_CLASS_ENGINEER_FILE		"scripts/playerclasses/engineer"
+#define TFCS_CLASS_CIVILIAN_FILE		"scripts/playerclasses/civilian"
+
+const char* s_aPlayerClassFiles[] =
+{
+	TFCS_CLASS_UNDEFINED_FILE,
+	TFCS_CLASS_SCOUT_FILE,
+	TFCS_CLASS_SNIPER_FILE,
+	TFCS_CLASS_SOLDIER_FILE,
+	TFCS_CLASS_DEMOMAN_FILE,
+	TFCS_CLASS_MEDIC_FILE,
+	TFCS_CLASS_HEAVYWEAPONS_FILE,
+	TFCS_CLASS_PYRO_FILE,
+	TFCS_CLASS_SPY_FILE,
+	TFCS_CLASS_ENGINEER_FILE,
+	TFCS_CLASS_CIVILIAN_FILE
+};
+
+
 TFCSPlayerClassInfo_t g_aTFCSPlayerClassData[ CLASS_LAST ];
 
 TFCSPlayerClassInfo_t::TFCSPlayerClassInfo_t()
 {
+	m_szArmsModel[0] = '\0';
+	m_szClassName[0] = '\0';
+	m_szModelName[0] = '\0';
+	m_szLocalizableName[0] = '\0';
+
 	m_flMaxSpeed = 0.0f;
 	m_iMaxArmor = 0;
 	m_iMaxHealth = 0;
 	m_iSpawnArmor = 0;
 	m_flArmorClass = 0.0f;
-	m_szArmsModel[0] = '\0';
-	m_szClassName[0] = '\0';
+
 
 	// Grenades
 	m_iGrenType1 = WEAPON_NONE;
@@ -53,8 +85,11 @@ void TFCSPlayerClassInfo_t::Parse( const char *szName )
 
 void TFCSPlayerClassInfo_t::ParseData( KeyValues *pKeyValuesData )
 {	
-	Q_strncpy( m_szArmsModel, pKeyValuesData->GetString("armsmodel", "!! Missing armsmodel on Player Class"), MAX_PLAYERCLASS_NAME_LENGTH );
-	Assert( Q_strlen( m_szArmsModel ) > 0 && "Every class must specify a armsmodel" );
+	Q_strncpy( m_szClassName, pKeyValuesData->GetString( "name" ), MAX_PLAYERCLASS_NAME_LENGTH );
+
+	Q_strncpy( m_szModelName, pKeyValuesData->GetString( "model" ), MAX_PLAYERCLASS_NAME_LENGTH );
+	Q_strncpy( m_szArmsModel, pKeyValuesData->GetString("armsmodel" ), MAX_PLAYERCLASS_NAME_LENGTH );
+	Q_strncpy( m_szLocalizableName, pKeyValuesData->GetString( "localize_name" ), MAX_PLAYERCLASS_NAME_LENGTH );
 	
 	m_flMaxSpeed = pKeyValuesData->GetFloat( "speed_max", 220.0f );
 	m_iMaxHealth = pKeyValuesData->GetInt( "health_max", 100 );
@@ -90,6 +125,31 @@ void TFCSPlayerClassInfo_t::ParseData( KeyValues *pKeyValuesData )
 	m_iGrenType2 = AliasToWeaponID( pszGrenType2 );
 
 	m_bParsed = true;
+}
+
+void InitPlayerClasses( void )
+{
+	// Special case the undefined class.
+	TFCSPlayerClassInfo_t *pData = &g_aTFCSPlayerClassData[ CLASS_FIRST ];
+	Assert( pData );
+	Q_strncpy( pData->m_szClassName, "undefined", MAX_PLAYERCLASS_NAME_LENGTH );
+	Q_strncpy( pData->m_szModelName, "models/player/scout.mdl", MAX_PLAYERCLASS_NAME_LENGTH );	// Undefined players still need a model
+	Q_strncpy( pData->m_szArmsModel, "models/weapons/c_arms_hev.mdl", MAX_PLAYERCLASS_NAME_LENGTH );	// Undefined players still need hands
+	Q_strncpy( pData->m_szLocalizableName, "undefined", MAX_PLAYERCLASS_NAME_LENGTH );
+
+	// Initialize the classes.
+	for ( int iClass = 1; iClass < CLASS_LAST; ++iClass )
+	{
+		TFCSPlayerClassInfo_t *pClassData = &g_aTFCSPlayerClassData[ iClass ];
+		Assert( pClassData );
+		pClassData->Parse( s_aPlayerClassFiles[ iClass ] );
+	}
+}
+
+TFCSPlayerClassInfo_t *GetClassData( int iClass )
+{
+	Assert ( ( iClass >= 0 ) && ( iClass < CLASS_LAST ) );
+	return &g_aTFCSPlayerClassData[ iClass ];
 }
 
 //////////////////////////////////////////////////////////////////

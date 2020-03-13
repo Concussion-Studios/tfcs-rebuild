@@ -9,8 +9,10 @@
 
 struct TFCSPlayerClassInfo_t
 {
-	char m_szArmsModel[ MAX_PLAYERCLASS_NAME_LENGTH];
 	char m_szClassName[ MAX_PLAYERCLASS_NAME_LENGTH ];
+	char m_szArmsModel[ MAX_PLAYERCLASS_NAME_LENGTH];
+	char m_szModelName[ MAX_PLAYERCLASS_NAME_LENGTH ];
+	char m_szLocalizableName[ MAX_PLAYERCLASS_NAME_LENGTH ];
 
 	float m_flMaxSpeed;
 	int m_iMaxArmor;
@@ -49,7 +51,12 @@ public:
 
 	int GetClassIndex( void ) { return m_iClass; }
 	bool Init( int iClass );
-	const char *GetName( void ) const { return GetClassData(m_iClass)->m_szClassName; }
+
+	const char *GetName( void ) const		{ return GetClassData( m_iClass )->m_szClassName; }
+	const char *GetModelName( void ) const	{ return GetClassData( m_iClass )->m_szModelName; }
+	float GetMaxSpeed( void )				{ return GetClassData( m_iClass )->m_flMaxSpeed; }
+	int GetMaxHealth( void )				{ return GetClassData( m_iClass )->m_iMaxHealth; }
+	int GetMaxArmor( void )					{ return GetClassData( m_iClass )->m_iMaxArmor; }
 	
 	TFCSPlayerClassInfo_t *GetData( int iClass );
 
