@@ -68,6 +68,10 @@ CTFCSWeaponBase::CTFCSWeaponBase()
 	SetCollisionGroup( COLLISION_GROUP_WEAPON );
 }
 
+CTFCSWeaponBase::~CTFCSWeaponBase()
+{
+}
+
 void CTFCSWeaponBase::Spawn( void )
 {
 	BaseClass::Spawn();
