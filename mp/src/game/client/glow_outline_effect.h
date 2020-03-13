@@ -119,7 +119,7 @@ private:
 
 	struct GlowObjectDefinition_t
 	{
-		bool ShouldDraw( int nSlot ) const
+		bool ShouldDraw() const
 		{
 			return m_hEntity.Get() && 
 				   ( m_bRenderWhenOccluded || m_bRenderWhenUnoccluded ) && 
