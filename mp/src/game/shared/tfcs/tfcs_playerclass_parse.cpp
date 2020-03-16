@@ -127,7 +127,7 @@ void TFCSPlayerClassInfo_t::ParseData( KeyValues *pKeyValuesData )
 	m_bParsed = true;
 }
 
-void InitClasses( void )
+void InitPlayerClasses( void )
 {
 	// Special case the undefined class.
 	TFCSPlayerClassInfo_t *pData = &g_aTFCSPlayerClassData[ CLASS_FIRST ];

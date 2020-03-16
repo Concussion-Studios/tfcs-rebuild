@@ -38,7 +38,7 @@ private:
 	void ParseData( KeyValues *pKeyValuesData );
 };
 
-void InitClasses( void );
+void InitPlayerClasses( void );
 TFCSPlayerClassInfo_t *GetClassData( int iClass );
 
 class CTFCSPlayerClass

@@ -165,6 +165,21 @@ void CTFCSPlayer::InitialSpawn( void )
 void CTFCSPlayer::Spawn()
 {
 	BaseClass::Spawn();
+	switch ( GetTeamNumber() )
+	{
+	case TEAM_RED:
+		m_nSkin = 0;
+		break;
+	case TEAM_BLUE:
+		m_nSkin = 1;
+		break;
+	case TEAM_GREEN:
+		m_nSkin = 2;
+		break;
+	case TEAM_YELLOW:
+		m_nSkin = 3;
+		break;
+	}
 
 	InitClass();
 }
@@ -174,10 +189,11 @@ void CTFCSPlayer::Spawn()
 void CTFCSPlayer::GiveDefaultItems()
 {
 	// Get the player class data.
-	TFCSPlayerClassInfo_t *data = GetClassData( CLASS_SCOUT );	
+	TFCSPlayerClassInfo_t *data = GetClassData( m_Shared.GetClassIndex() );	
 	
-	//Get rid of all ammo first
+	//Get rid of all ammo and weapons first
 	RemoveAllAmmo();
+	RemoveAllWeapons();
 
 	//Give ammo
 	for ( int iAmmo = AMMO_DUMMY; iAmmo < AMMO_LAST; ++iAmmo )
@@ -217,20 +233,20 @@ void CTFCSPlayer::InitClass( void )
 	GiveDefaultItems();
 
 	//Give ammo
-	for ( int iAmmo = AMMO_DUMMY; iAmmo < AMMO_LAST; ++iAmmo )
-	{
-		GiveAmmo( data->m_aSpawnAmmo[iAmmo], iAmmo );
-	}
+	//for ( int iAmmo = AMMO_DUMMY; iAmmo < AMMO_LAST; ++iAmmo )
+	//{
+	//	GiveAmmo( data->m_aSpawnAmmo[iAmmo], iAmmo );
+	//}
 
-	//Give weapons
-	for ( int iSlot = 0; iSlot < TFCS_MAX_WEAPON_SLOTS; ++iSlot )
-	{
-		if ( data->m_aWeapons[iSlot] != 0 )
-		{
-			const char *pszWeaponName = WeaponIDToAlias( data->m_aWeapons[iSlot] );
-			CTFCSWeaponBase *pWpn = (CTFCSWeaponBase *)GiveNamedItem( pszWeaponName );
-		}
-	}
+	////Give weapons
+	//for ( int iSlot = 0; iSlot < TFCS_MAX_WEAPON_SLOTS; ++iSlot )
+	//{
+	//	if ( data->m_aWeapons[iSlot] != 0 )
+	//	{
+	//		const char *pszWeaponName = WeaponIDToAlias( data->m_aWeapons[iSlot] );
+	//		CTFCSWeaponBase *pWpn = (CTFCSWeaponBase *)GiveNamedItem( pszWeaponName );
+	//	}
+	//}
 }
 
 bool CTFCSPlayer::HandleCommand_JoinClass( int iClass )
@@ -375,6 +391,7 @@ int CTFCSPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 
 	// TODO: Deal with protection powerup; Player takes only armor damage
 	// TODO: Deal with biosuit powerup; Player does not take drown or nervegas damage
+	// TODO: Figure out proper jumping for explosions using the original damage and not the amount after all reductions
 	
 	return BaseClass::OnTakeDamage_Alive( info );
 }
@@ -417,6 +434,117 @@ bool CTFCSPlayer::ClientCommand( const CCommand &args )
 void CTFCSPlayer::ChangeTeam( int iTeamNum )
 {
 	BaseClass::ChangeTeam( iTeamNum );
+}
+
+bool CTFCSPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot )
+{
+	// Find the next spawn spot.
+	pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+
+	if ( pSpot == NULL ) // skip over the null point
+		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+
+	CBaseEntity *pFirstSpot = pSpot;
+	do
+	{
+		if ( pSpot )
+		{
+			// check if pSpot is valid
+			if ( g_pGameRules->IsSpawnPointValid( pSpot, this ) )
+			{
+				if ( pSpot->GetAbsOrigin() == Vector( 0, 0, 0 ) )
+				{
+					pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+					continue;
+				}
+
+				// if so, go to pSpot
+				return true;
+			}
+		}
+		// increment pSpot
+		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+	} while ( pSpot != pFirstSpot ); // loop if we're not back to the start
+
+	DevMsg( "CTFCSPlayer::SelectSpawnSpot: couldn't find valid spawn point.\n" );
+
+	return true;
+}
+
+CBaseEntity *CTFCSPlayer::EntSelectSpawnPoint( void )
+{
+	CBaseEntity *pSpot = NULL;
+
+	const char *pSpawnPointName = "";
+
+	switch ( GetTeamNumber() )
+	{
+	case TEAM_BLUE:
+	{
+		pSpawnPointName = "info_player_blue";
+		pSpot = g_pLastBlueSpawn;
+		if ( SelectSpawnSpot( pSpawnPointName, pSpot ) )
+		{
+			g_pLastBlueSpawn = pSpot;
+		}
+	}
+	break;
+	case TEAM_RED:
+	{
+		pSpawnPointName = "info_player_red";
+		pSpot = g_pLastRedSpawn;
+		if ( SelectSpawnSpot( pSpawnPointName, pSpot ) )
+		{
+			g_pLastRedSpawn = pSpot;
+		}
+	}
+	break;
+	case TEAM_GREEN:
+	{
+		pSpawnPointName = "info_player_green";
+		pSpot = g_pLastGreenSpawn;
+		if ( SelectSpawnSpot( pSpawnPointName, pSpot ) )
+		{
+			g_pLastGreenSpawn = pSpot;
+		}
+	}
+	break;
+	case TEAM_YELLOW:
+	{
+		pSpawnPointName = "info_player_yellow";
+		pSpot = g_pLastYellowSpawn;
+		if ( SelectSpawnSpot( pSpawnPointName, pSpot ) )
+		{
+			g_pLastYellowSpawn = pSpot;
+		}
+	}
+	break;
+	case TEAM_UNASSIGNED:
+	case TEAM_SPECTATOR:
+	default:
+	{
+		pSpot = CBaseEntity::Instance( INDEXENT( 0 ) );
+	}
+	break;
+	}
+
+	if ( !pSpot )
+	{
+		pSpawnPointName = "info_player_deathmatch";
+		pSpot = g_pLastDMSpawn;
+		if ( pSpot )
+		{
+			if ( SelectSpawnSpot( pSpawnPointName, pSpot ) )
+				g_pLastDMSpawn = pSpot;
+
+			return pSpot;
+		}
+
+		Warning( "PutClientInServer: no %s on level\n", pSpawnPointName );
+		return CBaseEntity::Instance( INDEXENT( 0 ) );
+	}
+
+	return pSpot;
 }
 
 int CTFCSPlayer::TakeHealth( float flHealth )

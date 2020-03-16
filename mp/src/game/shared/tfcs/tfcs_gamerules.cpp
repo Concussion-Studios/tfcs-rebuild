@@ -124,7 +124,7 @@ CTFCSGameRules::CTFCSGameRules()
 	
 #endif
 	//TODO: Prematch stuff
-	InitClasses();
+	InitPlayerClasses();
 }
 
 CTFCSGameRules::~CTFCSGameRules()
@@ -153,6 +153,52 @@ Vector DropToGround(
 	UTIL_TraceHull( vPos, vPos + Vector( 0, 0, -500 ), vMins, vMaxs, MASK_SOLID, pMainEnt, COLLISION_GROUP_NONE, &trace );
 	return trace.endpos;
 }
+
+void TestSpawnPointType( const char *pEntClassName )
+{
+	// Find the next spawn spot.
+	CBaseEntity *pSpot = gEntList.FindEntityByClassname( NULL, pEntClassName );
+
+	while ( pSpot )
+	{
+		// check if pSpot is valid
+		if ( g_pGameRules->IsSpawnPointValid( pSpot, NULL ) )
+		{
+			// the successful spawn point's location
+			NDebugOverlay::Box( pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX, 0, 255, 0, 100, 60 );
+
+			// drop down to ground
+			Vector GroundPos = DropToGround( NULL, pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
+
+			// the location the player will spawn at
+			NDebugOverlay::Box( GroundPos, VEC_HULL_MIN, VEC_HULL_MAX, 0, 0, 255, 100, 60 );
+
+			// draw the spawn angles
+			QAngle spotAngles = pSpot->GetLocalAngles();
+			Vector vecForward;
+			AngleVectors( spotAngles, &vecForward );
+			NDebugOverlay::HorzArrow( pSpot->GetAbsOrigin(), pSpot->GetAbsOrigin() + vecForward * 32, 10, 255, 0, 0, 255, true, 60 );
+		}
+		else
+		{
+			// failed spawn point location
+			NDebugOverlay::Box( pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX, 255, 0, 0, 100, 60 );
+		}
+
+		// increment pSpot
+		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+	}
+}
+
+void TestSpawns()
+{
+	TestSpawnPointType( "info_player_deathmatch" );
+	TestSpawnPointType( "info_player_blue" );
+	TestSpawnPointType( "info_player_red" );
+	TestSpawnPointType( "info_player_yellow" );
+	TestSpawnPointType( "info_player_green" );
+}
+ConCommand cc_TestSpawns( "map_showspawnpoints", TestSpawns, "Dev - test the spawn points, draws for 60 seconds", FCVAR_CHEAT );
 
 CBaseEntity *CTFCSGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 {
@@ -199,7 +245,7 @@ void CTFCSGameRules::PlayerSpawn( CBasePlayer *p )
 	BaseClass::PlayerSpawn( p );
 }
 
-void CTFCSGameRules::RadiusDamage(const CTakeDamageInfo &info, const Vector &vecSrc, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore)
+void CTFCSGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrc, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore )
 {
 	BaseClass::RadiusDamage( info, vecSrc, flRadius, iClassIgnore, pEntityIgnore );
 }
