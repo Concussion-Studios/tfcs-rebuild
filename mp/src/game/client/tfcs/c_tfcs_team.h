@@ -12,7 +12,6 @@
 
 #include "c_team.h"
 #include "shareddefs.h"
-#include "c_baseobject.h"
 
 class C_BaseEntity;
 
