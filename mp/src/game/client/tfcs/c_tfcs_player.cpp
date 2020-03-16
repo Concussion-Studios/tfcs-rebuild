@@ -45,10 +45,14 @@ BEGIN_PREDICTION_DATA( C_TFCSPlayer )
 END_PREDICTION_DATA()
 
 BEGIN_RECV_TABLE_NOBASE( C_TFCSPlayer, DT_TFCSLocalPlayerExclusive )
+//RecvPropVector(RECVINFO())
+	RecvPropFloat( RECVINFO( m_ArmorClass ) ),
+	RecvPropInt( RECVINFO( m_MaxArmor ) ),
+	RecvPropFloat(RECVINFO(m_flConcussTime)),
 END_RECV_TABLE()
 
-BEGIN_RECV_TABLE_NOBASE( C_TFCSPlayer, DT_TFCSNonLocalPlayerExclusive )
-END_RECV_TABLE()
+//BEGIN_RECV_TABLE_NOBASE( C_TFCSPlayer, DT_TFCSNonLocalPlayerExclusive )
+//END_RECV_TABLE()
 
 IMPLEMENT_CLIENTCLASS_DT( C_TFCSPlayer, DT_TFCSPlayer, CTFCSPlayer )
 	RecvPropFloat( RECVINFO( m_angEyeAngles[0] ) ),
@@ -58,7 +62,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFCSPlayer, DT_TFCSPlayer, CTFCSPlayer )
 	RecvPropDataTable( RECVINFO_DT( m_Shared ), 0, &REFERENCE_RECV_TABLE( DT_TFCSPlayerShared ) ),
 
 	RecvPropDataTable( "tfcs_localdata", 0, 0, &REFERENCE_RECV_TABLE( DT_TFCSLocalPlayerExclusive ) ),
-	RecvPropDataTable( "tfcs_nonlocaldata", 0, 0, &REFERENCE_RECV_TABLE( DT_TFCSNonLocalPlayerExclusive ) ),
+	//RecvPropDataTable( "tfcs_nonlocaldata", 0, 0, &REFERENCE_RECV_TABLE( DT_TFCSNonLocalPlayerExclusive ) ),
 END_RECV_TABLE()
 
 ITFCSPlayerAnimState* CreatePlayerAnimState( C_TFCSPlayer *pPlayer );

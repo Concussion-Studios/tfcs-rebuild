@@ -52,8 +52,10 @@ public: // called by shared code
 	CTFCSWeaponBase* Weapon_OwnsThisID( int iWeaponID );
 	CTFCSWeaponBase* GetActiveTFCSWeapon() const;
 
+	CNetworkVar( float, m_ArmorClass );
+	CNetworkVar( int, m_MaxArmor );
+	CNetworkVar( float, m_flConcussTime );
 private:
-
 	QAngle m_angEyeAngles;
 	CInterpolatedVar< QAngle >	m_iv_angEyeAngles;
 	ITFCSPlayerAnimState* m_PlayerAnimState;

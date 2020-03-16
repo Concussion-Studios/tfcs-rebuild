@@ -1,6 +1,7 @@
 #include "cbase.h"
 #include "tfcs_gamerules.h"
 #include "tfcs_weapon_base.h"
+#include "tfcs_playerclass_parse.h"
 #include "KeyValues.h"
 #include "ammodef.h"
 
@@ -120,10 +121,10 @@ CTFCSGameRules::CTFCSGameRules()
 {
 #ifdef GAME_DLL
 	//TODO: Team managers
-
+	
 #endif
 	//TODO: Prematch stuff
-
+	InitClasses();
 }
 
 CTFCSGameRules::~CTFCSGameRules()
@@ -194,6 +195,7 @@ bool CTFCSGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer
 void CTFCSGameRules::PlayerSpawn( CBasePlayer *p )
 {
 	//TODO: Finish this when player class is completed
+	p->Spawn();
 	BaseClass::PlayerSpawn( p );
 }
 

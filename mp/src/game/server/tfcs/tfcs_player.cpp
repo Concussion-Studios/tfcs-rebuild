@@ -82,15 +82,15 @@ BEGIN_DATADESC( CTFCSPlayer )
 END_DATADESC()
 
 BEGIN_SEND_TABLE_NOBASE( CTFCSPlayer, DT_TFCSLocalPlayerExclusive )
-	SendPropVector( SENDINFO( m_vecOrigin ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
-	SendPropInt( SENDINFO( m_ArmorClass ) ),
+	//SendPropVector( SENDINFO( m_vecOrigin ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
+	SendPropFloat( SENDINFO( m_ArmorClass ) ),
 	//SendPropInt( SENDINFO( m_Armor ), 8, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_MaxArmor ), 8, SPROP_UNSIGNED ),
 	SendPropFloat( SENDINFO( m_flConcussTime ) ),
 END_SEND_TABLE()
 
-BEGIN_SEND_TABLE_NOBASE( CTFCSPlayer, DT_TFCSNonLocalPlayerExclusive )
-END_SEND_TABLE()
+//BEGIN_SEND_TABLE_NOBASE( CTFCSPlayer, DT_TFCSNonLocalPlayerExclusive )
+//END_SEND_TABLE()
 
 IMPLEMENT_SERVERCLASS_ST( CTFCSPlayer, DT_TFCSPlayer )
 
@@ -112,7 +112,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFCSPlayer, DT_TFCSPlayer )
 
 	// Data that only gets sent to the local player.
 	SendPropDataTable( "tfcs_localdata", 0, &REFERENCE_SEND_TABLE( DT_TFCSLocalPlayerExclusive ), SendProxy_SendLocalDataTable ),
-	SendPropDataTable( "tfcs_nonlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFCSNonLocalPlayerExclusive ), SendProxy_SendNonLocalDataTable ),
+	//SendPropDataTable( "tfcs_nonlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFCSNonLocalPlayerExclusive ), SendProxy_SendNonLocalDataTable ),
 
 END_SEND_TABLE()
 

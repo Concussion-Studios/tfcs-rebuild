@@ -72,8 +72,6 @@ public: // called by shared code
 	CTFCSWeaponBase* Weapon_OwnsThisID( int iWeaponID );
 	CTFCSWeaponBase* GetActiveTFCSWeapon() const;
 
-private:
-
 	//TFCS related vars
 	CNetworkVar( float, m_ArmorClass );
 	CNetworkVarForDerived( int, m_ArmorValue );
@@ -81,6 +79,7 @@ private:
 	CNetworkVar( float, m_flConcussTime );
 	CNetworkVar( float, m_flCrippleTime );
 	CNetworkVar( int, m_iCrippleLevel );
+private:
 
 	EHANDLE m_hBurnAttacker;
 	EHANDLE m_hInfecAttacker;

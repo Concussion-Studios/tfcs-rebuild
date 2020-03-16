@@ -20,7 +20,7 @@
 
 const char* s_aPlayerClassFiles[] =
 {
-	TFCS_CLASS_UNDEFINED_FILE,
+	//TFCS_CLASS_UNDEFINED_FILE,
 	TFCS_CLASS_SCOUT_FILE,
 	TFCS_CLASS_SNIPER_FILE,
 	TFCS_CLASS_SOLDIER_FILE,
@@ -127,7 +127,7 @@ void TFCSPlayerClassInfo_t::ParseData( KeyValues *pKeyValuesData )
 	m_bParsed = true;
 }
 
-void InitPlayerClasses( void )
+void InitClasses( void )
 {
 	// Special case the undefined class.
 	TFCSPlayerClassInfo_t *pData = &g_aTFCSPlayerClassData[ CLASS_FIRST ];
@@ -138,7 +138,7 @@ void InitPlayerClasses( void )
 	Q_strncpy( pData->m_szLocalizableName, "undefined", MAX_PLAYERCLASS_NAME_LENGTH );
 
 	// Initialize the classes.
-	for ( int iClass = 1; iClass < CLASS_LAST; ++iClass )
+	for ( int iClass = 1; iClass < CLASS_CIVILLIAN; ++iClass )
 	{
 		TFCSPlayerClassInfo_t *pClassData = &g_aTFCSPlayerClassData[ iClass ];
 		Assert( pClassData );
