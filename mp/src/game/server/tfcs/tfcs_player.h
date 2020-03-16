@@ -39,10 +39,12 @@ public:
 	virtual void Event_Killed( const CTakeDamageInfo &info );
 	virtual bool ClientCommand( const CCommand &args );
 	virtual void ChangeTeam( int iTeamNum );
-	virtual bool SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot );
-	virtual CBaseEntity *EntSelectSpawnPoint( void );
+
 	void InitClass( void );
 	void GiveDefaultItems();
+
+	virtual CBaseEntity* EntSelectSpawnPoint( void );
+	bool SelectSpawnSpot( const char* pEntClassName, CBaseEntity*& pSpot );
 
 	//TFCS Functions
 	void TFCSPlayerThink();
@@ -85,12 +87,6 @@ private:
 	EHANDLE m_hBurnAttacker;
 	EHANDLE m_hInfecAttacker;
 	EHANDLE m_hHealer;		//store healers for assists
-
-	EHANDLE g_pLastDMSpawn;
-	EHANDLE g_pLastBlueSpawn;
-	EHANDLE g_pLastRedSpawn;
-	EHANDLE g_pLastGreenSpawn;
-	EHANDLE g_pLastYellowSpawn;
 
 	ITFCSPlayerAnimState* m_PlayerAnimState;
 	CNetworkQAngle( m_angEyeAngles );

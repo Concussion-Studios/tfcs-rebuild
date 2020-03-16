@@ -65,8 +65,6 @@ $Project "Client (TFCSOURCE)"
 				$File	"$SRCDIR\game\shared\tfcs\tfcs_player_shared.h"
 				$File	"$SRCDIR\game\shared\tfcs\tfcs_playeranimstate.cpp"
 				$File	"$SRCDIR\game\shared\tfcs\tfcs_playeranimstate.h"
-				$File	"$SRCDIR\game\shared\tfcs\tfcs_playerclass_parse.cpp"
-				$File	"$SRCDIR\game\shared\tfcs\tfcs_playerclass_parse.h"
 				$File	"$SRCDIR\game\shared\tfcs\tfcs_gamemovement.cpp"
 			}
 			
@@ -80,6 +78,21 @@ $Project "Client (TFCSOURCE)"
 				$File	"tfcs\hud\tfcs_hud_targetid.cpp"
 				$File	"tfcs\hud\tfcs_hud_deathnotice.cpp"
 				$File	"tfcs\hud\tfcs_hud_damage.cpp"
+			}
+
+			$Folder	"GameRules"
+			{
+				$File	"tfcs\c_tfcs_objective_resource.cpp"
+				$File	"tfcs\c_tfcs_objective_resource.h"
+				$File	"tfcs\c_tfcs_playerresource.cpp"
+				$File	"tfcs\c_tfcs_playerresource.h"
+				$File	"tfcs\c_tfcs_team.cpp"
+				$File	"tfcs\c_tfcs_team.h"
+				$File	"$SRCDIR\game\shared\tfcs\tfcs_usermessages.cpp"
+				$File	"$SRCDIR\game\shared\tfcs\tfcs_gamerules.cpp"
+				$File	"$SRCDIR\game\shared\tfcs\tfcs_gamerules.h"
+				$File	"$SRCDIR\game\shared\tfcs\tfcs_playerclass_parse.cpp"
+				$File	"$SRCDIR\game\shared\tfcs\tfcs_playerclass_parse.h"
 			}
 
 			$Folder	"VGUI"
@@ -128,9 +141,6 @@ $Project "Client (TFCSOURCE)"
 			$File	"tfcs\tfcs_fx.cpp"
 			$File	"tfcs\tfcs_in_main.cpp"
 			$File	"tfcs\tfcs_prediction.cpp"
-			$File	"$SRCDIR\game\shared\tfcs\tfcs_usermessages.cpp"
-			$File	"$SRCDIR\game\shared\tfcs\tfcs_gamerules.cpp"
-			$File	"$SRCDIR\game\shared\tfcs\tfcs_gamerules.h"
 			$File	"$SRCDIR\game\shared\tfcs\tfcs_shareddefs.cpp"
 			$File	"$SRCDIR\game\shared\tfcs\tfcs_shareddefs.h"
 		}

@@ -54,8 +54,11 @@ public:
 	//TODO: Change this fake key to a real key
 	virtual const unsigned char *GetEncryptionKey(void) { return (unsigned char *)"a1b2c3d4"; }
 
+	// Sets up g_pPlayerResource.
+	virtual void CreateStandardEntities();
+
 	CBaseEntity *GetPlayerSpawnSpot( CBasePlayer *pPlayer );
-	bool IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer );
+	bool IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers );
 	virtual void PlayerSpawn( CBasePlayer *pPlayer );
 #endif
 private:

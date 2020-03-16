@@ -24,6 +24,9 @@ public:
 
 	void	Activate( void );
 	virtual bool	IsValid( CBasePlayer *pPlayer );
+#ifdef TFCSOURCE_DLL
+	bool IsDisabled() { return m_bDisabled; }
+#endif // TFCSOURCE_DLL
 
 	COutputEvent m_OnPlayerSpawn;
 

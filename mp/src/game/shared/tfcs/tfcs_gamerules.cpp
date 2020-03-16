@@ -6,46 +6,34 @@
 #include "ammodef.h"
 
 #ifdef CLIENT_DLL
-	//#include "c_tfcs_player.h"
+	#include <game/client/iviewport.h>
+	#include "c_tfcs_player.h"
+	#include "c_tfcs_objective_resource.h"
 #else
+	#include "basemultiplayerplayer.h"
 	#include "voice_gamemgr.h"
+	#include "items.h"
 	#include "team.h"
-	//#include "tfcs_player.h"
+	#include "tfcs_player.h"
+	#include "tfcs_team.h"
+	#include "player_resource.h"
+	#include "team_spawnpoint.h"
+	#include "filesystem.h"
+	#include "tfcs_objective_resource.h"
+	#include "tfcs_player_resource.h"
+	#include "team_control_point_master.h"
+	#include "team_control_point_master.h"
+	#include "coordsize.h"
+	//#include "entity_capture_flag.h"
+	#include "tfcs_player_resource.h"
+	#include "tier0/icommandline.h"
+	#include "activitylist.h"
+	#include "AI_ResponseSystem.h"
+	#include "hltvdirector.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-
-#ifndef CLIENT_DLL
-class CSpawnPoint : public CPointEntity
-{
-public:
-	bool IsDisabled() { return m_bDisabled; }
-	void InputEnable( inputdata_t &inputdata ) { m_bDisabled = false; }
-	void InputDisable( inputdata_t &inputdata ) { m_bDisabled = true; }
-
-private:
-	bool m_bDisabled;
-	DECLARE_DATADESC();
-};
-
-BEGIN_DATADESC( CSpawnPoint )
-
-	// Keyfields
-	DEFINE_KEYFIELD( m_bDisabled, FIELD_BOOLEAN, "StartDisabled" ),
-
-	// Inputs
-	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
-
-END_DATADESC();
-
-LINK_ENTITY_TO_CLASS( info_player_deathmatch, CSpawnPoint );
-LINK_ENTITY_TO_CLASS( info_player_blue, CSpawnPoint );
-LINK_ENTITY_TO_CLASS( info_player_red, CSpawnPoint );
-LINK_ENTITY_TO_CLASS( info_player_yellow, CSpawnPoint );
-LINK_ENTITY_TO_CLASS( info_player_green, CSpawnPoint );
-#endif
 
 REGISTER_GAMERULES_CLASS( CTFCSGameRules );
 
@@ -98,7 +86,7 @@ ConVar ammo_max( "ammo_max", "5000", FCVAR_REPLICATED );
 class CVoiceGameMgrHelper : public IVoiceGameMgrHelper
 {
 public:
-	virtual bool		CanPlayerHearPlayer( CBasePlayer *pListener, CBasePlayer *pTalker, bool &bProximity )
+	virtual bool CanPlayerHearPlayer( CBasePlayer *pListener, CBasePlayer *pTalker, bool &bProximity )
 	{
 		// Dead players can only be heard by other dead team mates but only if a match is in progress
 		if ( TFCSGameRules()->State_Get() != GR_STATE_TEAM_WIN && TFCSGameRules()->State_Get() != GR_STATE_GAME_OVER ) 
@@ -120,27 +108,63 @@ IVoiceGameMgrHelper *g_pVoiceGameMgrHelper = &g_VoiceGameMgrHelper;
 CTFCSGameRules::CTFCSGameRules()
 {
 #ifdef GAME_DLL
-	//TODO: Team managers
-	
+	ConColorMsg( Color( 86, 156, 143, 255 ), "[CTFCSGameRules] Creating Gamerules....\n" );
+
+	// Create teams.
+	TFCSTeamMgr()->Init();
+
+	if ( filesystem->FileExists( UTIL_VarArgs( "maps/cfg/%s.cfg", STRING( gpGlobals->mapname ) ) ) )
+	{
+		// Execute a map specific cfg file
+		ConColorMsg( Color( 86, 156, 143, 255 ), "[CTFCSGameRules] Executing map %s config file\n", STRING( gpGlobals->mapname ) );
+		engine->ServerCommand( UTIL_VarArgs( "exec %s.cfg */maps\n", STRING( gpGlobals->mapname ) ) );
+		engine->ServerExecute();
+	}
+	else
+	{
+		ConColorMsg( Color( 86, 156, 143, 255 ), "[CTFCSGameRules] Could not load map %s config file skiping...\n", STRING( gpGlobals->mapname ) );
+	}
+#else
+	ConColorMsg( Color( 86, 156, 143, 255 ), "[C_TFCSGameRules] Creating Gamerules....\n" );
 #endif
+
 	//TODO: Prematch stuff
 	InitPlayerClasses();
 }
 
 CTFCSGameRules::~CTFCSGameRules()
 {
-	
-}
+#ifndef CLIENT_DLL
+	ConColorMsg( Color( 86, 156, 143, 255 ), "[CTFCSGameRules] Destroying Gamerules....\n" );
 
-bool CTFCSGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
-{
-	return BaseClass::ShouldCollide( collisionGroup0, collisionGroup1 );
+	// Note, don't delete each team since they are in the gEntList and will 
+	// automatically be deleted from there, instead.
+	TFCSTeamMgr()->Shutdown();
+#else
+	ConColorMsg( Color( 86, 156, 143, 255 ), "[C_TFCSGameRules] Destroying Gamerules....\n" );
+#endif	
 }
 
 #ifdef GAME_DLL
 void CTFCSGameRules::Think()
 {
 	BaseClass::Think();
+}
+
+void CTFCSGameRules::CreateStandardEntities()
+{
+	// Create the player resource
+	g_pPlayerResource = (CPlayerResource*)CBaseEntity::Create( "tfcs_player_manager", vec3_origin, vec3_angle );
+
+	// Create the objective resource
+	g_pObjectiveResource = (CTFCSObjectiveResource *)CBaseEntity::Create( "tfcs_objective_resource", vec3_origin, vec3_angle );
+
+	Assert( g_pObjectiveResource );
+
+	// Create the entity that will send our data to the client.
+	CBaseEntity *pEnt = CBaseEntity::Create( "tfcs_gamerules", vec3_origin, vec3_angle );
+	Assert( pEnt );
+	pEnt->SetName( AllocPooledString( "tfcs_gamerules" ) );
 }
 
 Vector DropToGround(
@@ -154,15 +178,18 @@ Vector DropToGround(
 	return trace.endpos;
 }
 
-void TestSpawnPointType( const char *pEntClassName )
+ void TestSpawnPointType( const char *pEntClassName )
 {
 	// Find the next spawn spot.
 	CBaseEntity *pSpot = gEntList.FindEntityByClassname( NULL, pEntClassName );
 
-	while ( pSpot )
+	while( pSpot )
 	{
-		// check if pSpot is valid
-		if ( g_pGameRules->IsSpawnPointValid( pSpot, NULL ) )
+		// trace a box here
+		Vector vTestMins = pSpot->GetAbsOrigin() + VEC_HULL_MIN;
+		Vector vTestMaxs = pSpot->GetAbsOrigin() + VEC_HULL_MAX;
+
+		if ( UTIL_IsSpaceEmpty( pSpot, vTestMins, vTestMaxs ) )
 		{
 			// the successful spawn point's location
 			NDebugOverlay::Box( pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX, 0, 255, 0, 100, 60 );
@@ -192,11 +219,7 @@ void TestSpawnPointType( const char *pEntClassName )
 
 void TestSpawns()
 {
-	TestSpawnPointType( "info_player_deathmatch" );
-	TestSpawnPointType( "info_player_blue" );
-	TestSpawnPointType( "info_player_red" );
-	TestSpawnPointType( "info_player_yellow" );
-	TestSpawnPointType( "info_player_green" );
+	TestSpawnPointType( "info_player_teamspawn" );
 }
 ConCommand cc_TestSpawns( "map_showspawnpoints", TestSpawns, "Dev - test the spawn points, draws for 60 seconds", FCVAR_CHEAT );
 
@@ -209,19 +232,23 @@ CBaseEntity *CTFCSGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 	Vector GroundPos = DropToGround( pPlayer, pSpawnSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
 
 	// Move the player to the place it said.
-	pPlayer->Teleport( &GroundPos, &pSpawnSpot->GetLocalAngles(), &vec3_origin );
+	pPlayer->SetLocalOrigin( GroundPos + Vector(0,0,1) );
+	pPlayer->SetAbsVelocity( vec3_origin );
+	pPlayer->SetLocalAngles( pSpawnSpot->GetLocalAngles() );
 	pPlayer->m_Local.m_vecPunchAngle = vec3_angle;
+	pPlayer->m_Local.m_vecPunchAngleVel = vec3_angle;
+	pPlayer->SnapEyeAngles( pSpawnSpot->GetLocalAngles() );
 
 	return pSpawnSpot;
 }
 
-bool CTFCSGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer )
+bool CTFCSGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers )
 {
 	if ( !pSpot->IsTriggered( pPlayer ) )
 		return false;
 
 	// Check if it is disabled by Enable/Disable
-	CSpawnPoint *pSpawnPoint = dynamic_cast< CSpawnPoint * >( pSpot );
+	CTeamSpawnPoint *pSpawnPoint = dynamic_cast< CTeamSpawnPoint* >( pSpot );
 	if ( pSpawnPoint )
 	{
 		if ( pSpawnPoint->IsDisabled() )
@@ -231,11 +258,16 @@ bool CTFCSGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer
 	Vector mins = GetViewVectors()->m_vHullMin;
 	Vector maxs = GetViewVectors()->m_vHullMax;
 
-	Vector vTestMins = pSpot->GetAbsOrigin() + mins;
-	Vector vTestMaxs = pSpot->GetAbsOrigin() + maxs;
+	if ( !bIgnorePlayers )
+	{
+		Vector vTestMins = pSpot->GetAbsOrigin() + mins;
+		Vector vTestMaxs = pSpot->GetAbsOrigin() + maxs;
+		return UTIL_IsSpaceEmpty( pPlayer, vTestMins, vTestMaxs );
+	}
 
-	// First test the starting origin.
-	return UTIL_IsSpaceEmpty( pPlayer, vTestMins, vTestMaxs );
+	trace_t trace;
+	UTIL_TraceHull( pSpot->GetAbsOrigin(), pSpot->GetAbsOrigin(), mins, maxs, MASK_PLAYERSOLID, pPlayer, COLLISION_GROUP_PLAYER_MOVEMENT, &trace );
+	return ( trace.fraction == 1 && trace.allsolid != 1 && (trace.startsolid != 1) );
 }
 
 void CTFCSGameRules::PlayerSpawn( CBasePlayer *p )
@@ -260,6 +292,26 @@ const char *CTFCSGameRules::GetChatPrefix( bool bTeamOnly, CBasePlayer *pPlayer 
 	return "";
 }
 #endif
+
+bool CTFCSGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
+{
+	// swap so that lowest is always first
+	if ( collisionGroup0 > collisionGroup1 )
+		V_swap( collisionGroup0, collisionGroup1 );
+	
+	//Don't stand on COLLISION_GROUP_WEAPONs
+	if( collisionGroup0 == COLLISION_GROUP_PLAYER_MOVEMENT &&
+		collisionGroup1 == COLLISION_GROUP_WEAPON )
+		return false;
+
+	// Don't stand on projectiles
+	if( collisionGroup0 == COLLISION_GROUP_PLAYER_MOVEMENT &&
+		collisionGroup1 == COLLISION_GROUP_PROJECTILE )
+		return false;
+
+	return BaseClass::ShouldCollide( collisionGroup0, collisionGroup1 ); 
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Init CS ammo definitions
 //-----------------------------------------------------------------------------

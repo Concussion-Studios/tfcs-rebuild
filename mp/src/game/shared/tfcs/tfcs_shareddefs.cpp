@@ -1,7 +1,50 @@
 #include "cbase.h"
 #include "tfcs_shareddefs.h"
 
-const char* g_aClassNames[13] =
+//-----------------------------------------------------------------------------
+// Teams.
+//-----------------------------------------------------------------------------
+const char *g_aTeamNames[TEAM_COUNT] =
+{
+	"Unassigned",
+	"Spectator",
+	"Red",
+	"Blue",
+	"Green",
+	"Yellow"
+};
+
+color32 g_aTeamColors[TEAM_COUNT] = 
+{
+	{ 0, 0, 0, 0 },		// Unassigned
+	{ 0, 0, 0, 0 },		// Spectator
+	{ 255, 0, 0, 0 },	// Red
+	{ 0, 0, 255, 0 },	// Blue
+	{ 0, 255, 0, 0 },	// Green
+	{ 255, 255, 0, 0 }	// Yellow
+};
+
+//-----------------------------------------------------------------------------
+// Classes.
+//-----------------------------------------------------------------------------
+const char *g_aClassNames[13] =
+{
+	"#TFCS_Class_Name_Undefined",
+	"#TFCS_Class_Name_Scout",
+	"#TFCS_Class_Name_Sniper",
+	"#TFCS_Class_Name_Soldier",
+	"#TFCS_Class_Name_Demoman",
+	"#TFCS_Class_Name_Medic",
+	"#TFCS_Class_Name_HWGuy",
+	"#TFCS_Class_Name_Pyro",
+	"#TFCS_Class_Name_Spy",
+	"#TFCS_Class_Name_Engineer",
+	"#TFCS_Class_Name_Civillian",
+	"#TFCS_Class_Name_Random",
+	NULL
+};
+
+const char* g_aClassNames_NonLocalized[13] =
 {
 	"None",
 	"Sniper",
@@ -18,16 +61,9 @@ const char* g_aClassNames[13] =
 	NULL
 };
 
-const char* g_aTeamNames[] =
-{
-	"#SDK_Team_Unassigned",
-	"#SDK_Team_Spectator",
-	"#SDK_Team_Blue",
-	"#SDK_Team_Red",
-	"#SDK_Team_Green",
-	"#SDK_Team_Yellow"
-};
-
+//-----------------------------------------------------------------------------
+// Ammo.
+//-----------------------------------------------------------------------------
 const char* g_aAmmoNames[] =
 {
 	"AMMO_NONE",
@@ -41,6 +77,9 @@ const char* g_aAmmoNames[] =
 	"AMMO_LAST"
 };
 
+//-----------------------------------------------------------------------------
+// Projectiles.
+//-----------------------------------------------------------------------------
 const char* g_aProjectileNames[] =
 {
 	"PROJECTILE_NONE",
@@ -52,6 +91,9 @@ const char* g_aProjectileNames[] =
 	"PROJECTILE_LAST"
 };
 
+//-----------------------------------------------------------------------------
+// Weapons.
+//-----------------------------------------------------------------------------
 const char* g_aWeaponNames[] =
 {
 	"WEAPON_NONE",

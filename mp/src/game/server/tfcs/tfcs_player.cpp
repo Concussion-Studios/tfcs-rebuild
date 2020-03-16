@@ -21,6 +21,8 @@
 
 #pragma warning(disable:4189) // TODO: fix this error
 
+EHANDLE g_pLastSpawnPoints[TEAM_COUNT];
+
 class CTEPlayerAnimEvent : public CBaseTempEntity
 {
 public:
@@ -165,6 +167,7 @@ void CTFCSPlayer::InitialSpawn( void )
 void CTFCSPlayer::Spawn()
 {
 	BaseClass::Spawn();
+
 	switch ( GetTeamNumber() )
 	{
 	case TEAM_RED:
@@ -183,7 +186,6 @@ void CTFCSPlayer::Spawn()
 
 	InitClass();
 }
-
 
 // Set the player up with the default weapons, ammo, etc.
 void CTFCSPlayer::GiveDefaultItems()
@@ -233,20 +235,20 @@ void CTFCSPlayer::InitClass( void )
 	GiveDefaultItems();
 
 	//Give ammo
-	//for ( int iAmmo = AMMO_DUMMY; iAmmo < AMMO_LAST; ++iAmmo )
-	//{
-	//	GiveAmmo( data->m_aSpawnAmmo[iAmmo], iAmmo );
-	//}
+	/*for ( int iAmmo = AMMO_DUMMY; iAmmo < AMMO_LAST; ++iAmmo )
+	{
+		GiveAmmo( data->m_aSpawnAmmo[iAmmo], iAmmo );
+	}*/
 
-	////Give weapons
-	//for ( int iSlot = 0; iSlot < TFCS_MAX_WEAPON_SLOTS; ++iSlot )
-	//{
-	//	if ( data->m_aWeapons[iSlot] != 0 )
-	//	{
-	//		const char *pszWeaponName = WeaponIDToAlias( data->m_aWeapons[iSlot] );
-	//		CTFCSWeaponBase *pWpn = (CTFCSWeaponBase *)GiveNamedItem( pszWeaponName );
-	//	}
-	//}
+	//Give weapons
+	/*for ( int iSlot = 0; iSlot < TFCS_MAX_WEAPON_SLOTS; ++iSlot )
+	{
+		if ( data->m_aWeapons[iSlot] != 0 )
+		{
+			const char *pszWeaponName = WeaponIDToAlias( data->m_aWeapons[iSlot] );
+			CTFCSWeaponBase *pWpn = (CTFCSWeaponBase *)GiveNamedItem( pszWeaponName );
+		}
+	}*/
 }
 
 bool CTFCSPlayer::HandleCommand_JoinClass( int iClass )
@@ -265,7 +267,7 @@ bool CTFCSPlayer::HandleCommand_JoinClass( int iClass )
 	}
 
 	int iOldPlayerClass = m_Shared.DesiredPlayerClass();
-	const char *classname = g_aClassNames[iClass];
+	const char *classname = g_aClassNames_NonLocalized[iClass];
 
 	// Trying to join current class
 	if ( iClass == iOldPlayerClass )
@@ -438,108 +440,106 @@ void CTFCSPlayer::ChangeTeam( int iTeamNum )
 
 bool CTFCSPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot )
 {
-	// Find the next spawn spot.
+	// Get an initial spawn point.
 	pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-
-	if ( pSpot == NULL ) // skip over the null point
+	if ( !pSpot )
+	{
+		// Sometimes the first spot can be NULL????
 		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+	}
+
+	// First we try to find a spawn point that is fully clear. If that fails,
+	// we look for a spawnpoint that's clear except for another players. We
+	// don't collide with our team members, so we should be fine.
+	bool bIgnorePlayers = false;
 
 	CBaseEntity *pFirstSpot = pSpot;
-	do
+	do 
 	{
 		if ( pSpot )
 		{
-			// check if pSpot is valid
-			if ( g_pGameRules->IsSpawnPointValid( pSpot, this ) )
+			// Check to see if this is a valid team spawn ( player is on this team, etc. ).
+			if( TFCSGameRules()->IsSpawnPointValid( pSpot, this, bIgnorePlayers ) )
 			{
-				if ( pSpot->GetAbsOrigin() == Vector( 0, 0, 0 ) )
+				// Check for a bad spawn entity.
+				if ( pSpot->GetAbsOrigin() == vec3_origin )
 				{
 					pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
 					continue;
 				}
 
-				// if so, go to pSpot
+				if ( bIgnorePlayers )
+				{
+					// We're spawning on a busy spawn point so kill off anyone occupying it.
+					edict_t	*edPlayer;
+					edPlayer = edict();
+					CBaseEntity *ent = NULL;
+					for ( CEntitySphereQuery sphere( pSpot->GetAbsOrigin(), 128 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
+					{
+						// if ent is a client, kill 'em (unless they are ourselves)
+						if ( ent->IsPlayer() && !( ent->edict() == edPlayer ) )
+						{
+							CTakeDamageInfo info( this, this, 1000, DMG_CRUSH );
+							ent->TakeDamage( info );
+						}
+					}
+				}
+
+				// Found a valid spawn point.
 				return true;
 			}
 		}
-		// increment pSpot
+
+		// Get the next spawning point to check.
 		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-	} while ( pSpot != pFirstSpot ); // loop if we're not back to the start
 
-	DevMsg( "CTFCSPlayer::SelectSpawnSpot: couldn't find valid spawn point.\n" );
+		if ( pSpot == pFirstSpot && !bIgnorePlayers )
+		{
+			// Loop through again, ignoring players
+			bIgnorePlayers = true;
+			pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+		}
+	} 
+	// Continue until a valid spawn point is found or we hit the start.
+	while ( pSpot != pFirstSpot ); 
 
-	return true;
+	return false;
 }
 
-CBaseEntity *CTFCSPlayer::EntSelectSpawnPoint( void )
+// Purpose: Find a spawn point for the player.
+CBaseEntity* CTFCSPlayer::EntSelectSpawnPoint()
 {
-	CBaseEntity *pSpot = NULL;
-
+	CBaseEntity *pSpot = g_pLastSpawnPoints[ GetTeamNumber() ];
 	const char *pSpawnPointName = "";
 
-	switch ( GetTeamNumber() )
+	switch( GetTeamNumber() )
 	{
-	case TEAM_BLUE:
-	{
-		pSpawnPointName = "info_player_blue";
-		pSpot = g_pLastBlueSpawn;
-		if ( SelectSpawnSpot( pSpawnPointName, pSpot ) )
-		{
-			g_pLastBlueSpawn = pSpot;
-		}
-	}
-	break;
 	case TEAM_RED:
-	{
-		pSpawnPointName = "info_player_red";
-		pSpot = g_pLastRedSpawn;
-		if ( SelectSpawnSpot( pSpawnPointName, pSpot ) )
-		{
-			g_pLastRedSpawn = pSpot;
-		}
-	}
-	break;
+	case TEAM_BLUE:
 	case TEAM_GREEN:
-	{
-		pSpawnPointName = "info_player_green";
-		pSpot = g_pLastGreenSpawn;
-		if ( SelectSpawnSpot( pSpawnPointName, pSpot ) )
-		{
-			g_pLastGreenSpawn = pSpot;
-		}
-	}
-	break;
 	case TEAM_YELLOW:
-	{
-		pSpawnPointName = "info_player_yellow";
-		pSpot = g_pLastYellowSpawn;
-		if ( SelectSpawnSpot( pSpawnPointName, pSpot ) )
 		{
-			g_pLastYellowSpawn = pSpot;
+			bool bSuccess = false;
+
+			pSpawnPointName = "info_player_teamspawn";
+			bSuccess = SelectSpawnSpot( pSpawnPointName, pSpot );
+
+			if ( bSuccess )
+				g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
+
+			break;
 		}
-	}
-	break;
-	case TEAM_UNASSIGNED:
 	case TEAM_SPECTATOR:
+	case TEAM_UNASSIGNED:
 	default:
-	{
-		pSpot = CBaseEntity::Instance( INDEXENT( 0 ) );
-	}
-	break;
+		{
+			pSpot = CBaseEntity::Instance( INDEXENT(0) );
+			break;		
+		}
 	}
 
 	if ( !pSpot )
 	{
-		pSpawnPointName = "info_player_deathmatch";
-		pSpot = g_pLastDMSpawn;
-		if ( pSpot )
-		{
-			if ( SelectSpawnSpot( pSpawnPointName, pSpot ) )
-				g_pLastDMSpawn = pSpot;
-
-			return pSpot;
-		}
-
 		Warning( "PutClientInServer: no %s on level\n", pSpawnPointName );
 		return CBaseEntity::Instance( INDEXENT( 0 ) );
 	}
