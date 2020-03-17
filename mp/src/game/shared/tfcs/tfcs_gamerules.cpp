@@ -273,7 +273,7 @@ bool CTFCSGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer
 void CTFCSGameRules::PlayerSpawn( CBasePlayer *p )
 {
 	//TODO: Finish this when player class is completed
-	p->Spawn();
+	//p->Spawn();
 	BaseClass::PlayerSpawn( p );
 }
 

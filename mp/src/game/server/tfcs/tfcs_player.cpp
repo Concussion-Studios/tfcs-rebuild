@@ -1,5 +1,6 @@
 #include "cbase.h"
 #include "tfcs_player.h"
+#include "tfcs_player_shared.h"
 #include "tfcs_gamerules.h"
 #include "tfcs_playerclass_parse.h"
 #include "tfcs_shareddefs.h"
@@ -8,6 +9,8 @@
 #include "viewport_panel_names.h"
 #include "client.h"
 #include "team.h"
+#include "GameStats.h"
+#include "datacache/imdlcache.h"
 
 #define TFCS_PLAYER_MODEL "models/player/scout.mdl"
 
@@ -156,6 +159,16 @@ void CTFCSPlayer::TFCSPlayerThink()
 
 void CTFCSPlayer::Precache()
 {
+	// Precache player models
+	for ( int i = 0; i < CLASS_LAST; i++ )
+	{
+		const char *pszModel = GetClassData( i )->m_szModelName;
+		if ( pszModel && pszModel[0] )
+		{
+			PrecacheModel( pszModel );
+		}
+	}
+
 	BaseClass::Precache();
 }
 
@@ -166,6 +179,12 @@ void CTFCSPlayer::InitialSpawn( void )
 
 void CTFCSPlayer::Spawn()
 {
+	MDLCACHE_CRITICAL_SECTION();
+	SetModel( GetClassData( m_Shared.GetClassIndex() )->m_szModelName );
+
+	SetMoveType( MOVETYPE_WALK );
+	RemoveSolidFlags( FSOLID_NOT_SOLID );
+
 	BaseClass::Spawn();
 
 	switch ( GetTeamNumber() )
@@ -185,6 +204,11 @@ void CTFCSPlayer::Spawn()
 	}
 
 	InitClass();
+
+	Vector mins = VEC_HULL_MIN;
+	Vector maxs = VEC_HULL_MAX;
+
+	CollisionProp()->SetSurroundingBoundsType( USE_SPECIFIED_BOUNDS, &mins, &maxs );
 }
 
 // Set the player up with the default weapons, ammo, etc.

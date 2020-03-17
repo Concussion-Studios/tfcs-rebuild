@@ -84,9 +84,11 @@ public: // called by shared code
 	CNetworkVar( int, m_iCrippleLevel );
 private:
 
-	EHANDLE m_hBurnAttacker;
+	EHANDLE m_hBurnAttacker;	//For handling afterburn
 	EHANDLE m_hInfecAttacker;
 	EHANDLE m_hHealer;		//store healers for assists
+
+	//TODO: Maybe something to buff afterburn damage if pyros hit an incindiary, a napalm, and flamethrower the player?
 
 	ITFCSPlayerAnimState* m_PlayerAnimState;
 	CNetworkQAngle( m_angEyeAngles );
