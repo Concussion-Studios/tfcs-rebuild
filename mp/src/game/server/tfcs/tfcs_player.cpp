@@ -217,6 +217,7 @@ void CTFCSPlayer::Precache()
 void CTFCSPlayer::InitialSpawn( void )
 {
 	BaseClass::InitialSpawn();
+	ChangeTeam( TEAM_BLUE );
 }
 
 void CTFCSPlayer::TFCSPushawayThink( void )
@@ -719,6 +720,18 @@ void CTFCSPlayer::ChangeTeam( int iTeamNum )
 	BaseClass::ChangeTeam( iTeamNum );
 }
 
+void CTFCSPlayer::ShowClassSelectMenu()
+{
+	if ( GetTeamNumber() == TEAM_BLUE )
+		ShowViewPortPanel( PANEL_CLASS_BLUE );
+	else if ( GetTeamNumber() == TEAM_RED )
+		ShowViewPortPanel( PANEL_CLASS_RED );
+	else if ( GetTeamNumber() == TEAM_YELLOW )
+		ShowViewPortPanel( PANEL_CLASS_YELLOW );
+	else if ( GetTeamNumber() == TEAM_GREEN )
+		ShowViewPortPanel( PANEL_CLASS_GREEN );
+}
+
 bool CTFCSPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot )
 {
 	// Get an initial spawn point.
@@ -880,4 +893,122 @@ void CTFCSPlayer::SetArmorClass( float flArmorClass )
 int CTFCSPlayer::GetMaxArmor( void )
 {
 	return GetClassData( m_Shared.GetClassIndex() )->m_iMaxArmor;
+}
+
+void CTFCSPlayer::PhysObjectSleep()
+{
+	IPhysicsObject *pObj = VPhysicsGetObject();
+	if ( pObj )
+		pObj->Sleep();
+}
+
+void CTFCSPlayer::PhysObjectWake()
+{
+	IPhysicsObject *pObj = VPhysicsGetObject();
+	if ( pObj )
+		pObj->Wake();
+}
+
+CTFCSPlayerStateInfo *CTFCSPlayer::State_LookupInfo( TFCSPlayerState state )
+{
+	// This table MUST match the 
+	static CTFCSPlayerStateInfo playerStateInfos[] =
+	{
+		{ STATE_ACTIVE, "STATE_ACTIVE", &CTFCSPlayer::State_Enter_ACTIVE, NULL, &CTFCSPlayer::State_PreThink_ACTIVE },
+		{ STATE_WELCOME, "STATE_WELCOME", &CTFCSPlayer::State_Enter_WELCOME, NULL, &CTFCSPlayer::State_PreThink_WELCOME },
+		{ STATE_PICKINGTEAM, "STATE_PICKINGTEAM", &CTFCSPlayer::State_Enter_PICKINGTEAM, NULL, &CTFCSPlayer::State_PreThink_WELCOME },
+		{ STATE_PICKINGCLASS, "STATE_PICKINGCLASS", &CTFCSPlayer::State_Enter_PICKINGCLASS, NULL, &CTFCSPlayer::State_PreThink_WELCOME },
+		{ STATE_DEATH_ANIM, "STATE_DEATH_ANIM", &CTFCSPlayer::State_Enter_DEATH_ANIM, NULL, &CTFCSPlayer::State_PreThink_DEATH_ANIM },
+		{ STATE_OBSERVER_MODE, "STATE_OBSERVER_MODE", &CTFCSPlayer::State_Enter_OBSERVER_MODE, NULL, &CTFCSPlayer::State_PreThink_OBSERVER_MODE }
+	};
+
+	for ( int i = 0; i < ARRAYSIZE( playerStateInfos ); i++ )
+	{
+		if ( playerStateInfos[i].m_iPlayerState == state )
+			return &playerStateInfos[i];
+	}
+
+	return NULL;
+}
+
+void CTFCSPlayer::State_Enter_WELCOME()
+{
+	// Important to set MOVETYPE_NONE or our physics object will fall while we're sitting at one of the intro cameras.
+	SetMoveType( MOVETYPE_NONE );
+	AddSolidFlags( FSOLID_NOT_SOLID );
+
+	PhysObjectSleep();
+
+	// Show info panel
+	if ( IsBot() )
+	{
+		// If they want to auto join a team for debugging, pretend they clicked the button.
+		CCommand args;
+		args.Tokenize( "joingame" );
+		ClientCommand( args );
+	}
+	else
+	{
+		const ConVar *hostname = cvar->FindVar( "hostname" );
+		const char *title = (hostname) ? hostname->GetString() : "MESSAGE OF THE DAY";
+
+		// open info panel on client showing MOTD:
+		KeyValues *data = new KeyValues( "data" );
+		data->SetString( "title", title );		// info panel title
+		data->SetString( "type", "1" );			// show userdata from stringtable entry
+		data->SetString( "msg", "motd" );		// use this stringtable entry
+		//data->SetString( "cmd", TEXTWINDOW_CMD_JOINGAME );// exec this command if panel closed
+		CCommand args;
+		args.Tokenize( "joingame" );
+		ClientCommand( args );
+
+		ShowViewPortPanel( PANEL_INFO, true, data );
+
+		data->deleteThis();
+
+	}
+}
+
+void CTFCSPlayer::State_PreThink_WELCOME()
+{
+	//TODO: Camera stuff
+}
+
+void CTFCSPlayer::State_Enter_PICKINGTEAM()
+{
+	ShowViewPortPanel( PANEL_TEAM );
+	PhysObjectSleep();
+}
+
+void CTFCSPlayer::State_Enter_PICKINGCLASS()
+{
+	ShowClassSelectMenu();
+	PhysObjectSleep();
+}
+
+void CTFCSPlayer::State_Enter_ACTIVE()
+{
+
+}
+void CTFCSPlayer::State_PreThink_ACTIVE()
+{
+
+}
+
+void CTFCSPlayer::State_Enter_OBSERVER_MODE()
+{
+
+}
+void CTFCSPlayer::State_PreThink_OBSERVER_MODE()
+{
+
+}
+
+void CTFCSPlayer::State_Enter_DEATH_ANIM()
+{
+
+}
+void CTFCSPlayer::State_PreThink_DEATH_ANIM()
+{
+
 }

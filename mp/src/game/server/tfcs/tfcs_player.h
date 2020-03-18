@@ -11,6 +11,18 @@
 
 class CTFCSPlayer;
 
+// Function table for each player state.
+class CTFCSPlayerStateInfo
+{
+public:
+	TFCSPlayerState m_iPlayerState;
+	const char *m_pStateName;
+
+	void (CTFCSPlayer::*pfnEnterState)();	// Init and deinit the state.
+	void (CTFCSPlayer::*pfnLeaveState)();
+	void (CTFCSPlayer::*pfnPreThink)();	// Do a PreThink() in this state.
+};
+
 //=============================================================================
 //
 // TE PlayerAnimEvent
@@ -95,6 +107,9 @@ public:
 	virtual bool Event_Gibbed( const CTakeDamageInfo& info ) { return false; }
 	virtual void DeathSound( const CTakeDamageInfo &info );
 
+	void PhysObjectSleep();
+	void PhysObjectWake();
+
 	// Ragdolls.
 	virtual bool BecomeRagdollOnClient( const Vector& force );
 	virtual void CreateRagdollEntity( void );
@@ -164,6 +179,32 @@ private:
 
 	friend class CTFCSRagdoll;
 	friend class CTFCSPlayerAnimState;
+
+	//Player state stuff
+public:
+	void State_Enter( TFCSPlayerState newState );
+	void State_Transition( TFCSPlayerState newState );
+	void State_PreThink();
+	void State_Leave();
+	static CTFCSPlayerStateInfo* State_LookupInfo( TFCSPlayerState state );
+
+	void State_Enter_WELCOME();
+	void State_PreThink_WELCOME();
+
+	void State_Enter_PICKINGTEAM();
+	void State_Enter_PICKINGCLASS();
+
+private:
+	void State_Enter_ACTIVE();
+	void State_PreThink_ACTIVE();
+
+	void State_Enter_OBSERVER_MODE();
+	void State_PreThink_OBSERVER_MODE();
+
+	void State_Enter_DEATH_ANIM();
+	void State_PreThink_DEATH_ANIM();
+
+	void ShowClassSelectMenu();
 };
 
 inline CTFCSPlayer* ToTFCSPlayer( CBaseEntity* pEntity )
@@ -178,7 +219,4 @@ inline CTFCSPlayer* ToTFCSPlayer( CBasePlayer* pPlayer )
 {
 	return static_cast<CTFCSPlayer*>( pPlayer );
 }
-
-//TODO add playerclassinfo
-
 #endif //TFCS_PLAYER_H
