@@ -39,7 +39,7 @@
 #include "LabeledCommandComboBox.h"
 #include "filesystem.h"
 #include "EngineInterface.h"
-#include "BitmapImagePanel.h"
+#include "vgui_controls/BitmapImagePanel.h"
 #include "utlbuffer.h"
 #include "ModInfo.h"
 #include "tier1/convar.h"
