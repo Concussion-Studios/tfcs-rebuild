@@ -65,6 +65,7 @@ $Project "GameUI"
 					"CvarNegateCheckButton.cpp" \
 					"CvarSlider.cpp" \
 					"CvarTextEntry.cpp" \
+					"CvarToggleCheckButton.cpp" \
 					"CreateMultiplayerGameDialog.cpp" \
 					"CreateMultiplayerGameGameplayPage.cpp" \
 					"CreateMultiplayerGameServerPage.cpp" \
