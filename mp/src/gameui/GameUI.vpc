@@ -61,10 +61,8 @@ $Project "GameUI"
 			$File	"$SRCDIR\game\client\vgui_video_player.cpp"
 
 			$File	"AchievementsDialog.cpp" \
-					"BitmapImagePanel.cpp" \
 					"CommandCheckButton.cpp" \
 					"CvarNegateCheckButton.cpp" \
-					"CvarToggleCheckButton.cpp" \
 					"CvarSlider.cpp" \
 					"CvarTextEntry.cpp" \
 					"CreateMultiplayerGameDialog.cpp" \
@@ -75,7 +73,6 @@ $Project "GameUI"
 					"GameUI_Interface.cpp" \
 					"KeyToggleCheckButton.cpp" \
 					"LabeledCommandComboBox.cpp" \
-					"LoadingDialog.cpp" \
 					"ModInfo.cpp" \
 					"MouseMessageForwardingPanel.cpp" \
 					"MultiplayerAdvancedDialog.cpp" \
@@ -86,7 +83,6 @@ $Project "GameUI"
 					"OptionsSubMultiplayer.cpp" \
 					"OptionsSubVideo.cpp" \
 					"OptionsSubVoice.cpp" \
-					"PanelListPanel.cpp" \
 					"PlayerListDialog.cpp" \
 					"RunGameEngine.cpp" \
 					"ScriptObject.cpp" \
@@ -94,6 +90,7 @@ $Project "GameUI"
 					"TextEntryBox.cpp" \
 					"TGAImagePanel.cpp" \
 					"URLButton.cpp" \
+					"PanelListPanel.cpp" \
 					"VControlsListPanel.cpp" \
 					"VGuiSystemModuleLoader.cpp" \
 					"$SRCDIR\common\language.cpp" \

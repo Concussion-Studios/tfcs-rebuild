@@ -12,7 +12,7 @@
 #endif
 
 #include <vgui_controls/PropertyPage.h>
-#include "cvartogglecheckbutton.h"
+#include <vgui_controls/cvartogglecheckbutton.h>
 
 //-----------------------------------------------------------------------------
 // Purpose: server options page of the create game server dialog

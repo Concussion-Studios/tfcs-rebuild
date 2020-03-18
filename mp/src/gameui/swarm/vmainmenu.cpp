@@ -313,7 +313,7 @@ void MainMenu::GetRandomMusic( char *pszBuf, int iBufLength )
 	char szPath[MAX_PATH];
 
 	// Check that there's music available
-	if ( !g_pFullFileSystem->FileExists( "sound/ui/music/gamestartup1.mp3" ) )
+	if ( !g_pFullFileSystem->FileExists( "sound/ui/gamestartup1.mp3" ) )
 	{
 		Assert(false);
 		*pszBuf = '\0';
@@ -323,11 +323,11 @@ void MainMenu::GetRandomMusic( char *pszBuf, int iBufLength )
 	int iLastTrack = 0;
 	do
 	{
-		Q_snprintf( szPath, sizeof(szPath), "sound/ui/music/gamestartup%d.mp3", ++iLastTrack );
+		Q_snprintf( szPath, sizeof(szPath), "sound/ui/gamestartup%d.mp3", ++iLastTrack );
 	} while ( g_pFullFileSystem->FileExists( szPath ) );
 
 	// Pick a random one
-	Q_snprintf( szPath, sizeof( szPath ), "ui/music/gamestartup%d.mp3", RandomInt( 1, iLastTrack - 1 ) );
+	Q_snprintf( szPath, sizeof( szPath ), "ui/gamestartup%d.mp3", RandomInt( 1, iLastTrack - 1 ) );
 	Q_strncpy( pszBuf, szPath, iBufLength);
 }
 

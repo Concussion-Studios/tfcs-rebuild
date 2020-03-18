@@ -13,7 +13,6 @@
 #include "FileSystem.h"
 #include "tier1/convar.h"
 #include "EngineInterface.h"
-#include "CvarToggleCheckButton.h"
 #include "ModInfo.h"
 #include <vstdlib/random.h> // for SRC
 
