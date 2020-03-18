@@ -52,11 +52,12 @@ public:
 	int GetClassIndex( void ) { return m_iClass; }
 	bool Init( int iClass );
 
-	const char *GetName( void ) const		{ return GetClassData( m_iClass )->m_szClassName; }
-	const char *GetModelName( void ) const	{ return GetClassData( m_iClass )->m_szModelName; }
-	float GetMaxSpeed( void )				{ return GetClassData( m_iClass )->m_flMaxSpeed; }
-	int GetMaxHealth( void )				{ return GetClassData( m_iClass )->m_iMaxHealth; }
-	int GetMaxArmor( void )					{ return GetClassData( m_iClass )->m_iMaxArmor; }
+	const char *GetName( void ) const			{ return GetClassData( m_iClass )->m_szClassName; }
+	const char *GetModelName( void ) const		{ return GetClassData( m_iClass )->m_szModelName; }
+	const char *GetArmsModelName( void ) const	{ return GetClassData( m_iClass )->m_szArmsModel; }
+	float GetMaxSpeed( void )					{ return GetClassData( m_iClass )->m_flMaxSpeed; }
+	int GetMaxHealth( void )					{ return GetClassData( m_iClass )->m_iMaxHealth; }
+	int GetMaxArmor( void )						{ return GetClassData( m_iClass )->m_iMaxArmor; }
 	
 	TFCSPlayerClassInfo_t *GetData( int iClass );
 

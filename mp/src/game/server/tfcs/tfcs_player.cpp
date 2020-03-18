@@ -11,33 +11,18 @@
 #include "team.h"
 #include "GameStats.h"
 #include "datacache/imdlcache.h"
-
-#define TFCS_PLAYER_MODEL "models/player/scout.mdl"
-
-#define TFCS_SELF_DAMAGE_MULTIPLIER 0.75
-#define TFCS_DEMOMAN_EXPLOSION_MULTIPLIER 0.85
-#define TFCS_PYRO_FIRE_RESIST_MULTIPLIER 0.5
-
-#define TFCS_MEDIKIT_HEAL 200
-#define TFCS_MEDIKIT_OVERHEAL 10
-#define TFCS_MEDIKIT_MAX_OVERHEAL 50
+#include "predicted_viewmodel.h"
+#include "obstacle_pushaway.h"
+#include "ilagcompensationmanager.h"
+#include "in_buttons.h"
 
 #pragma warning(disable:4189) // TODO: fix this error
 
-EHANDLE g_pLastSpawnPoints[TEAM_COUNT];
+#define CYCLELATCH_UPDATE_INTERVAL	0.2f
 
-class CTEPlayerAnimEvent : public CBaseTempEntity
-{
-public:
-	DECLARE_CLASS( CTEPlayerAnimEvent, CBaseTempEntity );
-	DECLARE_SERVERCLASS();
+EHANDLE g_pLastSpawnPoints[ TEAM_COUNT ];
 
-	CTEPlayerAnimEvent( const char *name ) : CBaseTempEntity( name ) {}
-
-	CNetworkHandle( CBasePlayer, m_hPlayer );
-	CNetworkVar( int, m_iEvent );
-	CNetworkVar( int, m_nData );
-};
+// ***************** CTEPlayerAnimEvent **********************
 
 IMPLEMENT_SERVERCLASS_ST_NOBASE( CTEPlayerAnimEvent, DT_TEPlayerAnimEvent )
 	SendPropEHandle( SENDINFO( m_hPlayer ) ),
@@ -56,6 +41,25 @@ void TE_PlayerAnimEvent( CBasePlayer *pPlayer, PlayerAnimEvent_t event, int nDat
 	g_TEPlayerAnimEvent.m_nData = nData;
 	g_TEPlayerAnimEvent.Create( filter, 0 );
 }
+
+// ***************** CTFCSRagdoll **********************
+
+LINK_ENTITY_TO_CLASS( tfcs_ragdoll, CTFCSRagdoll );
+
+IMPLEMENT_SERVERCLASS_ST( CTFCSRagdoll, DT_TFCSRagdoll )
+	SendPropVector( SENDINFO( m_vecRagdollOrigin ), -1, SPROP_COORD ),
+	SendPropEHandle( SENDINFO( m_hPlayer ) ),
+	SendPropModelIndex( SENDINFO( m_nModelIndex ) ),
+	SendPropInt( SENDINFO( m_nForceBone), 8, 0 ),
+	SendPropVector( SENDINFO( m_vecForce), -1, SPROP_NOSCALE ),
+	SendPropVector( SENDINFO( m_vecRagdollVelocity ), 13, SPROP_ROUNDDOWN, -2048.0f, 2048.0f ),
+	SendPropBool( SENDINFO( m_bGib ) ),
+	SendPropBool( SENDINFO( m_bBurning ) ),
+	SendPropExclude( "DT_BaseEntity", "m_nRenderFX" ),
+END_SEND_TABLE()
+
+// ***************** CTFCSPlayer **********************
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Filters updates to a variable so that only non-local players see
@@ -87,18 +91,29 @@ BEGIN_DATADESC( CTFCSPlayer )
 END_DATADESC()
 
 BEGIN_SEND_TABLE_NOBASE( CTFCSPlayer, DT_TFCSLocalPlayerExclusive )
-	//SendPropVector( SENDINFO( m_vecOrigin ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
+	// send a hi-res origin to the local player for use in prediction
+	SendPropVector	(SENDINFO( m_vecOrigin ), -1,  SPROP_NOSCALE|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
+	SendPropFloat( SENDINFO_VECTORELEM( m_angEyeAngles, 0 ), 8, SPROP_CHANGES_OFTEN, -90.0f, 90.0f ),
+
 	SendPropFloat( SENDINFO( m_ArmorClass ) ),
 	//SendPropInt( SENDINFO( m_Armor ), 8, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_MaxArmor ), 8, SPROP_UNSIGNED ),
 	SendPropFloat( SENDINFO( m_flConcussTime ) ),
 END_SEND_TABLE()
 
-//BEGIN_SEND_TABLE_NOBASE( CTFCSPlayer, DT_TFCSNonLocalPlayerExclusive )
-//END_SEND_TABLE()
+BEGIN_SEND_TABLE_NOBASE( CTFCSPlayer, DT_TFCSNonLocalPlayerExclusive )
+	SendPropVector( SENDINFO( m_vecOrigin ), -1, SPROP_COORD_MP_LOWPRECISION | SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
+	SendPropFloat( SENDINFO_VECTORELEM( m_angEyeAngles, 0 ), 8, SPROP_CHANGES_OFTEN, -90.0f, 90.0f ),
+	SendPropAngle( SENDINFO_VECTORELEM( m_angEyeAngles, 1 ), 10, SPROP_CHANGES_OFTEN ),
+
+	// Only need to latch cycle for other players
+	// If you increase the number of bits networked, make sure to also modify the code below and in the client class.
+	SendPropInt( SENDINFO( m_cycleLatch ), 4, SPROP_UNSIGNED ),
+END_SEND_TABLE()
 
 IMPLEMENT_SERVERCLASS_ST( CTFCSPlayer, DT_TFCSPlayer )
 
+	SendPropExclude( "DT_BaseEntity", "m_vecOrigin" ),
 	SendPropExclude( "DT_BaseAnimating", "m_flPoseParameter" ),
 	SendPropExclude( "DT_BaseAnimating", "m_flPlaybackRate" ),
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
@@ -107,17 +122,16 @@ IMPLEMENT_SERVERCLASS_ST( CTFCSPlayer, DT_TFCSPlayer )
 
 	SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
 
-	SendPropAngle( SENDINFO_VECTORELEM( m_angEyeAngles, 0 ), 11 ),
-	SendPropAngle( SENDINFO_VECTORELEM( m_angEyeAngles, 1 ), 11 ),
-
 	SendPropInt( SENDINFO( m_iRealSequence ), 9 ),
+	SendPropBool( SENDINFO( m_bSpawnInterpCounter ) ),
+	SendPropEHandle( SENDINFO( m_hRagdoll ) ),
 
 	// Data that only gets sent to the local player.
 	SendPropDataTable( SENDINFO_DT( m_Shared ), &REFERENCE_SEND_TABLE( DT_TFCSPlayerShared ) ),
 
 	// Data that only gets sent to the local player.
 	SendPropDataTable( "tfcs_localdata", 0, &REFERENCE_SEND_TABLE( DT_TFCSLocalPlayerExclusive ), SendProxy_SendLocalDataTable ),
-	//SendPropDataTable( "tfcs_nonlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFCSNonLocalPlayerExclusive ), SendProxy_SendNonLocalDataTable ),
+	SendPropDataTable( "tfcs_nonlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFCSNonLocalPlayerExclusive ), SendProxy_SendNonLocalDataTable ),
 
 END_SEND_TABLE()
 
@@ -132,9 +146,18 @@ CTFCSPlayer::CTFCSPlayer()
 	UseClientSideAnimation();
 	m_angEyeAngles.Init();
 
+	SetPredictionEligible( true );
+
+	m_bSpawnInterpCounter = false;
+
+	m_iLastWeaponFireUsercmd = 0;
+
 	m_lifeState = LIFE_DEAD; // Start "dead".
 
 	m_Shared.Init( this );
+
+	m_cycleLatch = 0;
+	m_cycleLatchTimer.Invalidate();
 
 	//SetViewOffset( TFC_PLAYER_VIEW_OFFSET );
 
@@ -143,8 +166,17 @@ CTFCSPlayer::CTFCSPlayer()
 
 CTFCSPlayer::~CTFCSPlayer()
 {
-	m_PlayerAnimState->Release();
+	if ( GetAnimState() )
+		GetAnimState()->Release();
 }
+
+void CTFCSPlayer::UpdateOnRemove()
+{
+	RemoveRagdollEntity();
+
+	BaseClass::UpdateOnRemove();
+}
+
 
 CTFCSPlayer *CTFCSPlayer::CreatePlayer( const char *className, edict_t *ed )
 {
@@ -169,12 +201,29 @@ void CTFCSPlayer::Precache()
 		}
 	}
 
+	// Precache arm models
+	for ( int i = 0; i < CLASS_LAST; i++ )
+	{
+		const char *pszHandModel = GetClassData( i )->m_szArmsModel;
+		if ( pszHandModel && pszHandModel[0] )
+		{
+			PrecacheModel( pszHandModel );
+		}
+	}
+
 	BaseClass::Precache();
 }
 
 void CTFCSPlayer::InitialSpawn( void )
 {
 	BaseClass::InitialSpawn();
+}
+
+void CTFCSPlayer::TFCSPushawayThink( void )
+{
+	// Push physics props out of our way.
+	PerformObstaclePushaway( this );
+	SetNextThink( gpGlobals->curtime + PUSHAWAY_THINK_INTERVAL, "TFCSPushawayThink" );
 }
 
 void CTFCSPlayer::Spawn()
@@ -186,6 +235,16 @@ void CTFCSPlayer::Spawn()
 	RemoveSolidFlags( FSOLID_NOT_SOLID );
 
 	BaseClass::Spawn();
+
+	m_cycleLatchTimer.Start( CYCLELATCH_UPDATE_INTERVAL );
+
+	m_impactEnergyScale = TFCS_PLAYER_PHYSDAMAGE_SCALE;
+
+	// used to not interp players when they spawn
+	m_bSpawnInterpCounter = !m_bSpawnInterpCounter;
+
+	if ( GetAnimState() )
+		GetAnimState()->ClearAnimationState();
 
 	switch ( GetTeamNumber() )
 	{
@@ -203,12 +262,71 @@ void CTFCSPlayer::Spawn()
 		break;
 	}
 
+	RemoveRagdollEntity();
+
 	InitClass();
 
 	Vector mins = VEC_HULL_MIN;
 	Vector maxs = VEC_HULL_MAX;
 
 	CollisionProp()->SetSurroundingBoundsType( USE_SPECIFIED_BOUNDS, &mins, &maxs );
+
+	SetContextThink( &CTFCSPlayer::TFCSPushawayThink, gpGlobals->curtime + PUSHAWAY_THINK_INTERVAL, "TFCSPushawayThink" );
+}
+
+void CTFCSPlayer::CreateViewModel( int index )
+{
+	Assert( index >= 0 && index < MAX_VIEWMODELS );
+
+	if ( GetViewModel( index ) )
+		return;
+
+	CPredictedViewModel* vm = ( CPredictedViewModel* )CreateEntityByName( "predicted_viewmodel" );
+	if ( vm )
+	{
+		vm->SetAbsOrigin( GetAbsOrigin() );
+		vm->SetOwner( this );
+		vm->SetIndex( index );
+		DispatchSpawn( vm );
+		vm->FollowEntity( this, false );
+		m_hViewModel.Set( index, vm );
+	}
+}
+
+void CTFCSPlayer::FireBullets ( const FireBulletsInfo_t &info )
+{
+	// Move other players back to history positions based on local player's lag
+	lagcompensation->StartLagCompensation( this, this->GetCurrentCommand() );
+
+	/*FireBulletsInfo_t modinfo = info;
+
+	CTFCSWeaponBase *pWeapon = dynamic_cast<CTFCSWeaponBase*>( GetActiveWeapon() );
+	if ( pWeapon )
+		modinfo.m_iPlayerDamage = modinfo.m_flDamage = pWeapon->GetTFCSWpnData().m_iPlayerDamage;*/
+
+	NoteWeaponFired();
+
+	BaseClass::FireBullets( info );
+
+	// Move other players back to history positions based on local player's lag
+	lagcompensation->FinishLagCompensation( this );
+}
+
+void CTFCSPlayer::NoteWeaponFired( void )
+{
+	Assert( m_pCurrentCommand );
+	if( m_pCurrentCommand )
+		m_iLastWeaponFireUsercmd = m_pCurrentCommand->command_number;
+}
+
+bool CTFCSPlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const
+{
+	// No need to lag compensate at all if we're not attacking in this command and
+	// we haven't attacked recently.
+	if ( !( pCmd->buttons & IN_ATTACK ) && (pCmd->command_number - m_iLastWeaponFireUsercmd > 5) )
+		return false;
+
+	return BaseClass::WantsLagCompensationOnEntity( pPlayer, pCmd, pEntityTransmitBits );
 }
 
 // Set the player up with the default weapons, ammo, etc.
@@ -239,7 +357,7 @@ void CTFCSPlayer::GiveDefaultItems()
 //Give players their spawn items
 void CTFCSPlayer::InitClass( void )
 {
-	TFCSPlayerClassInfo_t *data = GetClassData( CLASS_SCOUT );
+	TFCSPlayerClassInfo_t *data = GetClassData( /*CLASS_SCOUT*/ m_Shared.GetClassIndex() );
 	int iMaxHealth = data->m_iMaxHealth;
 
 	//Give health and armor
@@ -347,7 +465,25 @@ void CTFCSPlayer::ForceRespawn()
 
 void CTFCSPlayer::PreThink()
 {
+	//Andrew; See http://forums.steampowered.com/forums/showthread.php?t=1372727
+	QAngle vOldAngles = GetLocalAngles();
+	QAngle vTempAngles = GetLocalAngles();
+
+	vTempAngles = EyeAngles();
+
+	if ( vTempAngles[PITCH] > 180.0f )
+		vTempAngles[PITCH] -= 360.0f;
+
+	SetLocalAngles( vTempAngles );
+
 	BaseClass::PreThink();
+
+	//State_PreThink();
+
+	//Reset bullet force accumulator, only lasts one frame
+	m_vecTotalBulletForce = vec3_origin;
+
+	SetLocalAngles( vOldAngles );
 }
 
 void CTFCSPlayer::Think()
@@ -366,12 +502,38 @@ void CTFCSPlayer::PostThink()
 	// Store the eye angles pitch so the client can compute its animation state correctly.
 	m_angEyeAngles = EyeAngles();
 
-	m_PlayerAnimState->Update( m_angEyeAngles[YAW], m_angEyeAngles[PITCH] );
+	if ( GetAnimState() )
+		GetAnimState()->Update( m_angEyeAngles[YAW], m_angEyeAngles[PITCH] );
+
+	if ( IsAlive() && m_cycleLatchTimer.IsElapsed() )
+	{
+		m_cycleLatchTimer.Start( CYCLELATCH_UPDATE_INTERVAL );
+		// Compress the cycle into 4 bits. Can represent 0.0625 in steps which is enough.
+		m_cycleLatch.GetForModify() = 16 * GetCycle();
+	}
 }
 
 int CTFCSPlayer::OnTakeDamage( const CTakeDamageInfo &info )
 {
-	return BaseClass::OnTakeDamage( info );
+	CTakeDamageInfo inputInfoCopy( info );
+
+	bool bTookDamage = ( BaseClass::OnTakeDamage( inputInfoCopy ) != 0 );
+
+	// Early out if the base class took no damage
+	if ( !bTookDamage )
+		return 0;
+
+	m_vecTotalBulletForce += info.GetDamageForce();
+
+	return bTookDamage;
+}
+
+void CTFCSPlayer::DeathSound( const CTakeDamageInfo &info )
+{
+	if ( m_hRagdoll && m_hRagdoll->GetBaseAnimating()->IsDissolving() )
+		 return;
+
+	BaseClass::DeathSound( info );
 }
 
 int CTFCSPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
@@ -422,11 +584,106 @@ int CTFCSPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 	return BaseClass::OnTakeDamage_Alive( info );
 }
 
+bool CTFCSPlayer::ShouldGib( const CTakeDamageInfo &info )
+{
+	if ( info.GetDamageType() & DMG_NEVERGIB )
+		return false;
+
+	if ( info.GetDamageType() & DMG_ALWAYSGIB )
+		return true;
+
+	if ( g_pGameRules->Damage_ShouldGibCorpse( info.GetDamageType() ) )
+	{
+		if ( m_iHealth < -2 )
+			return true;
+	}
+
+	return false;
+}
+
 void CTFCSPlayer::Event_Killed( const CTakeDamageInfo &info )
 {
-	//DoAnimationEvent( PLAYERANIMEVENT_DIE );
+	//update damage info with our accumulated physics force
+	CTakeDamageInfo subinfo = info;
+	subinfo.SetDamageForce( m_vecTotalBulletForce );
 
-	BaseClass::Event_Killed( info );
+	DoAnimationEvent( PLAYERANIMEVENT_DIE );
+
+	bool bBurning = ( ( info.GetDamageType() & ( DMG_BURN | DMG_BLAST | DMG_PLASMA | DMG_ENERGYBEAM ) ) != 0 );
+	bool bGib = ShouldGib(info);
+
+	// Note: since we're dead, it won't draw us on the client, but we don't set EF_NODRAW
+	// because we still want to transmit to the clients in our PVS.
+	CreateRagdollEntity( bGib, bBurning );
+
+	// ...and employ a minor hack to stop CBaseCombatCharacter creating its own
+	const_cast< CTakeDamageInfo* >( &info )->AddDamageType( DMG_REMOVENORAGDOLL );
+
+	// show killer in death cam mode
+	if ( info.GetAttacker() && ( info.GetAttacker()->IsPlayer() || info.GetAttacker()->IsNPC() ) && info.GetAttacker() != ( CBaseEntity* )this )
+	{
+		m_hObserverTarget.Set( info.GetAttacker() );
+		SetFOV( this, 0 ); // reset
+	}
+	else
+		m_hObserverTarget.Set( NULL );
+
+	BaseClass::Event_Killed( subinfo );
+
+	if ( info.GetDamageType() & DMG_DISSOLVE )
+	{
+		if ( m_hRagdoll )
+			m_hRagdoll->GetBaseAnimating()->Dissolve( NULL, gpGlobals->curtime, false, ENTITY_DISSOLVE_NORMAL );
+	}
+}
+
+void CTFCSPlayer::CreateRagdollEntity( void )
+{
+	CreateRagdollEntity( false, false );
+}
+
+void CTFCSPlayer::CreateRagdollEntity( bool bGib, bool bBurning )
+{
+	RemoveRagdollEntity();
+
+	// If we already have a ragdoll, don't make another one.
+	CTFCSRagdoll* pRagdoll = dynamic_cast< CTFCSRagdoll* >( m_hRagdoll.Get() );
+
+	// create a new one
+	if ( !pRagdoll )
+		pRagdoll = dynamic_cast<CTFCSRagdoll*>( CreateEntityByName( "tfcs_ragdoll" ) );
+
+	if ( pRagdoll )
+	{
+		pRagdoll->m_hPlayer = this;
+		pRagdoll->m_vecRagdollOrigin = GetAbsOrigin();
+		pRagdoll->m_vecRagdollVelocity = GetAbsVelocity();
+		pRagdoll->m_nModelIndex = m_nModelIndex;
+		pRagdoll->m_nForceBone = m_nForceBone;
+		pRagdoll->m_vecForce = m_vecForce;
+		pRagdoll->m_bGib = bGib;
+		pRagdoll->m_bBurning = bBurning;
+		pRagdoll->SetAbsOrigin( GetAbsOrigin() );
+	}
+
+	//AddEffects(EF_NODRAW | EF_NOSHADOW);
+
+	// ragdolls will be removed on round restart automatically
+	m_hRagdoll = pRagdoll;
+}
+
+void CTFCSPlayer::RemoveRagdollEntity()
+{
+	if ( m_hRagdoll )
+	{
+		UTIL_RemoveImmediate( m_hRagdoll );
+		m_hRagdoll = NULL;
+	}
+}
+
+bool CTFCSPlayer::BecomeRagdollOnClient( const Vector& force )
+{
+	return true;
 }
 
 void CTFCSPlayer::CommitSuicide( bool bExplode /* = false */, bool bForce /*= false*/ )

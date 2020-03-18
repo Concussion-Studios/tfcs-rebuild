@@ -7,11 +7,30 @@
 #include "shareddefs.h"
 #include "mp_shareddefs.h"
 
+//-----------------------------------------------------------------------------
+// Gamerules.
+//-----------------------------------------------------------------------------
 #define TFCS_GAME_DESCRIPTION "Team Fortress Classic: Source"
 #define TFCS_MAX_PLAYERS 128
 
+//-----------------------------------------------------------------------------
+// Player settings.
+//-----------------------------------------------------------------------------
 #define TFCS_DEFAULT_RUN_SPEED 220.0f
 #define TFCS_MAX_WEAPON_SLOTS 10
+
+#define TFCS_SELF_DAMAGE_MULTIPLIER 0.75
+#define TFCS_DEMOMAN_EXPLOSION_MULTIPLIER 0.85
+#define TFCS_PYRO_FIRE_RESIST_MULTIPLIER 0.5
+
+#define TFCS_MEDIKIT_HEAL 200
+#define TFCS_MEDIKIT_OVERHEAL 10
+#define TFCS_MEDIKIT_MAX_OVERHEAL 50
+#define TFCS_PLAYER_PHYSDAMAGE_SCALE 4.0f
+
+// Player avoidance
+#define PUSHAWAY_THINK_INTERVAL		( 1.0f / 20.0f )
+#define TFCS_PUSHAWAY_THINK_INTERVAL		( 1.0f / 20.0f )
 
 //-----------------------------------------------------------------------------
 // Teams.

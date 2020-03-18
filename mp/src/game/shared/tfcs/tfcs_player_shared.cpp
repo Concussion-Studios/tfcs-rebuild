@@ -1,14 +1,18 @@
 #include "cbase.h"
 #include "tfcs_player_shared.h"
 #include "tfcs_playeranimstate.h"
+#include "takedamageinfo.h"
 
 #ifdef CLIENT_DLL
 	#include "c_tfcs_player.h"
+	#include "prediction.h"
 #else
 	#include "tfcs_player.h"
 
 	void TE_PlayerAnimEvent( CBasePlayer* pPlayer, PlayerAnimEvent_t playerAnim, int nData );
 #endif
+
+void SpawnBlood( Vector vecSpot, const Vector& vecDir, int bloodColor, float flDamage );
 
 //=============================================================================
 //
@@ -129,7 +133,15 @@ ITFCSPlayerAnimState* CreatePlayerAnimState( CTFCSPlayer *pPlayer )
 
 void CTFCSPlayer::DoAnimationEvent( PlayerAnimEvent_t event, int nData )
 {
-	m_PlayerAnimState->DoAnimationEvent( event, nData );
+#ifdef CLIENT_DLL
+	if ( IsLocalPlayer() && prediction->InPrediction() && !prediction->IsFirstTimePredicted() )
+		return;
+
+	MDLCACHE_CRITICAL_SECTION();
+#endif
+
+	if ( GetAnimState() )
+		GetAnimState()->DoAnimationEvent( event, nData );
 
 #ifndef CLIENT_DLL
 	TE_PlayerAnimEvent( this, event, nData );	// Send to any clients who can see this guy.
@@ -275,4 +287,66 @@ void CTFCSPlayer::SetAnimation( PLAYER_ANIM playerAnim )
 #else
 	return; // This is handle in the server
 #endif
+}
+
+void CTFCSPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator )
+{
+	Vector vecOrigin = ptr->endpos - vecDir * 4;
+
+	float flDistance = 0.0f;
+	
+	if ( info.GetAttacker() )
+		flDistance = ( ptr->endpos - info.GetAttacker()->GetAbsOrigin() ).Length();
+
+	if ( m_takedamage )
+	{
+		AddMultiDamage( info, this );
+
+		int blood = BloodColor();
+		
+		CBaseEntity *pAttacker = info.GetAttacker();
+
+		if ( pAttacker )
+		{
+			if ( pAttacker->InSameTeam( this ) == true )
+				return;
+		}
+
+		if ( blood != DONT_BLEED )
+		{
+			SpawnBlood( vecOrigin, vecDir, blood, flDistance );	// a little surface blood.
+			TraceBleed( flDistance, vecDir, ptr, info.GetDamageType() );
+		}
+	}
+}
+
+bool CTFCSPlayer::ShouldCollide( int collisionGroup, int contentsMask ) const
+{
+	if ( collisionGroup == COLLISION_GROUP_PLAYER_MOVEMENT || collisionGroup == COLLISION_GROUP_PROJECTILE )
+	{
+		switch( GetTeamNumber() )
+		{
+		case TEAM_BLUE:
+			if ( !( contentsMask & CONTENTS_BLUETEAM ) )
+				return false;
+			break;
+
+		case TEAM_RED:
+			if ( !( contentsMask & CONTENTS_REDTEAM ) )
+				return false;
+			break;
+
+		case TEAM_GREEN:
+			if ( !( contentsMask & CONTENTS_GREENTEAM ) )
+				return false;
+			break;
+
+		case TEAM_YELLOW:
+			if ( !( contentsMask & CONTENTS_YELLOWTEAM ) )
+				return false;
+			break;
+		}
+	}
+
+	return BaseClass::ShouldCollide( collisionGroup, contentsMask );
 }

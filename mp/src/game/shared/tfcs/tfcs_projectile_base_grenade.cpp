@@ -76,7 +76,7 @@ END_NETWORK_TABLE()
 			{
 //Tony; FIXME!
 //				C_SDKPlayer *pPlayer = dynamic_cast<C_SDKPlayer*>( GetThrower() );
-//				if ( pPlayer && pPlayer->m_PlayerAnimState->IsThrowingGrenade() )
+//				if ( pPlayer && pPlayer->GetAnimState()->IsThrowingGrenade() )
 //				{
 //					return 0;
 //				}

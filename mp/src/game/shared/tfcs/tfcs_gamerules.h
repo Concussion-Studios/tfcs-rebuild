@@ -37,7 +37,7 @@ public:
 	virtual ~CTFCSGameRules();
 
 	virtual bool ShouldCollide( int collisionGroup0, int collisionGroup1 );
-	virtual bool IsTeamplay( void ) { return false; }
+	//virtual bool IsTeamplay( void ) { return false; }
 
 #ifdef CLIENT_DLL
 	DECLARE_CLIENTCLASS_NOBASE();
