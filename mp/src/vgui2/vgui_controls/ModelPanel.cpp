@@ -15,7 +15,7 @@
 #include <vgui/ISurface.h>
 #include <vgui/IImage.h>
 #include <vgui_controls/Label.h>
-#include "ModelPanel.h"
+#include <vgui_controls/ModelPanel.h>
 
 #include "materialsystem/imaterialsystem.h"
 #include "engine/ivmodelinfo.h"
