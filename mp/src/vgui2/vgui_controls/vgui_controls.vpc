@@ -23,6 +23,11 @@ $Project "vgui_controls"
 {
 	$Folder	"Source Files"
 	{
+		$File	"ColorPicker.cpp"
+		$File	"PromptSimple.cpp"
+		$File	"TokenChannels.cpp"
+		$File	"Utilities.cpp"
+		$File	"ModelPanel.cpp"
 		$File	"AnalogBar.cpp"
 		$File	"AnimatingImagePanel.cpp"
 		$File	"AnimationController.cpp"
@@ -104,6 +109,11 @@ $Project "vgui_controls"
 
 	$Folder	"Public Header Files"
 	{
+		$File	"$SRCDIR\public\vgui_controls\ColorPicker.h"
+		$File	"$SRCDIR\public\vgui_controls\PromptSimple.h"
+		$File	"$SRCDIR\public\vgui_controls\TokenChannels.h"
+		$File	"$SRCDIR\public\vgui_controls\Utilities.h"
+		$File	"$SRCDIR\public\vgui_controls\ModelPanel.h"
 		$File	"$SRCDIR\public\vgui_controls\AnalogBar.h"
 		$File	"$SRCDIR\public\vgui_controls\AnimatingImagePanel.h"
 		$File	"$SRCDIR\public\vgui_controls\AnimationController.h"
