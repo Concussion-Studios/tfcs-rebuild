@@ -22,6 +22,8 @@
 
 EHANDLE g_pLastSpawnPoints[ TEAM_COUNT ];
 
+ConVar TFCS_ShowStateTransitions( "tfcs_ShowStateTransitions", "-2", FCVAR_CHEAT, "tfcs_ShowStateTransitions <ent index or -1 for all>. Show player state transitions." );
+
 // ***************** CTEPlayerAnimEvent **********************
 
 IMPLEMENT_SERVERCLASS_ST_NOBASE( CTEPlayerAnimEvent, DT_TEPlayerAnimEvent )
@@ -217,7 +219,7 @@ void CTFCSPlayer::Precache()
 void CTFCSPlayer::InitialSpawn( void )
 {
 	BaseClass::InitialSpawn();
-	ChangeTeam( TEAM_BLUE );
+	State_Enter( STATE_WELCOME );
 }
 
 void CTFCSPlayer::TFCSPushawayThink( void )
@@ -907,6 +909,38 @@ void CTFCSPlayer::PhysObjectWake()
 	IPhysicsObject *pObj = VPhysicsGetObject();
 	if ( pObj )
 		pObj->Wake();
+}
+
+void CTFCSPlayer::State_Transition( TFCSPlayerState newState )
+{
+	State_Leave();
+	State_Enter( newState );
+}
+
+void CTFCSPlayer::State_Enter( TFCSPlayerState newState )
+{
+	m_iPlayerState = newState;
+	m_pCurStateInfo = State_LookupInfo( newState );
+
+	if ( TFCS_ShowStateTransitions.GetInt() == -1 || TFCS_ShowStateTransitions.GetInt() == entindex() )
+	{
+		if ( m_pCurStateInfo )
+			Msg( "ShowStateTransitions: entering '%s'\n", m_pCurStateInfo->m_pStateName );
+		else
+			Msg( "ShowStateTransitions: entering #%d\n", newState );
+	}
+
+	// Initialize the new state.
+	if ( m_pCurStateInfo && m_pCurStateInfo->pfnEnterState )
+		(this->*m_pCurStateInfo->pfnEnterState)();
+}
+
+void CTFCSPlayer::State_Leave( void )
+{
+	if ( m_pCurStateInfo && m_pCurStateInfo->pfnLeaveState )
+	{
+		(this->*m_pCurStateInfo->pfnLeaveState)();
+	}
 }
 
 CTFCSPlayerStateInfo *CTFCSPlayer::State_LookupInfo( TFCSPlayerState state )

@@ -165,11 +165,14 @@ private:
 
 	//TODO: Maybe something to buff afterburn damage if pyros hit an incindiary, a napalm, and flamethrower the player?
 
+	CTFCSPlayerStateInfo *m_pCurStateInfo;
+
 	ITFCSPlayerAnimState* m_PlayerAnimState;
 	CNetworkQAngle( m_angEyeAngles );
 	CNetworkVar( bool, m_bSpawnInterpCounter );
 	CNetworkHandle( CBaseEntity, m_hRagdoll );
 	CNetworkVar( int, m_iRealSequence );
+	CNetworkVar( int, m_iPlayerState );
 
 	int m_iLastWeaponFireUsercmd;
 	Vector m_vecTotalBulletForce;	//Accumulator for bullet force in a single frame
