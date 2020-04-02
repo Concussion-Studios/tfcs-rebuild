@@ -378,8 +378,8 @@ void ClientModeTFCS::FireGameEvent( IGameEvent *event )
 		//
 		if ( pPlayer && pPlayer->IsLocalPlayer() )
 			pPlayer->TeamChange( team ); // that's other guy.
-		else if ( bIsLocalPlayer )
-			C_TFCSPlayer::TeamChangeStatic( team ); // that's me.
+		//else if ( bIsLocalPlayer )
+		//	C_TFCSPlayer::TeamChangeStatic( team ); // that's me.
 
 		return;
 	}

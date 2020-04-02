@@ -27,8 +27,8 @@
 #include "iservervehicle.h"
 #include "func_break.h"
 
-#ifdef HL2MP
-	#include "hl2mp_gamerules.h"
+#ifdef TFCSOURCE_DLL
+	#include "tfcs_gamerules.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -369,24 +369,24 @@ bool CBaseCombatWeapon::WeaponLOSCondition( const Vector &ownerPos, const Vector
 //-----------------------------------------------------------------------------
 int CBaseCombatWeapon::WeaponRangeAttack1Condition( float flDot, float flDist )
 {
- 	if ( UsesPrimaryAmmo() && !HasPrimaryAmmo() )
- 	{
- 		return COND_NO_PRIMARY_AMMO;
- 	}
- 	else if ( flDist < m_fMinRange1) 
- 	{
- 		return COND_TOO_CLOSE_TO_ATTACK;
- 	}
- 	else if (flDist > m_fMaxRange1) 
- 	{
- 		return COND_TOO_FAR_TO_ATTACK;
- 	}
- 	else if (flDot < 0.5) 	// UNDONE: Why check this here? Isn't the AI checking this already?
- 	{
- 		return COND_NOT_FACING_ATTACK;
- 	}
+	if ( UsesPrimaryAmmo() && !HasPrimaryAmmo() )
+	{
+		return COND_NO_PRIMARY_AMMO;
+	}
+	else if ( flDist < m_fMinRange1) 
+	{
+		return COND_TOO_CLOSE_TO_ATTACK;
+	}
+	else if (flDist > m_fMaxRange1) 
+	{
+		return COND_TOO_FAR_TO_ATTACK;
+	}
+	else if (flDot < 0.5) 	// UNDONE: Why check this here? Isn't the AI checking this already?
+	{
+		return COND_NOT_FACING_ATTACK;
+	}
 
- 	return COND_CAN_RANGE_ATTACK1;
+	return COND_CAN_RANGE_ATTACK1;
 }
 
 //-----------------------------------------------------------------------------
@@ -567,7 +567,7 @@ void CBaseCombatWeapon::Materialize( void )
 	if ( IsEffectActive( EF_NODRAW ) )
 	{
 		// changing from invisible state to visible.
-#ifdef HL2MP
+#ifdef TFCSOURCE_DLL
 		EmitSound( "AlyxEmp.Charge" );
 #else
 		EmitSound( "BaseCombatWeapon.WeaponMaterialize" );
@@ -576,13 +576,13 @@ void CBaseCombatWeapon::Materialize( void )
 		RemoveEffects( EF_NODRAW );
 		DoMuzzleFlash();
 	}
-#ifdef HL2MP
+#ifdef TFCSOURCE_DLL
 	if ( HasSpawnFlags( SF_NORESPAWN ) == false )
 	{
 		VPhysicsInitNormal( SOLID_BBOX, GetSolidFlags() | FSOLID_TRIGGER, false );
 		SetMoveType( MOVETYPE_VPHYSICS );
 
-		HL2MPRules()->AddLevelDesignerPlacedObject( this );
+		TFCSGameRules()->AddLevelDesignerPlacedObject( this );
 	}
 #else
 	SetSolid( SOLID_BBOX );

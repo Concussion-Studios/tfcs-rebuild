@@ -1,3 +1,8 @@
+//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ============//
+//
+// Purpose: 
+//
+//=============================================================================//
 #ifndef TFCS_PLAYERANIMSTATE_H
 #define TFCS_PLAYERANIMSTATE_H
 #ifdef _WIN32
@@ -5,98 +10,61 @@
 #endif
 
 #include "convar.h"
-#include "iplayeranimstate.h"
+#include "multiplayer_animstate.h"
 #include "base_playeranimstate.h"
-#include "studio.h"
-
-#ifdef CLIENT_DLL
-	#define CTFCSPlayer C_TFCSPlayer
+#if defined( CLIENT_DLL )
+class C_TFCSPlayer;
+#define CTFCSPlayer C_TFCSPlayer
 #else
-	class CTFCSPlayer;
+class CTFCSPlayer;
 #endif
 
-// When moving this fast, he plays run anim.
-#define ARBITRARY_RUN_SPEED		175.0f
-
-#define MAX_STANDING_RUN_SPEED	320
-#define MAX_CROUCHED_RUN_SPEED	110
-
-enum PlayerAnimEvent_t
-{
-	PLAYERANIMEVENT_FIRE_GUN=0,
-	PLAYERANIMEVENT_THROW_GRENADE,
-	PLAYERANIMEVENT_JUMP,
-	PLAYERANIMEVENT_RELOAD,
-	PLAYERANIMEVENT_DIE,
-	
-	PLAYERANIMEVENT_COUNT
-};
-
-class ITFCSPlayerAnimState : virtual public IPlayerAnimState
+// ------------------------------------------------------------------------------------------------ //
+// CTFCSPlayerAnimState declaration.
+// ------------------------------------------------------------------------------------------------ //
+class CTFCSPlayerAnimState : public CMultiPlayerAnimState
 {
 public:
-	// This is called by both the client and the server in the same way to trigger events for
-	// players firing, jumping, throwing grenades, etc.
-	virtual void DoAnimationEvent( PlayerAnimEvent_t event, int nData ) = 0;
-};
-
-class CTFCSPlayerAnimState : public ITFCSPlayerAnimState, public CBasePlayerAnimState
-{
-public:
-
-#ifdef CLIENT_DLL
-	friend class C_TFCSPlayer;
-	typedef C_TFCSPlayer OuterClass;
-#else
-	friend class CTFCSPlayer;
-	typedef CTFCSPlayer OuterClass;
-#endif
 	
-	DECLARE_CLASS( CTFCSPlayerAnimState, CBasePlayerAnimState );
+	DECLARE_CLASS( CTFCSPlayerAnimState, CMultiPlayerAnimState );
 
 	CTFCSPlayerAnimState();
-	void Init( OuterClass* pPlayer );
+	CTFCSPlayerAnimState( CBasePlayer *pPlayer, MultiPlayerMovementData_t &movementData );
+	~CTFCSPlayerAnimState();
 
-	// This is called by both the client and the server in the same way to trigger events for
-	// players firing, jumping, throwing grenades, etc.
-	virtual void DoAnimationEvent( PlayerAnimEvent_t event, int nData );
-	virtual int CalcAimLayerSequence( float *flCycle, float *flAimSequenceWeight, bool bForceIdle );
-	virtual float SetOuterBodyYaw( float flValue );
-	virtual Activity CalcMainActivity();
-	virtual float GetCurrentMaxGroundSpeed();
+	void InitTFCSAnimState( CTFCSPlayer *pPlayer );
+	CTFCSPlayer *GetTFCSPlayer( void ) { return m_pTFCSPlayer; }
+
 	virtual void ClearAnimationState();
-	virtual bool ShouldUpdateAnimState();
-	virtual int SelectWeightedSequence( Activity activity ) ;
+	virtual Activity TranslateActivity( Activity actDesired );
+	virtual void Update( float eyeYaw, float eyePitch );
 
-	float CalcMovementPlaybackRate( bool *bIsMoving );
+	void	DoAnimationEvent( PlayerAnimEvent_t event, int nData = 0 );
 
-	virtual void ComputePoseParam_BodyPitch( CStudioHdr *pStudioHdr );
+	bool	HandleMoving( Activity &idealActivity );
+	bool	HandleJumping( Activity &idealActivity );
+	bool	HandleDucking( Activity &idealActivity );
+	bool	HandleSwimming( Activity &idealActivity );
 
+	virtual float GetCurrentMaxGroundSpeed();
+
+protected:
+	CModAnimConfig		m_AnimConfig;
 
 private:
+	//Tony; temp till 9way!
+	bool						SetupPoseParameters( CStudioHdr *pStudioHdr );
+	virtual void				EstimateYaw( void );
+	virtual void				ComputePoseParam_MoveYaw( CStudioHdr *pStudioHdr );
+	virtual void				ComputePoseParam_AimPitch( CStudioHdr *pStudioHdr );
+	virtual void				ComputePoseParam_AimYaw( CStudioHdr *pStudioHdr );
+	void						ComputePlaybackRate();
 	
-	const char* GetWeaponSuffix();
-	bool HandleJumping();
-	bool HandleDeath( Activity *deathActivity );
-
-
-private:
-	
-	OuterClass *m_pOuter;
-	
-	bool m_bJumping;
-	bool m_bFirstJumpFrame;
-	float m_flJumpStartTime;
-
-	bool m_bFiring;
-	float m_flFireStartTime;
-
-	bool m_bDying;
-	Activity m_DeathActivity;
+	CTFCSPlayer   *m_pTFCSPlayer;
+	bool		m_bInAirWalk;
+	float		m_flHoldDeployedPoseUntilTime;
 };
 
-// If this is set, then the game code needs to make sure to send player animation events
-// to the local player if he's the one being watched.
-extern ConVar cl_showanimstate;
+CTFCSPlayerAnimState *CreateTFCSPlayerAnimState( CTFCSPlayer *pPlayer );
 
 #endif // TFCS_PLAYERANIMSTATE_H

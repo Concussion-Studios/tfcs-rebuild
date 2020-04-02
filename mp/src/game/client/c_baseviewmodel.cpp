@@ -197,13 +197,22 @@ bool C_BaseViewModel::Interpolate( float currentTime )
 
 bool C_BaseViewModel::ShouldFlipViewModel()
 {
-#ifdef CSTRIKE_DLL
+//Tony; changed for SDK so that the CSS models can be flipped out of the box.
+#if defined( CSTRIKE_DLL ) || defined ( SDK_DLL )
+	//Tony; move this up here.
+	if (!cl_righthand.GetBool())
+		return false;
+
 	// If cl_righthand is set, then we want them all right-handed.
 	CBaseCombatWeapon *pWeapon = m_hWeapon.Get();
 	if ( pWeapon )
 	{
 		const FileWeaponInfo_t *pInfo = &pWeapon->GetWpnData();
-		return pInfo->m_bAllowFlipping && pInfo->m_bBuiltRightHanded != cl_righthand.GetBool();
+		//Tony; if they're already built right handed (default) then we can get out.
+		if (pInfo->m_bBuiltRightHanded)
+			return false;
+
+		return pInfo->m_bAllowFlipping;
 	}
 #endif
 

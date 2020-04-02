@@ -1,30 +1,57 @@
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//
+// Purpose:		Player for HL2.
+//
+//=============================================================================//
+
 #include "cbase.h"
+//#include "weapon_hl2mpbasehlmpcombatweapon.h"
 #include "tfcs_player.h"
+#include "globalstate.h"
+#include "game.h"
+#include "gamerules.h"
 #include "tfcs_player_shared.h"
+#include "predicted_viewmodel.h"
+#include "in_buttons.h"
 #include "tfcs_gamerules.h"
+#include "tfcs_player_shared.h"
 #include "tfcs_playerclass_parse.h"
-#include "tfcs_shareddefs.h"
-//#include "multiplayer_animstate.h"
+#include "KeyValues.h"
+#include "team.h"
+//#include "weapon_hl2mpbase.h"
+#include "entity_spawnpoint.h"
+#include "eventqueue.h"
+#include "gamestats.h"
+#include "tier0/vprof.h"
+#include "bone_setup.h"
+#include "datacache/imdlcache.h"
+#include "obstacle_pushaway.h"
+#include "ilagcompensationmanager.h"
 #include "keyvalues.h"
 #include "viewport_panel_names.h"
 #include "client.h"
-#include "team.h"
 #include "GameStats.h"
-#include "datacache/imdlcache.h"
-#include "predicted_viewmodel.h"
-#include "obstacle_pushaway.h"
-#include "ilagcompensationmanager.h"
-#include "in_buttons.h"
 
-#pragma warning(disable:4189) // TODO: fix this error
+// memdbgon must be the last include file in a .cpp file!!!
+#include "tier0/memdbgon.h"
 
+extern int	gEvilImpulse101;
+
+#define TFCS_PLAYER_PHYSDAMAGE_SCALE 4.0f
+#define TFCS_PUSHAWAY_THINK_CONTEXT	"TFCSPushawayThink"
 #define CYCLELATCH_UPDATE_INTERVAL	0.2f
+
+#define TEAM_CHANGE_INTERVAL 5.0f
+
+#pragma warning( disable : 4355 )
+#pragma warning( disable : 4189 )
 
 EHANDLE g_pLastSpawnPoints[ TEAM_COUNT ];
 
-ConVar TFCS_ShowStateTransitions( "tfcs_ShowStateTransitions", "-2", FCVAR_CHEAT, "tfcs_ShowStateTransitions <ent index or -1 for all>. Show player state transitions." );
+ConVar tfcs_showstatetransitions( "tfcs_ShowStateTransitions", "-2", FCVAR_CHEAT, "tfcs_ShowStateTransitions <ent index or -1 for all>. Show player state transitions." );
 
-// ***************** CTEPlayerAnimEvent **********************
+
+//* **************** CTEPlayerAnimEvent* *********************
 
 IMPLEMENT_SERVERCLASS_ST_NOBASE( CTEPlayerAnimEvent, DT_TEPlayerAnimEvent )
 	SendPropEHandle( SENDINFO( m_hPlayer ) ),
@@ -36,15 +63,18 @@ static CTEPlayerAnimEvent g_TEPlayerAnimEvent( "PlayerAnimEvent" );
 
 void TE_PlayerAnimEvent( CBasePlayer *pPlayer, PlayerAnimEvent_t event, int nData )
 {
-	CPVSFilter filter( pPlayer->EyePosition() );
+	CPVSFilter filter( (const Vector&)pPlayer->EyePosition() );
 
+	//Tony; use prediction rules.
+	filter.UsePredictionRules();
+	
 	g_TEPlayerAnimEvent.m_hPlayer = pPlayer;
 	g_TEPlayerAnimEvent.m_iEvent = event;
 	g_TEPlayerAnimEvent.m_nData = nData;
 	g_TEPlayerAnimEvent.Create( filter, 0 );
 }
 
-// ***************** CTFCSRagdoll **********************
+//* **************** CTFCSRagdoll* *********************
 
 LINK_ENTITY_TO_CLASS( tfcs_ragdoll, CTFCSRagdoll );
 
@@ -60,29 +90,76 @@ IMPLEMENT_SERVERCLASS_ST( CTFCSRagdoll, DT_TFCSRagdoll )
 	SendPropExclude( "DT_BaseEntity", "m_nRenderFX" ),
 END_SEND_TABLE()
 
-// ***************** CTFCSPlayer **********************
+//* **************** CTFCSPlayer* *********************
 
+LINK_ENTITY_TO_CLASS( player, CTFCSPlayer );
 
-//-----------------------------------------------------------------------------
-// Purpose: Filters updates to a variable so that only non-local players see
-// the changes.  This is so we can send a low-res origin to non-local players
-// while sending a hi-res one to the local player.
-// Input  : *pVarData -
-//			*pOut -
-//			objectID -
-//-----------------------------------------------------------------------------
+extern void SendProxy_Origin( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID );
 
+//Tony; this should ideally be added to dt_send.cpp
 void* SendProxy_SendNonLocalDataTable( const SendProp *pProp, const void *pStruct, const void *pVarData, CSendProxyRecipients *pRecipients, int objectID )
 {
 	pRecipients->SetAllRecipients();
 	pRecipients->ClearRecipient( objectID - 1 );
-	return (void *)pVarData;
+	return ( void * )pVarData;
 }
 REGISTER_SEND_PROXY_NON_MODIFIED_POINTER( SendProxy_SendNonLocalDataTable );
 
-// -------------------------------------------------------------------------------- //
-// Tables.
-// -------------------------------------------------------------------------------- //
+BEGIN_SEND_TABLE_NOBASE( CTFCSPlayer, DT_TFCSLocalPlayerExclusive )
+	// send a hi-res origin to the local player for use in prediction
+	SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_NOSCALE|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
+	SendPropFloat( SENDINFO_VECTORELEM(m_angEyeAngles, 0), 8, SPROP_CHANGES_OFTEN, -90.0f, 90.0f ),
+
+	SendPropFloat( SENDINFO( m_ArmorClass ) ),
+	//SendPropInt( SENDINFO( m_Armor ), 8, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_MaxArmor ), 8, SPROP_UNSIGNED ),
+	SendPropFloat( SENDINFO( m_flConcussTime ) ),
+END_SEND_TABLE()
+
+BEGIN_SEND_TABLE_NOBASE( CTFCSPlayer, DT_TFCSNonLocalPlayerExclusive )
+	// send a lo-res origin to other players
+	SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_COORD_MP_LOWPRECISION|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
+	SendPropFloat( SENDINFO_VECTORELEM(m_angEyeAngles, 0), 8, SPROP_CHANGES_OFTEN, -90.0f, 90.0f ),
+	SendPropAngle( SENDINFO_VECTORELEM(m_angEyeAngles, 1), 10, SPROP_CHANGES_OFTEN ),
+	// Only need to latch cycle for other players
+	// If you increase the number of bits networked, make sure to also modify the code below and in the client class.
+	SendPropInt( SENDINFO( m_cycleLatch ), 4, SPROP_UNSIGNED ),
+END_SEND_TABLE()
+
+IMPLEMENT_SERVERCLASS_ST(CTFCSPlayer, DT_TFCSPlayer)
+	SendPropExclude( "DT_BaseAnimating", "m_flPoseParameter" ),
+	SendPropExclude( "DT_BaseAnimating", "m_flPlaybackRate" ),	
+	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
+	SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
+	SendPropExclude( "DT_BaseAnimatingOverlay", "overlay_vars" ),
+
+	SendPropExclude( "DT_BaseEntity", "m_vecOrigin" ),
+
+	// playeranimstate and clientside animation takes care of these on the client
+	SendPropExclude( "DT_ServerAnimationData" , "m_flCycle" ),	
+	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
+
+	SendPropExclude( "DT_BaseFlex", "m_flexWeight" ),
+	SendPropExclude( "DT_BaseFlex", "m_blinktoggle" ),
+	SendPropExclude( "DT_BaseFlex", "m_viewtarget" ),
+
+	// Other players' water level is networked for animations.
+	SendPropInt( SENDINFO( m_nWaterLevel ), 2, SPROP_UNSIGNED ),
+	SendPropExclude( "DT_LocalPlayerExclusive", "m_nWaterLevel" ),
+
+	// Data that only gets sent to the local player.
+	SendPropDataTable( SENDINFO_DT( m_Shared ), &REFERENCE_SEND_TABLE( DT_TFCSPlayerShared ) ),
+
+	// Data that only gets sent to the local player.
+	SendPropDataTable( "tfcs_localdata", 0, &REFERENCE_SEND_TABLE(DT_TFCSLocalPlayerExclusive), SendProxy_SendLocalDataTable ),
+	// Data that gets sent to all other players
+	SendPropDataTable( "tfcs_nonlocaldata", 0, &REFERENCE_SEND_TABLE(DT_TFCSNonLocalPlayerExclusive), SendProxy_SendNonLocalDataTable ),
+
+	SendPropEHandle( SENDINFO( m_hRagdoll ) ),
+	SendPropInt( SENDINFO( m_iSpawnInterpCounter), 4 ),
+		
+END_SEND_TABLE()
+
 BEGIN_DATADESC( CTFCSPlayer )
 	DEFINE_FIELD( m_ArmorClass, FIELD_FLOAT ),
 	//DEFINE_FIELD( m_ArmorValue, FIELD_INTEGER ),
@@ -92,67 +169,21 @@ BEGIN_DATADESC( CTFCSPlayer )
 	DEFINE_FIELD( m_iCrippleLevel, FIELD_INTEGER ),
 END_DATADESC()
 
-BEGIN_SEND_TABLE_NOBASE( CTFCSPlayer, DT_TFCSLocalPlayerExclusive )
-	// send a hi-res origin to the local player for use in prediction
-	SendPropVector	(SENDINFO( m_vecOrigin ), -1,  SPROP_NOSCALE|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
-	SendPropFloat( SENDINFO_VECTORELEM( m_angEyeAngles, 0 ), 8, SPROP_CHANGES_OFTEN, -90.0f, 90.0f ),
-
-	SendPropFloat( SENDINFO( m_ArmorClass ) ),
-	//SendPropInt( SENDINFO( m_Armor ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_MaxArmor ), 8, SPROP_UNSIGNED ),
-	SendPropFloat( SENDINFO( m_flConcussTime ) ),
-END_SEND_TABLE()
-
-BEGIN_SEND_TABLE_NOBASE( CTFCSPlayer, DT_TFCSNonLocalPlayerExclusive )
-	SendPropVector( SENDINFO( m_vecOrigin ), -1, SPROP_COORD_MP_LOWPRECISION | SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
-	SendPropFloat( SENDINFO_VECTORELEM( m_angEyeAngles, 0 ), 8, SPROP_CHANGES_OFTEN, -90.0f, 90.0f ),
-	SendPropAngle( SENDINFO_VECTORELEM( m_angEyeAngles, 1 ), 10, SPROP_CHANGES_OFTEN ),
-
-	// Only need to latch cycle for other players
-	// If you increase the number of bits networked, make sure to also modify the code below and in the client class.
-	SendPropInt( SENDINFO( m_cycleLatch ), 4, SPROP_UNSIGNED ),
-END_SEND_TABLE()
-
-IMPLEMENT_SERVERCLASS_ST( CTFCSPlayer, DT_TFCSPlayer )
-
-	SendPropExclude( "DT_BaseEntity", "m_vecOrigin" ),
-	SendPropExclude( "DT_BaseAnimating", "m_flPoseParameter" ),
-	SendPropExclude( "DT_BaseAnimating", "m_flPlaybackRate" ),
-	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
-	SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
-	SendPropExclude( "DT_BaseAnimatingOverlay", "overlay_vars" ),
-
-	SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
-
-	SendPropInt( SENDINFO( m_iRealSequence ), 9 ),
-	SendPropBool( SENDINFO( m_bSpawnInterpCounter ) ),
-	SendPropEHandle( SENDINFO( m_hRagdoll ) ),
-
-	// Data that only gets sent to the local player.
-	SendPropDataTable( SENDINFO_DT( m_Shared ), &REFERENCE_SEND_TABLE( DT_TFCSPlayerShared ) ),
-
-	// Data that only gets sent to the local player.
-	SendPropDataTable( "tfcs_localdata", 0, &REFERENCE_SEND_TABLE( DT_TFCSLocalPlayerExclusive ), SendProxy_SendLocalDataTable ),
-	SendPropDataTable( "tfcs_nonlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFCSNonLocalPlayerExclusive ), SendProxy_SendNonLocalDataTable ),
-
-END_SEND_TABLE()
-
-LINK_ENTITY_TO_CLASS( player, CTFCSPlayer );
-PRECACHE_REGISTER( player );
-
-ITFCSPlayerAnimState* CreatePlayerAnimState( CTFCSPlayer *pPlayer );
-
 CTFCSPlayer::CTFCSPlayer()
 {
-	m_PlayerAnimState = CreatePlayerAnimState( this );
+	//Tony; create our player animation state.
+	m_PlayerAnimState = CreateTFCSPlayerAnimState( this );
 	UseClientSideAnimation();
+
 	m_angEyeAngles.Init();
 
 	SetPredictionEligible( true );
 
-	m_bSpawnInterpCounter = false;
-
 	m_iLastWeaponFireUsercmd = 0;
+
+	m_flNextTeamChangeTime = 0.0f;
+
+	m_iSpawnInterpCounter = 0;
 
 	m_lifeState = LIFE_DEAD; // Start "dead".
 
@@ -166,19 +197,18 @@ CTFCSPlayer::CTFCSPlayer()
 	SetContextThink( &CTFCSPlayer::TFCSPlayerThink, gpGlobals->curtime, "TFCSPlayerThink" );
 }
 
-CTFCSPlayer::~CTFCSPlayer()
+CTFCSPlayer::~CTFCSPlayer( void )
 {
 	if ( GetAnimState() )
 		GetAnimState()->Release();
 }
 
-void CTFCSPlayer::UpdateOnRemove()
+void CTFCSPlayer::UpdateOnRemove( void )
 {
 	RemoveRagdollEntity();
 
 	BaseClass::UpdateOnRemove();
 }
-
 
 CTFCSPlayer *CTFCSPlayer::CreatePlayer( const char *className, edict_t *ed )
 {
@@ -191,8 +221,12 @@ void CTFCSPlayer::TFCSPlayerThink()
 	SetContextThink( &CTFCSPlayer::TFCSPlayerThink, gpGlobals->curtime, "TFCSPlayerThink" );
 }
 
-void CTFCSPlayer::Precache()
+void CTFCSPlayer::Precache( void )
 {
+	BaseClass::Precache();
+
+	PrecacheModel ( "sprites/glow01.vmt" );
+
 	// Precache player models
 	for ( int i = 0; i < CLASS_LAST; i++ )
 	{
@@ -212,128 +246,14 @@ void CTFCSPlayer::Precache()
 			PrecacheModel( pszHandModel );
 		}
 	}
-
-	BaseClass::Precache();
 }
 
-void CTFCSPlayer::InitialSpawn( void )
+void CTFCSPlayer::GiveAllItems( void )
 {
-	BaseClass::InitialSpawn();
-	State_Enter( STATE_WELCOME );
-}
-
-void CTFCSPlayer::TFCSPushawayThink( void )
-{
-	// Push physics props out of our way.
-	PerformObstaclePushaway( this );
-	SetNextThink( gpGlobals->curtime + PUSHAWAY_THINK_INTERVAL, "TFCSPushawayThink" );
-}
-
-void CTFCSPlayer::Spawn()
-{
-	MDLCACHE_CRITICAL_SECTION();
-	SetModel( GetClassData( m_Shared.GetClassIndex() )->m_szModelName );
-
-	SetMoveType( MOVETYPE_WALK );
-	RemoveSolidFlags( FSOLID_NOT_SOLID );
-
-	BaseClass::Spawn();
-
-	m_cycleLatchTimer.Start( CYCLELATCH_UPDATE_INTERVAL );
-
-	m_impactEnergyScale = TFCS_PLAYER_PHYSDAMAGE_SCALE;
-
-	// used to not interp players when they spawn
-	m_bSpawnInterpCounter = !m_bSpawnInterpCounter;
-
-	if ( GetAnimState() )
-		GetAnimState()->ClearAnimationState();
-
-	switch ( GetTeamNumber() )
-	{
-	case TEAM_RED:
-		m_nSkin = 0;
-		break;
-	case TEAM_BLUE:
-		m_nSkin = 1;
-		break;
-	case TEAM_GREEN:
-		m_nSkin = 2;
-		break;
-	case TEAM_YELLOW:
-		m_nSkin = 3;
-		break;
-	}
-
-	RemoveRagdollEntity();
-
-	InitClass();
-
-	Vector mins = VEC_HULL_MIN;
-	Vector maxs = VEC_HULL_MAX;
-
-	CollisionProp()->SetSurroundingBoundsType( USE_SPECIFIED_BOUNDS, &mins, &maxs );
-
-	SetContextThink( &CTFCSPlayer::TFCSPushawayThink, gpGlobals->curtime + PUSHAWAY_THINK_INTERVAL, "TFCSPushawayThink" );
-}
-
-void CTFCSPlayer::CreateViewModel( int index )
-{
-	Assert( index >= 0 && index < MAX_VIEWMODELS );
-
-	if ( GetViewModel( index ) )
-		return;
-
-	CPredictedViewModel* vm = ( CPredictedViewModel* )CreateEntityByName( "predicted_viewmodel" );
-	if ( vm )
-	{
-		vm->SetAbsOrigin( GetAbsOrigin() );
-		vm->SetOwner( this );
-		vm->SetIndex( index );
-		DispatchSpawn( vm );
-		vm->FollowEntity( this, false );
-		m_hViewModel.Set( index, vm );
-	}
-}
-
-void CTFCSPlayer::FireBullets ( const FireBulletsInfo_t &info )
-{
-	// Move other players back to history positions based on local player's lag
-	lagcompensation->StartLagCompensation( this, this->GetCurrentCommand() );
-
-	/*FireBulletsInfo_t modinfo = info;
-
-	CTFCSWeaponBase *pWeapon = dynamic_cast<CTFCSWeaponBase*>( GetActiveWeapon() );
-	if ( pWeapon )
-		modinfo.m_iPlayerDamage = modinfo.m_flDamage = pWeapon->GetTFCSWpnData().m_iPlayerDamage;*/
-
-	NoteWeaponFired();
-
-	BaseClass::FireBullets( info );
-
-	// Move other players back to history positions based on local player's lag
-	lagcompensation->FinishLagCompensation( this );
-}
-
-void CTFCSPlayer::NoteWeaponFired( void )
-{
-	Assert( m_pCurrentCommand );
-	if( m_pCurrentCommand )
-		m_iLastWeaponFireUsercmd = m_pCurrentCommand->command_number;
-}
-
-bool CTFCSPlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const
-{
-	// No need to lag compensate at all if we're not attacking in this command and
-	// we haven't attacked recently.
-	if ( !( pCmd->buttons & IN_ATTACK ) && (pCmd->command_number - m_iLastWeaponFireUsercmd > 5) )
-		return false;
-
-	return BaseClass::WantsLagCompensationOnEntity( pPlayer, pCmd, pEntityTransmitBits );
 }
 
 // Set the player up with the default weapons, ammo, etc.
-void CTFCSPlayer::GiveDefaultItems()
+void CTFCSPlayer::GiveDefaultItems( void )
 {
 	// Get the player class data.
 	TFCSPlayerClassInfo_t *data = GetClassData( m_Shared.GetClassIndex() );	
@@ -396,6 +316,314 @@ void CTFCSPlayer::InitClass( void )
 	}*/
 }
 
+void CTFCSPlayer::PickDefaultSpawnTeam( void )
+{
+	if ( GetTeamNumber() == 0 )
+	{
+		if ( TFCSGameRules()->IsTeamplay() == false )
+			ChangeTeam( TEAM_UNASSIGNED );
+		else
+			ChangeTeam( TEAM_SPECTATOR );
+	}
+}
+
+void CTFCSPlayer::TFCSPushawayThink( void )
+{
+	// Push physics props out of our way.
+	PerformObstaclePushaway( this );
+	SetNextThink( gpGlobals->curtime + PUSHAWAY_THINK_INTERVAL, TFCS_PUSHAWAY_THINK_CONTEXT );
+}
+
+void CTFCSPlayer::ForceRespawn()
+{
+	BaseClass::ForceRespawn();
+}
+
+void CTFCSPlayer::InitialSpawn( void )
+{
+	BaseClass::InitialSpawn();
+	State_Enter( STATE_WELCOME );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFCSPlayer::Spawn( void )
+{
+	MDLCACHE_CRITICAL_SECTION();
+
+	SetModel( GetClassData( m_Shared.GetClassIndex() )->m_szModelName );
+
+	m_flNextTeamChangeTime = 0.0f;
+
+	PickDefaultSpawnTeam();
+
+	// Collision group must be set before base class spawn.
+	// Spawnpoint look-up depend on the fact that player's are solid which is done before setting player's collision group...
+	SetCollisionGroup( COLLISION_GROUP_PLAYER );
+
+	BaseClass::Spawn();
+
+	if ( !m_Local.m_PlayerFog.m_hCtrl.Get() )
+		m_Local.m_skybox3d.fog.enable = false;
+	
+	if ( !IsObserver() )
+	{
+		pl.deadflag = false;
+
+		SetMoveType( MOVETYPE_WALK );
+		RemoveSolidFlags( FSOLID_NOT_SOLID );
+
+		RemoveEffects( EF_NODRAW );
+		
+		GiveDefaultItems();
+		InitClass();
+	}
+
+	RemoveEffects( EF_NOINTERP );
+
+	m_nRenderFX = kRenderNormal;
+
+	m_Local.m_iHideHUD = 0;
+	
+	AddFlag( FL_ONGROUND ); // set the player on the ground at the start of the round.
+
+	m_impactEnergyScale = TFCS_PLAYER_PHYSDAMAGE_SCALE;
+
+	// Don't display crosshair if the map is a background.
+	if ( gpGlobals->eLoadType == MapLoad_Background )
+		ShowCrosshair( false );
+
+	if ( TFCSGameRules()->IsIntermission() )
+		AddFlag( FL_FROZEN );
+	else
+		RemoveFlag( FL_FROZEN );
+
+	m_iSpawnInterpCounter = (m_iSpawnInterpCounter + 1) % 8;
+
+	if ( GetAnimState() )
+		GetAnimState()->ClearAnimationState();
+
+	m_nSkin = GetTeamNumber();
+
+	RemoveRagdollEntity();
+
+	m_cycleLatchTimer.Start( CYCLELATCH_UPDATE_INTERVAL );
+
+	//Tony; do the spawn animevent
+	DoAnimationEvent( PLAYERANIMEVENT_SPAWN );
+
+	Vector mins = VEC_HULL_MIN;
+	Vector maxs = VEC_HULL_MAX;
+	CollisionProp()->SetSurroundingBoundsType( USE_SPECIFIED_BOUNDS, &mins, &maxs );
+
+	SetContextThink( &CTFCSPlayer::TFCSPushawayThink, gpGlobals->curtime + PUSHAWAY_THINK_INTERVAL, TFCS_PUSHAWAY_THINK_CONTEXT );
+}
+
+bool CTFCSPlayer::Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmodelindex )
+{
+	bool bRet = BaseClass::Weapon_Switch( pWeapon, viewmodelindex );
+	return bRet;
+}
+
+void CTFCSPlayer::PreThink( void )
+{
+	//Andrew; See http://forums.steampowered.com/forums/showthread.php?t=1372727
+	QAngle vOldAngles = GetLocalAngles();
+	QAngle vTempAngles = GetLocalAngles();
+
+	vTempAngles = EyeAngles();
+
+	if ( vTempAngles[PITCH] > 180.0f )
+		vTempAngles[PITCH] -= 360.0f;
+
+	SetLocalAngles( vTempAngles );
+
+	BaseClass::PreThink();
+
+	//Reset bullet force accumulator, only lasts one frame
+	m_vecTotalBulletForce = vec3_origin;
+
+	SetLocalAngles( vOldAngles );
+}
+
+void CTFCSPlayer::Think()
+{
+	BaseClass::Think();
+}
+
+
+void CTFCSPlayer::PostThink( void )
+{
+	BaseClass::PostThink();
+
+	QAngle angles = GetLocalAngles();
+	angles[PITCH] = 0;
+	SetLocalAngles( angles );
+
+	// Store the eye angles pitch so the client can compute its animation state correctly.
+	m_angEyeAngles = EyeAngles();
+
+	if ( GetAnimState() )
+		GetAnimState()->Update( m_angEyeAngles[YAW], m_angEyeAngles[PITCH] );
+
+	if ( IsAlive() && m_cycleLatchTimer.IsElapsed() )
+	{
+		m_cycleLatchTimer.Start( CYCLELATCH_UPDATE_INTERVAL );
+		// Compress the cycle into 4 bits. Can represent 0.0625 in steps which is enough.
+		m_cycleLatch.GetForModify() = 16 * GetCycle();
+	}
+}
+
+void CTFCSPlayer::FireBullets ( const FireBulletsInfo_t &info )
+{
+	// Move other players back to history positions based on local player's lag
+	lagcompensation->StartLagCompensation( this, this->GetCurrentCommand() );
+
+	FireBulletsInfo_t modinfo = info;
+
+	/*CTFCSWeaponBase* pWeapon = dynamic_cast<CTFCSWeaponBase *>( GetActiveWeapon() );
+	if ( pWeapon )
+		modinfo.m_iPlayerDamage = modinfo.m_flDamage = pWeapon->GetTFCSWpnData().m_iPlayerDamage;*/
+
+	NoteWeaponFired();
+
+	BaseClass::FireBullets( modinfo );
+
+	// Move other players back to history positions based on local player's lag
+	lagcompensation->FinishLagCompensation( this );
+}
+
+void CTFCSPlayer::NoteWeaponFired( void )
+{
+	Assert( m_pCurrentCommand );
+	if( m_pCurrentCommand )
+		m_iLastWeaponFireUsercmd = m_pCurrentCommand->command_number;
+}
+
+bool CTFCSPlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const
+{
+	// No need to lag compensate at all if we're not attacking in this command and
+	// we haven't attacked recently.
+	if ( !( pCmd->buttons & IN_ATTACK ) && (pCmd->command_number - m_iLastWeaponFireUsercmd > 5) )
+		return false;
+
+	return BaseClass::WantsLagCompensationOnEntity( pPlayer, pCmd, pEntityTransmitBits );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Player reacts to bumping a weapon. 
+// Input  : pWeapon - the weapon that the player bumped into.
+// Output : Returns true if player picked up the weapon
+//-----------------------------------------------------------------------------
+bool CTFCSPlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
+{
+	CBaseCombatCharacter *pOwner = pWeapon->GetOwner();
+
+	// Can I have this weapon type?
+	if ( !IsAllowedToPickupWeapons() )
+		return false;
+
+	if ( pOwner || !Weapon_CanUse( pWeapon ) || !g_pGameRules->CanHavePlayerItem( this, pWeapon ) )
+	{
+		if ( gEvilImpulse101 )
+			UTIL_Remove( pWeapon );
+
+		return false;
+	}
+
+	// Don't let the player fetch weapons through walls (use MASK_SOLID so that you can't pickup through windows)
+	if( !pWeapon->FVisible( this, MASK_SOLID ) && !(GetFlags() & FL_NOTARGET) )
+		return false;
+
+	bool bOwnsWeaponAlready = !!Weapon_OwnsThisType( pWeapon->GetClassname(), pWeapon->GetSubType());
+
+	if ( bOwnsWeaponAlready == true ) 
+	{
+		//If we have room for the ammo, then "take" the weapon too.
+		 if ( Weapon_EquipAmmoOnly( pWeapon ) )
+		 {
+			 pWeapon->CheckRespawn();
+
+			 UTIL_Remove( pWeapon );
+			 return true;
+		 }
+		 else
+			 return false;
+	}
+
+	pWeapon->CheckRespawn();
+	Weapon_Equip( pWeapon );
+
+	return true;
+}
+
+void CTFCSPlayer::ChangeTeam( int iTeam )
+{
+/*	if ( GetNextTeamChangeTime() >= gpGlobals->curtime )
+	{
+		char szReturnString[128];
+		Q_snprintf( szReturnString, sizeof( szReturnString ), "Please wait %d more seconds before trying to switch teams again.\n", (int)(GetNextTeamChangeTime() - gpGlobals->curtime) );
+
+		ClientPrint( this, HUD_PRINTTALK, szReturnString );
+		return;
+	}*/
+
+	bool bKill = false;
+
+	if ( TFCSGameRules()->IsTeamplay() != true && iTeam != TEAM_SPECTATOR )
+	{
+		//don't let them try to join combine or rebels during deathmatch.
+		iTeam = TEAM_UNASSIGNED;
+	}
+
+	if ( TFCSGameRules()->IsTeamplay() == true )
+	{
+		if ( iTeam != GetTeamNumber() && GetTeamNumber() != TEAM_UNASSIGNED )
+		{
+			bKill = true;
+		}
+	}
+
+	BaseClass::ChangeTeam( iTeam );
+
+	m_flNextTeamChangeTime = gpGlobals->curtime + TEAM_CHANGE_INTERVAL;
+
+	if ( iTeam == TEAM_SPECTATOR )
+	{
+		RemoveAllItems( true );
+
+		int observerMode = m_iObserverLastMode;
+		if ( IsNetClient() )
+		{
+			const char *pIdealMode = engine->GetClientConVarValue( engine->IndexOfEdict( edict() ), "cl_spec_mode" );
+			if ( pIdealMode )
+			{
+				observerMode = atoi( pIdealMode );
+				if ( observerMode <= OBS_MODE_FIXED || observerMode > OBS_MODE_ROAMING )
+					observerMode = m_iObserverLastMode;
+			}
+		}
+
+		StartObserverMode( observerMode );
+	}
+
+	if ( bKill == true )
+		CommitSuicide();
+}
+
+void CTFCSPlayer::ShowClassSelectMenu()
+{
+	if ( GetTeamNumber() == TEAM_BLUE )
+		ShowViewPortPanel( PANEL_CLASS_BLUE );
+	else if ( GetTeamNumber() == TEAM_RED )
+		ShowViewPortPanel( PANEL_CLASS_RED );
+	else if ( GetTeamNumber() == TEAM_YELLOW )
+		ShowViewPortPanel( PANEL_CLASS_YELLOW );
+	else if ( GetTeamNumber() == TEAM_GREEN )
+		ShowViewPortPanel( PANEL_CLASS_GREEN );
+}
+
 bool CTFCSPlayer::HandleCommand_JoinClass( int iClass )
 {
 	Assert( GetTeamNumber() != TEAM_SPECTATOR );
@@ -426,24 +654,16 @@ bool CTFCSPlayer::HandleCommand_JoinClass( int iClass )
 	if ( iClass == CLASS_RANDOM )
 	{
 		if ( IsAlive() )
-		{
 			ClientPrint( this, HUD_PRINTTALK, "#game_respawn_asrandom" );
-		}
 		else
-		{
 			ClientPrint( this, HUD_PRINTTALK, "#game_spawn_asrandom" );
-		}
 	}
 	else
 	{
 		if ( IsAlive() )
-		{
 			ClientPrint( this, HUD_PRINTTALK, "#game_respawn_as", classname );
-		}
 		else
-		{
 			ClientPrint( this, HUD_PRINTTALK, "#game_spawn_as", classname );
-		}
 	}
 
 	//Create a game event
@@ -461,182 +681,143 @@ bool CTFCSPlayer::HandleCommand_JoinClass( int iClass )
 	return true;
 }
 
-void CTFCSPlayer::ForceRespawn()
+bool CTFCSPlayer::HandleCommand_JoinTeam( int team )
 {
-	BaseClass::ForceRespawn();
-}
-
-void CTFCSPlayer::PreThink()
-{
-	//Andrew; See http://forums.steampowered.com/forums/showthread.php?t=1372727
-	QAngle vOldAngles = GetLocalAngles();
-	QAngle vTempAngles = GetLocalAngles();
-
-	vTempAngles = EyeAngles();
-
-	if ( vTempAngles[PITCH] > 180.0f )
-		vTempAngles[PITCH] -= 360.0f;
-
-	SetLocalAngles( vTempAngles );
-
-	BaseClass::PreThink();
-
-	//State_PreThink();
-
-	//Reset bullet force accumulator, only lasts one frame
-	m_vecTotalBulletForce = vec3_origin;
-
-	SetLocalAngles( vOldAngles );
-}
-
-void CTFCSPlayer::Think()
-{
-	BaseClass::Think();
-}
-
-void CTFCSPlayer::PostThink()
-{
-	BaseClass::PostThink();
-
-	QAngle angles = GetLocalAngles();
-	angles[PITCH] = 0;
-	SetLocalAngles( angles );
-
-	// Store the eye angles pitch so the client can compute its animation state correctly.
-	m_angEyeAngles = EyeAngles();
-
-	if ( GetAnimState() )
-		GetAnimState()->Update( m_angEyeAngles[YAW], m_angEyeAngles[PITCH] );
-
-	if ( IsAlive() && m_cycleLatchTimer.IsElapsed() )
+	if ( !GetGlobalTeam( team ) || team == 0 )
 	{
-		m_cycleLatchTimer.Start( CYCLELATCH_UPDATE_INTERVAL );
-		// Compress the cycle into 4 bits. Can represent 0.0625 in steps which is enough.
-		m_cycleLatch.GetForModify() = 16 * GetCycle();
-	}
-}
-
-int CTFCSPlayer::OnTakeDamage( const CTakeDamageInfo &info )
-{
-	CTakeDamageInfo inputInfoCopy( info );
-
-	bool bTookDamage = ( BaseClass::OnTakeDamage( inputInfoCopy ) != 0 );
-
-	// Early out if the base class took no damage
-	if ( !bTookDamage )
-		return 0;
-
-	m_vecTotalBulletForce += info.GetDamageForce();
-
-	return bTookDamage;
-}
-
-void CTFCSPlayer::DeathSound( const CTakeDamageInfo &info )
-{
-	if ( m_hRagdoll && m_hRagdoll->GetBaseAnimating()->IsDissolving() )
-		 return;
-
-	BaseClass::DeathSound( info );
-}
-
-int CTFCSPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
-{
-	CTakeDamageInfo info = inputInfo;
-	float flDamage = info.GetDamage();
-
-	// Early out if no damage
-	if ( flDamage == 0 )
-	{
-		return 0;
-	}
-
-	// Self damage (rocket/grenade jumps) do less damage to yourself
-	if ( info.GetAttacker() == this && (info.GetDamageType() & DMG_BLAST))
-	{
-		flDamage *= TFCS_SELF_DAMAGE_MULTIPLIER;
-	}
-
-	// Demomen are more resistant to explosions
-	if ( m_Shared.GetClassIndex() == CLASS_DEMOMAN && (info.GetDamageType() & DMG_BLAST))
-	{
-		flDamage *= TFCS_DEMOMAN_EXPLOSION_MULTIPLIER;
-	}
-
-	// Pyros take less direct fire damage
-	if ( m_Shared.GetClassIndex() == CLASS_PYRO && (info.GetDamageType() & DMG_BURN) )
-	{
-		flDamage *= TFCS_PYRO_FIRE_RESIST_MULTIPLIER;
-	}
-
-	// Deal with Armour
-	if ( !(info.GetDamageType() & (DMG_FALL | DMG_DROWN | DMG_POISON | DMG_RADIATION)) && flDamage > 0)	// armor doesn't protect against fall or drown damage! also don't increase armor incase of negative damage
-	{
-		float flArmorDamage = flDamage * m_ArmorClass;
-		float flCurrentArmor = ArmorValue();
-		flDamage = flDamage * (1 - m_ArmorClass) - min( 0, flCurrentArmor - flArmorDamage );
-
-		SetArmorValue( max( 0, flCurrentArmor - flArmorDamage ) );
-
-		info.SetDamage( flDamage );
-	}
-
-	// TODO: Deal with protection powerup; Player takes only armor damage
-	// TODO: Deal with biosuit powerup; Player does not take drown or nervegas damage
-	// TODO: Figure out proper jumping for explosions using the original damage and not the amount after all reductions
-	
-	return BaseClass::OnTakeDamage_Alive( info );
-}
-
-bool CTFCSPlayer::ShouldGib( const CTakeDamageInfo &info )
-{
-	if ( info.GetDamageType() & DMG_NEVERGIB )
+		Warning( "HandleCommand_JoinTeam( %d ) - invalid team index.\n", team );
 		return false;
-
-	if ( info.GetDamageType() & DMG_ALWAYSGIB )
-		return true;
-
-	if ( g_pGameRules->Damage_ShouldGibCorpse( info.GetDamageType() ) )
-	{
-		if ( m_iHealth < -2 )
-			return true;
 	}
 
-	return false;
-}
-
-void CTFCSPlayer::Event_Killed( const CTakeDamageInfo &info )
-{
-	//update damage info with our accumulated physics force
-	CTakeDamageInfo subinfo = info;
-	subinfo.SetDamageForce( m_vecTotalBulletForce );
-
-	DoAnimationEvent( PLAYERANIMEVENT_DIE );
-
-	bool bBurning = ( ( info.GetDamageType() & ( DMG_BURN | DMG_BLAST | DMG_PLASMA | DMG_ENERGYBEAM ) ) != 0 );
-	bool bGib = ShouldGib(info);
-
-	// Note: since we're dead, it won't draw us on the client, but we don't set EF_NODRAW
-	// because we still want to transmit to the clients in our PVS.
-	CreateRagdollEntity( bGib, bBurning );
-
-	// ...and employ a minor hack to stop CBaseCombatCharacter creating its own
-	const_cast< CTakeDamageInfo* >( &info )->AddDamageType( DMG_REMOVENORAGDOLL );
-
-	// show killer in death cam mode
-	if ( info.GetAttacker() && ( info.GetAttacker()->IsPlayer() || info.GetAttacker()->IsNPC() ) && info.GetAttacker() != ( CBaseEntity* )this )
+	if ( team == TEAM_SPECTATOR )
 	{
-		m_hObserverTarget.Set( info.GetAttacker() );
-		SetFOV( this, 0 ); // reset
+		// Prevent this is the cvar is set
+		if ( !mp_allowspectators.GetInt() )
+		{
+			ClientPrint( this, HUD_PRINTCENTER, "#Cannot_Be_Spectator" );
+			return false;
+		}
+
+		if ( GetTeamNumber() != TEAM_UNASSIGNED && !IsDead() )
+		{
+			m_fNextSuicideTime = gpGlobals->curtime;	// allow the suicide to work
+
+			CommitSuicide();
+
+			// add 1 to frags to balance out the 1 subtracted for killing yourself
+			IncrementFragCount( 1 );
+		}
+
+		ChangeTeam( TEAM_SPECTATOR );
+
+		return true;
 	}
 	else
-		m_hObserverTarget.Set( NULL );
-
-	BaseClass::Event_Killed( subinfo );
-
-	if ( info.GetDamageType() & DMG_DISSOLVE )
 	{
-		if ( m_hRagdoll )
-			m_hRagdoll->GetBaseAnimating()->Dissolve( NULL, gpGlobals->curtime, false, ENTITY_DISSOLVE_NORMAL );
+		StopObserverMode();
+
+		SetMoveType( MOVETYPE_WALK );
+	
+		// md 8/15/07 - They'll get set back to solid when they actually respawn. If we set them solid now and mp_forcerespawn
+		// is false, then they'll be spectating but blocking live players from moving.
+		// RemoveSolidFlags( FSOLID_NOT_SOLID );
+	
+		m_Local.m_iHideHUD = 0;
+	}
+
+	// Switch their actual team...
+	ChangeTeam( team );
+
+	return true;
+}
+
+bool CTFCSPlayer::ClientCommand( const CCommand &args )
+{
+	if ( FStrEq( args[0], "spectate" ) )
+	{
+		if ( ShouldRunRateLimitedCommand( args ) )
+		{
+			// instantly join spectators
+			HandleCommand_JoinTeam( TEAM_SPECTATOR );	
+		}
+		return true;
+	}
+	else if ( FStrEq( args[0], "joinclass" ) )
+	{
+		if  ( args.ArgC() < 2 )
+		{
+			Warning( "Player sent bad joinclass sntax\n" );
+		}
+
+		if ( ShouldRunRateLimitedCommand( args ) )
+		{
+			int iClass = atoi( args[1] );
+			HandleCommand_JoinClass( iClass );
+		}
+	}
+	else if ( FStrEq( args[0], "jointeam" ) ) 
+	{
+		if ( args.ArgC() < 2 )
+		{
+			Warning( "Player sent bad jointeam syntax\n" );
+		}
+
+		if ( ShouldRunRateLimitedCommand( args ) )
+		{
+			int iTeam = atoi( args[1] );
+			HandleCommand_JoinTeam( iTeam );
+		}
+		return true;
+	}
+	else if ( FStrEq( args[0], "joingame" ) )
+	{
+		return true;
+	}
+
+	return BaseClass::ClientCommand( args );
+}
+
+void CTFCSPlayer::CheatImpulseCommands( int iImpulse )
+{
+	switch ( iImpulse )
+	{
+		case 101:
+			{
+				if( sv_cheats->GetBool() )
+				{
+					GiveAllItems();
+				}
+			}
+			break;
+
+		default:
+			BaseClass::CheatImpulseCommands( iImpulse );
+	}
+}
+
+void CTFCSPlayer::CommitSuicide( bool bExplode /* = false */, bool bForce /*= false*/ )
+{
+	//m_iSuicideCustomKillFlags = DMG_CUSTOM_SUICIDE;
+
+	BaseClass::CommitSuicide( bExplode, bForce );
+}
+
+void CTFCSPlayer::CreateViewModel( int index /*=0*/ )
+{
+	Assert( index >= 0 && index < MAX_VIEWMODELS );
+
+	if ( GetViewModel( index ) )
+		return;
+
+	CPredictedViewModel *vm = ( CPredictedViewModel * )CreateEntityByName( "predicted_viewmodel" );
+	if ( vm )
+	{
+		vm->SetAbsOrigin( GetAbsOrigin() );
+		vm->SetOwner( this );
+		vm->SetIndex( index );
+		DispatchSpawn( vm );
+		vm->FollowEntity( this, false );
+		m_hViewModel.Set( index, vm );
 	}
 }
 
@@ -684,54 +865,184 @@ void CTFCSPlayer::RemoveRagdollEntity()
 	}
 }
 
-bool CTFCSPlayer::BecomeRagdollOnClient( const Vector& force )
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+int CTFCSPlayer::FlashlightIsOn( void )
 {
-	return true;
+	return IsEffectActive( EF_DIMLIGHT );
 }
 
-void CTFCSPlayer::CommitSuicide( bool bExplode /* = false */, bool bForce /*= false*/ )
+extern ConVar flashlight;
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CTFCSPlayer::FlashlightTurnOn( void )
 {
-	//m_iSuicideCustomKillFlags = DMG_CUSTOM_SUICIDE;
+	BaseClass::FlashlightTurnOn();
 
-	BaseClass::CommitSuicide( bExplode, bForce );
-}
-
-bool CTFCSPlayer::ClientCommand( const CCommand &args )
-{
-	const char *pcmd = args[0];
-
-	if ( FStrEq( pcmd, "jointeam" ) )
+	if( flashlight.GetInt() > 0 && IsAlive() )
 	{
-
+		AddEffects( EF_DIMLIGHT );
+		EmitSound( "Player.FlashlightOn" );
 	}
-	else if ( FStrEq( pcmd, "joinclass" ) )
+}
+
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CTFCSPlayer::FlashlightTurnOff( void )
+{
+	BaseClass::FlashlightTurnOff();
+
+	RemoveEffects( EF_DIMLIGHT );
+	
+	if( IsAlive() )
+		EmitSound( "Player.FlashlightOff" );
+}
+
+void CTFCSPlayer::Event_Killed( const CTakeDamageInfo &info )
+{
+	//update damage info with our accumulated physics force
+	CTakeDamageInfo subinfo = info;
+	subinfo.SetDamageForce( m_vecTotalBulletForce );
+
+	DoAnimationEvent( PLAYERANIMEVENT_DIE );
+
+	bool bBurning = ( ( info.GetDamageType() & ( DMG_BURN | DMG_BLAST | DMG_PLASMA | DMG_ENERGYBEAM ) ) != 0 );
+	bool bGib = ShouldGib(info);
+
+	// Note: since we're dead, it won't draw us on the client, but we don't set EF_NODRAW
+	// because we still want to transmit to the clients in our PVS.
+	CreateRagdollEntity( bGib, bBurning );
+
+	// ...and employ a minor hack to stop CBaseCombatCharacter creating its own
+	const_cast< CTakeDamageInfo* >( &info )->AddDamageType( DMG_REMOVENORAGDOLL );
+
+	// We can't be on fire while dead!
+	Extinguish();
+
+	CBaseEntity* pEffect = GetEffectEntity();
+	if ( pEffect != nullptr )
 	{
-		if  (args.ArgC() < 2 )
-		{
-			Warning( "Player sent bad joinclass sntax\n" );
-		}
-		int iClass = atoi( args[1] );
-		HandleCommand_JoinClass( iClass );
+		UTIL_Remove( pEffect );
+		SetEffectEntity( nullptr );
 	}
 
-	return BaseClass::ClientCommand( args );
+	// show killer in death cam mode
+	if ( info.GetAttacker() && ( info.GetAttacker()->IsPlayer() || info.GetAttacker()->IsNPC() ) && info.GetAttacker() != ( CBaseEntity* )this )
+	{
+		m_hObserverTarget.Set( info.GetAttacker() );
+		SetFOV( this, 0 ); // reset
+	}
+	else
+		m_hObserverTarget.Set( NULL );
+
+	BaseClass::Event_Killed( subinfo );
+
+	if ( info.GetDamageType() & DMG_DISSOLVE )
+	{
+		if ( m_hRagdoll )
+			m_hRagdoll->GetBaseAnimating()->Dissolve( NULL, gpGlobals->curtime, false, ENTITY_DISSOLVE_NORMAL );
+	}
+
+	CBaseEntity *pAttacker = info.GetAttacker();
+
+	if ( pAttacker )
+	{
+		int iScoreToAdd = 1;
+		if ( pAttacker == this )
+			iScoreToAdd = -1;
+
+		GetGlobalTeam( pAttacker->GetTeamNumber() )->AddScore( iScoreToAdd );
+	}
+
+	FlashlightTurnOff();
+
+	m_lifeState = LIFE_DEAD;
+
+	RemoveEffects( EF_NODRAW );	// still draw player body
 }
 
-void CTFCSPlayer::ChangeTeam( int iTeamNum )
+int CTFCSPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 {
-	BaseClass::ChangeTeam( iTeamNum );
+	CTakeDamageInfo inputInfoCopy( inputInfo );
+
+	bool bTookDamage = ( BaseClass::OnTakeDamage( inputInfoCopy ) != 0 );
+
+	// Early out if the base class took no damage
+	if ( !bTookDamage )
+		return 0;
+
+	m_vecTotalBulletForce += inputInfo.GetDamageForce();
+	
+	gamestats->Event_PlayerDamage( this, inputInfo );
+
+	return bTookDamage;
 }
 
-void CTFCSPlayer::ShowClassSelectMenu()
+int CTFCSPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 {
-	if ( GetTeamNumber() == TEAM_BLUE )
-		ShowViewPortPanel( PANEL_CLASS_BLUE );
-	else if ( GetTeamNumber() == TEAM_RED )
-		ShowViewPortPanel( PANEL_CLASS_RED );
-	else if ( GetTeamNumber() == TEAM_YELLOW )
-		ShowViewPortPanel( PANEL_CLASS_YELLOW );
-	else if ( GetTeamNumber() == TEAM_GREEN )
-		ShowViewPortPanel( PANEL_CLASS_GREEN );
+	CTakeDamageInfo info = inputInfo;
+	float flDamage = info.GetDamage();
+
+	// Early out if no damage
+	if ( flDamage == 0 )
+		return 0;
+
+	// Self damage (rocket/grenade jumps) do less damage to yourself
+	if ( info.GetAttacker() == this && (info.GetDamageType() & DMG_BLAST))
+		flDamage *= TFCS_SELF_DAMAGE_MULTIPLIER;
+
+	// Demomen are more resistant to explosions
+	if ( m_Shared.GetClassIndex() == CLASS_DEMOMAN && (info.GetDamageType() & DMG_BLAST))
+		flDamage *= TFCS_DEMOMAN_EXPLOSION_MULTIPLIER;
+
+	// Pyros take less direct fire damage
+	if ( m_Shared.GetClassIndex() == CLASS_PYRO && (info.GetDamageType() & DMG_BURN) )
+		flDamage *= TFCS_PYRO_FIRE_RESIST_MULTIPLIER;
+
+	// Deal with Armour
+	if ( !(info.GetDamageType() & (DMG_FALL | DMG_DROWN | DMG_POISON | DMG_RADIATION)) && flDamage > 0)	// armor doesn't protect against fall or drown damage! also don't increase armor incase of negative damage
+	{
+		float flArmorDamage = flDamage * m_ArmorClass;
+		float flCurrentArmor = ArmorValue();
+		flDamage = flDamage * (1 - m_ArmorClass) - min( 0, flCurrentArmor - flArmorDamage );
+
+		SetArmorValue( max( 0, flCurrentArmor - flArmorDamage ) );
+
+		info.SetDamage( flDamage );
+	}
+
+	// TODO: Deal with protection powerup; Player takes only armor damage
+	// TODO: Deal with biosuit powerup; Player does not take drown or nervegas damage
+	// TODO: Figure out proper jumping for explosions using the original damage and not the amount after all reductions
+	
+	return BaseClass::OnTakeDamage_Alive( info );
+}
+
+bool CTFCSPlayer::ShouldGib( const CTakeDamageInfo &info )
+{
+	if ( info.GetDamageType() & DMG_NEVERGIB )
+		return false;
+
+	if ( info.GetDamageType() & DMG_ALWAYSGIB )
+		return true;
+
+	if ( g_pGameRules->Damage_ShouldGibCorpse( info.GetDamageType() ) )
+	{
+		if ( m_iHealth < -2 )
+			return true;
+	}
+
+	return false;
+}
+
+void CTFCSPlayer::DeathSound( const CTakeDamageInfo &info )
+{
+	if ( m_hRagdoll && m_hRagdoll->GetBaseAnimating()->IsDissolving() )
+		 return;
+
+	BaseClass::DeathSound( info );
 }
 
 bool CTFCSPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot )
@@ -802,8 +1113,7 @@ bool CTFCSPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpo
 	return false;
 }
 
-// Purpose: Find a spawn point for the player.
-CBaseEntity* CTFCSPlayer::EntSelectSpawnPoint()
+CBaseEntity* CTFCSPlayer::EntSelectSpawnPoint( void )
 {
 	CBaseEntity *pSpot = g_pLastSpawnPoints[ GetTeamNumber() ];
 	const char *pSpawnPointName = "";
@@ -841,6 +1151,79 @@ CBaseEntity* CTFCSPlayer::EntSelectSpawnPoint()
 	}
 
 	return pSpot;
+} 
+
+//-----------------------------------------------------------------------------
+// Purpose: Override setup bones so that is uses the render angles from
+//			the TFCS animation state to setup the hitboxes.
+//-----------------------------------------------------------------------------
+void CTFCSPlayer::SetupBones( matrix3x4_t *pBoneToWorld, int boneMask )
+{
+	VPROF_BUDGET( "CTFCSPlayer::SetupBones", VPROF_BUDGETGROUP_SERVER_ANIM );
+
+	// Set the mdl cache semaphore.
+	MDLCACHE_CRITICAL_SECTION();
+
+	// Get the studio header.
+	Assert( GetModelPtr() );
+	CStudioHdr *pStudioHdr = GetModelPtr( );
+	if ( !pStudioHdr )
+		return;
+
+	Vector pos[MAXSTUDIOBONES];
+	Quaternion q[MAXSTUDIOBONES];
+
+	// Adjust hit boxes based on IK driven offset.
+	Vector adjOrigin = GetAbsOrigin() + Vector( 0, 0, m_flEstIkOffset );
+
+	// FIXME: pass this into Studio_BuildMatrices to skip transforms
+	CBoneBitList boneComputed;
+	if ( m_pIk )
+	{
+		m_iIKCounter++;
+		m_pIk->Init( pStudioHdr, GetAbsAngles(), adjOrigin, gpGlobals->curtime, m_iIKCounter, boneMask );
+		GetSkeleton( pStudioHdr, pos, q, boneMask );
+
+		m_pIk->UpdateTargets( pos, q, pBoneToWorld, boneComputed );
+		CalculateIKLocks( gpGlobals->curtime );
+		m_pIk->SolveDependencies( pos, q, pBoneToWorld, boneComputed );
+	}
+	else
+	{
+		GetSkeleton( pStudioHdr, pos, q, boneMask );
+	}
+
+	CBaseAnimating *pParent = dynamic_cast< CBaseAnimating* >( GetMoveParent() );
+	if ( pParent )
+	{
+		// We're doing bone merging, so do special stuff here.
+		CBoneCache *pParentCache = pParent->GetBoneCache();
+		if ( pParentCache )
+		{
+			BuildMatricesWithBoneMerge( 
+				pStudioHdr, 
+				GetAnimState()->GetRenderAngles(),
+				adjOrigin, 
+				pos, 
+				q, 
+				pBoneToWorld, 
+				pParent, 
+				pParentCache );
+
+			return;
+		}
+	}
+
+	Studio_BuildMatrices( 
+		pStudioHdr, 
+		GetAnimState()->GetRenderAngles(),
+		adjOrigin, 
+		pos, 
+		q, 
+		-1,
+		GetModelScale(), // Scaling
+		pBoneToWorld,
+		boneMask );
 }
 
 int CTFCSPlayer::TakeHealth( float flHealth )
@@ -922,7 +1305,7 @@ void CTFCSPlayer::State_Enter( TFCSPlayerState newState )
 	m_iPlayerState = newState;
 	m_pCurStateInfo = State_LookupInfo( newState );
 
-	if ( TFCS_ShowStateTransitions.GetInt() == -1 || TFCS_ShowStateTransitions.GetInt() == entindex() )
+	if ( tfcs_showstatetransitions.GetInt() == -1 || tfcs_showstatetransitions.GetInt() == entindex() )
 	{
 		if ( m_pCurStateInfo )
 			Msg( "ShowStateTransitions: entering '%s'\n", m_pCurStateInfo->m_pStateName );

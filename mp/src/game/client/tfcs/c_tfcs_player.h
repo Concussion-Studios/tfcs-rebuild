@@ -1,3 +1,10 @@
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//
+// Purpose: 
+//
+// $NoKeywords: $
+//
+//=============================================================================//
 #ifndef C_TFCS_PLAYER_H
 #define C_TFCS_PLAYER_H
 #ifdef _WIN32
@@ -5,16 +12,31 @@
 #endif
 
 #include "tfcs_playeranimstate.h"
-#include "c_baseplayer.h"
 #include "c_baseflex.h"
+#include "c_basehlplayer.h"
+#include "c_basetempentity.h"
 #include "baseparticleentity.h"
 #include "tfcs_player_shared.h"
 #include "tfcs_weapon_base.h"
 #include "beamdraw.h"
 #include "flashlighteffect.h"
-#include "c_basetempentity.h"
 #include "props_shared.h"
 
+// -------------------------------------------------------------------------------- //
+// Tony; m_pFlashlightEffect is private, so just subclass. We may want to do some more stuff with it later anyway.
+// -------------------------------------------------------------------------------- //
+class CTFCSFlashlightEffect : public CFlashlightEffect
+{
+public:
+	CTFCSFlashlightEffect(int nIndex = 0) : CFlashlightEffect( nIndex  ) {}
+	~CTFCSFlashlightEffect() {};
+
+	virtual void UpdateLight( const Vector &vecPos, const Vector &vecDir, const Vector &vecRight, const Vector &vecUp, int nDistance );
+};
+
+// -------------------------------------------------------------------------------- //
+// Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
+// -------------------------------------------------------------------------------- //
 class C_TEPlayerAnimEvent : public C_BaseTempEntity
 {
 public:
@@ -29,6 +51,9 @@ public:
 	CNetworkVar( int, m_nData );
 };
 
+// -------------------------------------------------------------------------------- //
+// Ragdoll entities.
+// -------------------------------------------------------------------------------- //
 class C_TFCSRagdoll : public C_BaseFlex
 {
 public:
@@ -76,76 +101,85 @@ private:
 	bool  m_bBurning;
 };
 
-class C_TFCSPlayer : public C_BasePlayer
+// -------------------------------------------------------------------------------- //
+// Purpose:
+// -------------------------------------------------------------------------------- //
+class C_TFCSPlayer : public C_BaseHLPlayer
 {
 public:
-	DECLARE_CLASS( C_TFCSPlayer, C_BasePlayer );
+	DECLARE_CLASS( C_TFCSPlayer, C_BaseHLPlayer );
+
 	DECLARE_CLIENTCLASS();
 	DECLARE_PREDICTABLE();
 	DECLARE_INTERPOLATION();
 
+
 	C_TFCSPlayer();
-	~C_TFCSPlayer();
+	~C_TFCSPlayer( void );
+
+	void ClientThink( void );
 
 	static C_TFCSPlayer* GetLocalTFCSPlayer();
-
-	virtual void Respawn(); // Spawn() is called once, this is called every time
-	virtual void ClientThink();
-	virtual Vector GetObserverCamOrigin( void );
-	virtual void ItemPreFrame( void );
-	virtual void ItemPostFrame( void );
-	virtual void OnDataChanged( DataUpdateType_t type );
-	virtual void DoImpactEffect( trace_t& tr, int nDamageType );
-	virtual void CreateLightEffects( void ) {}
-	virtual bool ShouldDraw( void );
-
-	// Player avoidance
-	void AvoidPlayers( CUserCmd* pCmd );
-	float m_fNextThinkPushAway;
-	virtual bool CreateMove( float flInputSampleTime, CUserCmd* pCmd );
-
-	// Implement ITFCSPlayerAnimState
-	virtual const QAngle& GetRenderAngles();
-	virtual const QAngle& EyeAngles();
-	virtual void UpdateClientSideAnimation();
+	
 	virtual int DrawModel( int flags );
-	virtual CStudioHdr* OnNewModel( void );
-	virtual void PostDataUpdate( DataUpdateType_t updateType );
-	static void RecvProxy_CycleLatch( const CRecvProxyData* pData, void* pStruct, void* pOut );
-	virtual float GetServerIntendedCycle() { return m_flServerCycle; }
-	virtual void SetServerIntendedCycle( float cycle ) { m_flServerCycle = cycle; }
-	virtual ITFCSPlayerAnimState* GetAnimState() { return m_PlayerAnimState; }
+	virtual void AddEntity( void );
+	virtual Vector GetObserverCamOrigin( void );
 
-	// Shadows
+	// Should this object cast shadows?
 	virtual ShadowType_t ShadowCastType( void );
 	virtual void GetShadowRenderBounds( Vector &mins, Vector &maxs, ShadowType_t shadowType );
 	virtual void GetRenderBounds( Vector& theMins, Vector& theMaxs);
 	virtual bool GetShadowCastDirection( Vector *pDirection, ShadowType_t shadowType ) const;
 	virtual bool ShouldReceiveProjectedTextures( int flags );
+	virtual C_BaseAnimating *BecomeRagdollOnClient() { return nullptr; }
+	virtual const QAngle& GetRenderAngles();
+	virtual bool ShouldDraw( void );
+	virtual void OnDataChanged( DataUpdateType_t type );
+	virtual void ItemPreFrame( void );
+	virtual void ItemPostFrame( void );
+	virtual void NotifyShouldTransmit( ShouldTransmitState_t state );
+	virtual void CreateLightEffects( void ) {}
+	virtual void PostDataUpdate( DataUpdateType_t updateType );
+	virtual void PreThink( void );
+	virtual void Simulate();
+	virtual void DoImpactEffect( trace_t &tr, int nDamageType );
+	IRagdoll* GetRepresentativeRagdoll() const;
+	virtual const QAngle& EyeAngles( void );
 
-	// Implement multiplayer ragdolls
-	virtual C_BaseAnimating* BecomeRagdollOnClient();
-	virtual IRagdoll* GetRepresentativeRagdoll() const;
+	void	UpdateLookAt( void );
+	int		GetIDTarget() const { return m_iIDEntIndex;	}
+	void	UpdateIDTarget( void );
 
-	// Target ID
+	virtual void UpdateClientSideAnimation();
+	virtual void CalculateIKLocks( float currentTime );
 
-	int GetIDTarget() const	{ return m_iIDEntIndex;	}
-	void UpdateIDTarget( void );
+	static void RecvProxy_CycleLatch( const CRecvProxyData *pData, void *pStruct, void *pOut );
 
+	virtual float GetServerIntendedCycle() { return m_flServerCycle; }
+	virtual void SetServerIntendedCycle( float cycle ) { m_flServerCycle = cycle; }
+
+	void InitializePoseParams( void );
+	virtual CTFCSPlayerAnimState* GetAnimState() { return m_PlayerAnimState; }
+
+	// Player avoidance
+	void AvoidPlayers( CUserCmd *pCmd );
+	float m_fNextThinkPushAway;
+	virtual bool CreateMove( float flInputSampleTime, CUserCmd *pCmd );
+	
 	// Gibs.
 	void InitPlayerGibs( void );
 	bool CreatePlayerGibs( const Vector& vecOrigin, const Vector& vecVelocity, float flImpactScale, bool bBurning );
 	CUtlVector<EHANDLE>* GetSpawnedGibs( void ) { return &m_hSpawnedGibs; }
 
-	virtual void TeamChange( int iNewTeam ) OVERRIDE;
-	static void TeamChangeStatic( int iNewTeam );
-
 public: // called by shared code
 
+	virtual Vector GetAutoaimVector( float flDelta );
+	Vector GetAttackSpread( CBaseCombatWeapon *pWeapon, CBaseEntity *pTarget = NULL );
 	virtual void DoAnimationEvent( PlayerAnimEvent_t event, int nData = 0 );
 	virtual void SetAnimation( PLAYER_ANIM playerAnim );
 	virtual void TraceAttack( const CTakeDamageInfo& info, const Vector& vecDir, trace_t* ptr, CDmgAccumulator* pAccumulator );
 	virtual bool ShouldCollide( int collisionGroup, int contentsMask ) const;
+	virtual CStudioHdr *OnNewModel( void );		//Tony; when model is changed, need to init some stuff.
 
 	CTFCSPlayerShared m_Shared;
 
@@ -157,31 +191,53 @@ public: // called by shared code
 	CNetworkVar( float, m_flConcussTime );
 
 private:
+	
+	C_TFCSPlayer( const C_TFCSPlayer & );
+	CTFCSPlayerAnimState *m_PlayerAnimState;
 
-	ITFCSPlayerAnimState* m_PlayerAnimState;
+	QAngle	m_angEyeAngles;
 
-	QAngle m_angEyeAngles;
 	CInterpolatedVar< QAngle >	m_iv_angEyeAngles;
-
-	int m_cycleLatch; // The animation cycle goes out of sync very easily. Mostly from the player entering/exiting PVS. Server will frequently update us with a new one.
-	float m_flServerCycle;
-
-	bool m_bSpawnInterpCounter;
-	bool m_bSpawnInterpCounterCache;
 
 	EHANDLE	m_hRagdoll;
 
+	int	m_headYawPoseParam;
+	int	m_headPitchPoseParam;
+	float m_headYawMin;
+	float m_headYawMax;
+	float m_headPitchMin;
+	float m_headPitchMax;
+
+	bool m_isInit;
+	Vector m_vLookAtTarget;
+
+	float m_flLastBodyYaw;
+	float m_flCurrentHeadYaw;
+	float m_flCurrentHeadPitch;
+
+	int	  m_iIDEntIndex;
+
+	CountdownTimer m_blinkTimer;
+
+	int	  m_iSpawnInterpCounter;
+	int	  m_iSpawnInterpCounterCache;
+
+	virtual void	UpdateFlashlight( void ); //Tony; override.
+	void ReleaseFlashlight( void );
+	Beam_t	*m_pFlashlightBeam;
+
+	CTFCSFlashlightEffect *m_pTFCSFlashLightEffect;
+	
 	// Gibs.
 	CUtlVector<breakmodel_t> m_aGibs;
 	EHANDLE m_hFirstGib;
 	CUtlVector<EHANDLE> m_hSpawnedGibs;
 
-	int	m_iRealSequence;
-	int	  m_iIDEntIndex;
-
+	int m_cycleLatch; // The animation cycle goes out of sync very easily. Mostly from the player entering/exiting PVS. Server will frequently update us with a new one.
+	float m_flServerCycle;
+	
 	friend class C_TFCSRagdoll;
 	friend class CTFCSPlayerAnimState;
-
 };
 
 inline C_TFCSPlayer* ToTFCSPlayer( C_BaseEntity* pEntity )
@@ -197,4 +253,4 @@ inline C_TFCSPlayer* ToTFCSPlayer( C_BasePlayer* pPlayer )
 	return static_cast<C_TFCSPlayer*>( pPlayer );
 }
 
-#endif //C_TFCS_PLAYER_H
+#endif //TFCSPlayer_H

@@ -2803,8 +2803,8 @@ void CTeamplayRoundBasedRules::RoundRespawn( void )
 	}
 #endif
 
-    // Free any edicts that were marked deleted. This should hopefully clear some out
-    //  so the below function can use the now freed ones.
+	// Free any edicts that were marked deleted. This should hopefully clear some out
+	//  so the below function can use the now freed ones.
 	engine->AllowImmediateEdictReuse();
 
 	RespawnPlayers( true );

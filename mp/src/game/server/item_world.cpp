@@ -14,8 +14,8 @@
 #include "physics_saverestore.h"
 #include "world.h"
 
-#ifdef HL2MP
-#include "hl2mp_gamerules.h"
+#ifdef TFCSOURCE_DLL
+#include "tfcs_gamerules.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -98,7 +98,7 @@ BEGIN_DATADESC( CItem )
 	DEFINE_THINKFUNC( Materialize ),
 	DEFINE_THINKFUNC( ComeToRest ),
 
-#if defined( HL2MP ) || defined( TF_DLL )
+#if defined( TFCSOURCE_DLL ) || defined( TF_DLL )
 	DEFINE_FIELD( m_flNextResetCheckTime, FIELD_TIME ),
 	DEFINE_THINKFUNC( FallThink ),
 #endif
@@ -202,7 +202,7 @@ void CItem::Spawn( void )
 	}
 #endif //CLIENT_DLL
 
-#if defined( HL2MP ) || defined( TF_DLL )
+#if defined( TFCSOURCE_DLL ) || defined( TF_DLL )
 	SetThink( &CItem::FallThink );
 	SetNextThink( gpGlobals->curtime + 0.1f );
 #endif
@@ -231,10 +231,16 @@ extern int gEvilImpulse101;
 //-----------------------------------------------------------------------------
 void CItem::ActivateWhenAtRest( float flTime /* = 0.5f */ )
 {
+	// Andrew; This doesn't work, default to TFCSOURCE_DLL spawn behavior.
+#if !defined( TFCSOURCE_DLL )
 	RemoveSolidFlags( FSOLID_TRIGGER );
 	m_bActivateWhenAtRest = true;
 	SetThink( &CItem::ComeToRest );
 	SetNextThink( gpGlobals->curtime + flTime );
+#else
+	SetThink( &CItem::FallThink );
+	SetNextThink( gpGlobals->curtime + 0.1f );
+#endif
 }
 
 
@@ -272,7 +278,7 @@ void CItem::ComeToRest( void )
 	}
 }
 
-#if defined( HL2MP ) || defined( TF_DLL )
+#if defined( TFCSOURCE_DLL ) || defined( TF_DLL )
 
 //-----------------------------------------------------------------------------
 // Purpose: Items that have just spawned run this think to catch them when 
@@ -284,7 +290,7 @@ void CItem::FallThink ( void )
 {
 	SetNextThink( gpGlobals->curtime + 0.1f );
 
-#if defined( HL2MP )
+#if defined( TFCSOURCE_DLL )
 	bool shouldMaterialize = false;
 	IPhysicsObject *pPhysics = VPhysicsGetObject();
 	if ( pPhysics )
@@ -303,9 +309,9 @@ void CItem::FallThink ( void )
 		m_vOriginalSpawnOrigin = GetAbsOrigin();
 		m_vOriginalSpawnAngles = GetAbsAngles();
 
-		HL2MPRules()->AddLevelDesignerPlacedObject( this );
+		TFCSGameRules()->AddLevelDesignerPlacedObject( this );
 	}
-#endif // HL2MP
+#endif // TFCSOURCE_DLL
 
 #if defined( TF_DLL )
 	// We only come here if ActivateWhenAtRest() is never called,
@@ -330,7 +336,7 @@ void CItem::FallThink ( void )
 #endif // TF
 }
 
-#endif // HL2MP, TF
+#endif // TFCSOURCE_DLL, TF
 
 //-----------------------------------------------------------------------------
 // Purpose: Used to tell whether an item may be picked up by the player.  This
@@ -447,8 +453,8 @@ void CItem::ItemTouch( CBaseEntity *pOther )
 		{
 			UTIL_Remove( this );
 
-#ifdef HL2MP
-			HL2MPRules()->RemoveLevelDesignerPlacedObject( this );
+#ifdef TFCSOURCE_DLL
+			TFCSGameRules()->RemoveLevelDesignerPlacedObject( this );
 #endif
 		}
 	}
@@ -491,7 +497,7 @@ void CItem::Materialize( void )
 	{
 		// changing from invisible state to visible.
 
-#ifdef HL2MP
+#ifdef TFCSOURCE_DLL
 		EmitSound( "AlyxEmp.Charge" );
 #else
 		EmitSound( "Item.Materialize" );

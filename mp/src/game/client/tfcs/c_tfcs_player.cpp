@@ -1,33 +1,49 @@
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//
+// Purpose:		Player for TFC.
+//
+//=============================================================================//
+
 #include "cbase.h"
+#include "vcollide_parse.h"
 #include "c_tfcs_player.h"
-//#include "multiplayer_animstate.h"
 #include "view.h"
 #include "props_shared.h"
 #include "c_fire_smoke.h"
 #include "fx.h"
+#include "tfcs_gamerules.h"
+#include "in_buttons.h"
+#include "iviewrender_beams.h"			// flashlight beam
+#include "r_efx.h"
+#include "dlight.h"
+#include "c_basetempentity.h"
 #include "prediction.h"
-#include "view_scene.h" // for tone mapping reset
+#include "bone_setup.h"
 #include "input.h"
 #include "collisionutils.h"
 #include "c_team.h"
 #include "obstacle_pushaway.h"
+#include "view_scene.h" // for tone mapping reset
 
-#include "tier0/memdbgon.h"
-
-#ifdef CTFCSPlayer
-	#undef CTFCSPlayer
+// Don't alias here
+#if defined( CTFCSPlayer )
+	#undef CTFCSPlayer	
 #endif
-
-#define CYCLELATCH_TOLERANCE 0.15f
 
 void FX_BloodSpray( const Vector& origin, const Vector& normal, float scale, unsigned char r, unsigned char g, unsigned char b, int flags );
 C_EntityFlame *FireEffect( C_BaseAnimating *pTarget, C_BaseEntity *pServerFire, float *flScaleEnd, float *flTimeStart, float *flTimeEnd );
+
+#define FLASHLIGHT_DISTANCE 1000
+#define CYCLELATCH_TOLERANCE		0.15f
+
+#define TFCS_AVOID_MAX_RADIUS_SQR		5184.0f			// Based on player extents and max buildable extents.
+#define TFCS_OO_AVOID_MAX_RADIUS_SQR		0.00029f
 
 extern ConVar cl_forwardspeed;
 extern ConVar cl_backspeed;
 extern ConVar cl_sidespeed;
 
-ConVar cl_max_separation_force ( "cl_max_separation_force", "256", FCVAR_CHEAT | FCVAR_HIDDEN );
+ConVar cl_max_separation_force ( "cl_max_separation_force", "256", FCVAR_CHEAT|FCVAR_HIDDEN );
 
 ConVar cl_playergib_forceup( "cl_playergib_forceup", "1.0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Upward added velocity for gibs." );
 ConVar cl_playergib_force( "cl_playergib_force", "500.0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Gibs force." );
@@ -414,11 +430,6 @@ void C_TFCSRagdoll::UpdateOnRemove( void )
 	BaseClass::UpdateOnRemove();
 }
 
-C_BaseAnimating* C_TFCSPlayer::BecomeRagdollOnClient()
-{
-	return nullptr;
-}
-
 IRagdoll* C_TFCSPlayer::GetRepresentativeRagdoll() const
 {
 	if ( m_hRagdoll.Get() )
@@ -470,14 +481,10 @@ void C_TFCSRagdoll::SetupWeights( const matrix3x4_t* pBoneToWorld, int nFlexWeig
 
 // ***************** C_TFCSPlayer **********************
 
-// ------------------------------------------------------------------------------------------ //
-// Data tables and prediction tables.
-// ------------------------------------------------------------------------------------------ //
-BEGIN_PREDICTION_DATA( C_TFCSPlayer )
-END_PREDICTION_DATA()
+LINK_ENTITY_TO_CLASS( player, C_TFCSPlayer );
 
 BEGIN_RECV_TABLE_NOBASE( C_TFCSPlayer, DT_TFCSLocalPlayerExclusive )
-	RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ), // RECVINFO_NAME redirects the received var to m_vecNetworkOrigin for interpolation purposes
+	RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 	RecvPropFloat( RECVINFO( m_angEyeAngles[0] ) ),
 
 	//RecvPropVector( RECVINFO() )
@@ -487,137 +494,213 @@ BEGIN_RECV_TABLE_NOBASE( C_TFCSPlayer, DT_TFCSLocalPlayerExclusive )
 END_RECV_TABLE()
 
 BEGIN_RECV_TABLE_NOBASE( C_TFCSPlayer, DT_TFCSNonLocalPlayerExclusive )
-	RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ), // RECVINFO_NAME again
-	RecvPropFloat( RECVINFO( m_angEyeAngles[0]) ),
-	RecvPropFloat( RECVINFO( m_angEyeAngles[1]) ),
+	RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
+	RecvPropFloat( RECVINFO( m_angEyeAngles[0] ) ),
+	RecvPropFloat( RECVINFO( m_angEyeAngles[1] ) ),
+
 	RecvPropInt( RECVINFO( m_cycleLatch ), 0, &C_TFCSPlayer::RecvProxy_CycleLatch ),
 END_RECV_TABLE()
 
-IMPLEMENT_CLIENTCLASS_DT( C_TFCSPlayer, DT_TFCSPlayer, CTFCSPlayer )
+IMPLEMENT_CLIENTCLASS_DT(C_TFCSPlayer, DT_TFCSPlayer, CTFCSPlayer)
 	RecvPropDataTable( RECVINFO_DT( m_Shared ), 0, &REFERENCE_RECV_TABLE( DT_TFCSPlayerShared ) ),
 
-	RecvPropInt( RECVINFO( m_iRealSequence ) ),
-	RecvPropBool( RECVINFO( m_bSpawnInterpCounter ) ),
-	RecvPropEHandle( RECVINFO( m_hRagdoll ) ),
+	RecvPropDataTable( "tfcs_localdata", 0, 0, &REFERENCE_RECV_TABLE(DT_TFCSLocalPlayerExclusive) ),
+	RecvPropDataTable( "tfcs_nonlocaldata", 0, 0, &REFERENCE_RECV_TABLE(DT_TFCSNonLocalPlayerExclusive) ),
 
-	RecvPropDataTable( "tfcs_localdata", 0, 0, &REFERENCE_RECV_TABLE( DT_TFCSLocalPlayerExclusive ) ),
-	RecvPropDataTable( "tfcs_nonlocaldata", 0, 0, &REFERENCE_RECV_TABLE( DT_TFCSNonLocalPlayerExclusive ) ),
+	RecvPropEHandle( RECVINFO( m_hRagdoll ) ),
+	RecvPropInt( RECVINFO( m_iSpawnInterpCounter ) ),
+	RecvPropInt( RECVINFO( m_nWaterLevel ) ),
 END_RECV_TABLE()
 
-ITFCSPlayerAnimState* CreatePlayerAnimState( C_TFCSPlayer *pPlayer );
+BEGIN_PREDICTION_DATA( C_TFCSPlayer )
+	DEFINE_PRED_FIELD( m_flCycle, FIELD_FLOAT, FTYPEDESC_OVERRIDE | FTYPEDESC_PRIVATE | FTYPEDESC_NOERRORCHECK ),
+	DEFINE_PRED_FIELD( m_nSequence, FIELD_INTEGER, FTYPEDESC_OVERRIDE | FTYPEDESC_PRIVATE | FTYPEDESC_NOERRORCHECK ),
+	DEFINE_PRED_FIELD( m_flPlaybackRate, FIELD_FLOAT, FTYPEDESC_OVERRIDE | FTYPEDESC_PRIVATE | FTYPEDESC_NOERRORCHECK ),
+	DEFINE_PRED_ARRAY_TOL( m_flEncodedController, FIELD_FLOAT, MAXSTUDIOBONECTRLS, FTYPEDESC_OVERRIDE | FTYPEDESC_PRIVATE, 0.02f ),
+	DEFINE_PRED_FIELD( m_nNewSequenceParity, FIELD_INTEGER, FTYPEDESC_OVERRIDE | FTYPEDESC_PRIVATE | FTYPEDESC_NOERRORCHECK ),
+END_PREDICTION_DATA()
 
-void C_TFCSPlayer::RecvProxy_CycleLatch( const CRecvProxyData* pData, void* pStruct, void* pOut )
-{
-	C_TFCSPlayer* pPlayer = static_cast< C_TFCSPlayer* >( pStruct );
 
-	float flServerCycle = ( float )pData->m_Value.m_Int / 16.0f;
-	float flCurCycle = pPlayer->GetCycle();
-
-	// The cycle is way out of sync.
-	if ( fabsf( flCurCycle - flServerCycle) > CYCLELATCH_TOLERANCE )
-		pPlayer->SetServerIntendedCycle( flServerCycle );
-}
 
 C_TFCSPlayer::C_TFCSPlayer() : m_iv_angEyeAngles( "C_TFCSPlayer::m_iv_angEyeAngles" )
 {
-	m_PlayerAnimState = CreatePlayerAnimState( this );
-	m_angEyeAngles.Init();
+	m_iIDEntIndex = 0;
+	m_iSpawnInterpCounterCache = 0;
 
 	m_Shared.Init( this );
 
-	m_bSpawnInterpCounterCache = false;
-	m_bSpawnInterpCounter = false;
+	AddVar( &m_angEyeAngles, &m_iv_angEyeAngles, LATCH_SIMULATION_VAR );
+
+	m_PlayerAnimState = CreateTFCSPlayerAnimState( this );
 
 	SetPredictionEligible( true );
 
+	m_blinkTimer.Invalidate();
+
+	m_pFlashlightBeam = NULL;
+
 	m_flServerCycle = -1.0f;
-	m_cycleLatch = 0;
-
-// cant interpolate ... buggy?  it keeps resetting the angle to 0,0,0
-//	AddVar( &m_angEyeAngles, &m_iv_angEyeAngles, LATCH_SIMULATION_VAR );
-
-	//m_fNextThinkPushAway = 0.0f;
 }
 
-C_TFCSPlayer::~C_TFCSPlayer()
+C_TFCSPlayer::~C_TFCSPlayer( void )
 {
+	ReleaseFlashlight();
+
 	if ( GetAnimState() )
 		GetAnimState()->Release();
 }
 
-C_TFCSPlayer* C_TFCSPlayer::GetLocalTFCSPlayer()
+//-----------------------------------------------------------------------------
+// Purpose: Update this client's target entity
+//-----------------------------------------------------------------------------
+void C_TFCSPlayer::UpdateIDTarget()
 {
-	return ToTFCSPlayer( C_BasePlayer::GetLocalPlayer() );
+	if ( !IsLocalPlayer() )
+		return;
+
+	// Clear old target and find a new one
+	m_iIDEntIndex = 0;
+
+	// don't show IDs in chase spec mode
+	if ( GetObserverMode() == OBS_MODE_CHASE || 
+		 GetObserverMode() == OBS_MODE_DEATHCAM )
+		 return;
+
+	trace_t tr;
+	Vector vecStart, vecEnd;
+	VectorMA( MainViewOrigin(), 1500, MainViewForward(), vecEnd );
+	VectorMA( MainViewOrigin(), 10,   MainViewForward(), vecStart );
+	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, this, COLLISION_GROUP_NONE, &tr );
+
+	if ( !tr.startsolid && tr.DidHitNonWorldEntity() )
+	{
+		C_BaseEntity *pEntity = tr.m_pEnt;
+
+		if ( pEntity && (pEntity != this) )
+			m_iIDEntIndex = pEntity->entindex();
+	}
 }
 
-void C_TFCSPlayer::ClientThink()
+C_TFCSPlayer* C_TFCSPlayer::GetLocalTFCSPlayer()
 {
-	// Pass on through to the base class.
-	BaseClass::ClientThink();
+	return (C_TFCSPlayer*)C_BasePlayer::GetLocalPlayer();
+}
 
-	UpdateIDTarget();
+//-----------------------------------------------------------------------------
+/**
+ * Orient head and eyes towards m_lookAt.
+ */
+void C_TFCSPlayer::UpdateLookAt( void )
+{
+	// head yaw
+	if (m_headYawPoseParam < 0 || m_headPitchPoseParam < 0)
+		return;
+
+	// orient eyes
+	m_viewtarget = m_vLookAtTarget;
+
+	// blinking
+	if (m_blinkTimer.IsElapsed())
+	{
+		m_blinktoggle = !m_blinktoggle;
+		m_blinkTimer.Start( RandomFloat( 1.5f, 4.0f ) );
+	}
+
+	// Figure out where we want to look in world space.
+	QAngle desiredAngles;
+	Vector to = m_vLookAtTarget - EyePosition();
+	VectorAngles( to, desiredAngles );
+
+	// Figure out where our body is facing in world space.
+	QAngle bodyAngles( 0, 0, 0 );
+	bodyAngles[YAW] = GetLocalAngles()[YAW];
+
+
+	float flBodyYawDiff = bodyAngles[YAW] - m_flLastBodyYaw;
+	m_flLastBodyYaw = bodyAngles[YAW];
+	
+
+	// Set the head's yaw.
+	float desired = AngleNormalize( desiredAngles[YAW] - bodyAngles[YAW] );
+	desired = clamp( desired, m_headYawMin, m_headYawMax );
+	m_flCurrentHeadYaw = ApproachAngle( desired, m_flCurrentHeadYaw, 130 * gpGlobals->frametime );
+
+	// Counterrotate the head from the body rotation so it doesn't rotate past its target.
+	m_flCurrentHeadYaw = AngleNormalize( m_flCurrentHeadYaw - flBodyYawDiff );
+	desired = clamp( desired, m_headYawMin, m_headYawMax );
+	
+	SetPoseParameter( m_headYawPoseParam, m_flCurrentHeadYaw );
+
+	
+	// Set the head's yaw.
+	desired = AngleNormalize( desiredAngles[PITCH] );
+	desired = clamp( desired, m_headPitchMin, m_headPitchMax );
+	
+	m_flCurrentHeadPitch = ApproachAngle( desired, m_flCurrentHeadPitch, 130 * gpGlobals->frametime );
+	m_flCurrentHeadPitch = AngleNormalize( m_flCurrentHeadPitch );
+	SetPoseParameter( m_headPitchPoseParam, m_flCurrentHeadPitch );
+}
+
+void C_TFCSPlayer::ClientThink( void )
+{
+	bool bFoundViewTarget = false;
+	
+	Vector vForward;
+	AngleVectors( GetLocalAngles(), &vForward );
+
+	for( int iClient = 1; iClient <= gpGlobals->maxClients; ++iClient )
+	{
+		CBaseEntity *pEnt = UTIL_PlayerByIndex( iClient );
+		if(!pEnt || !pEnt->IsPlayer())
+			continue;
+
+		if ( pEnt->entindex() == entindex() )
+			continue;
+
+		Vector vTargetOrigin = pEnt->GetAbsOrigin();
+		Vector vMyOrigin =  GetAbsOrigin();
+
+		Vector vDir = vTargetOrigin - vMyOrigin;
+		
+		if ( vDir.Length() > 128 ) 
+			continue;
+
+		VectorNormalize( vDir );
+
+		if ( DotProduct( vForward, vDir ) < 0.0f )
+			 continue;
+
+		m_vLookAtTarget = pEnt->EyePosition();
+		bFoundViewTarget = true;
+		break;
+	}
+
+	if ( bFoundViewTarget == false )
+		m_vLookAtTarget = GetAbsOrigin() + vForward * 512;
 
 	// Avoidance
 	if ( gpGlobals->curtime >= m_fNextThinkPushAway )
 	{
 		PerformObstaclePushaway( this );
-		m_fNextThinkPushAway = gpGlobals->curtime + PUSHAWAY_THINK_INTERVAL;
+		m_fNextThinkPushAway =  gpGlobals->curtime + PUSHAWAY_THINK_INTERVAL;
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 int C_TFCSPlayer::DrawModel( int flags )
 {
 	if ( !m_bReadyToDraw )
 		return 0;
 
-	return BaseClass::DrawModel( flags );
+	return BaseClass::DrawModel(flags);
 }
 
-void C_TFCSPlayer::TeamChange( int iNewTeam )
-{
-	BaseClass::TeamChange( iNewTeam );
-
-	// The team number hasn't been updated yet.
-	int iOldTeam = GetTeamNumber();
-	C_BaseEntity::ChangeTeam( iNewTeam );
-
-	// Reset back to old team just in case something uses it.
-	C_BaseEntity::ChangeTeam( iOldTeam );
-
-	TeamChangeStatic( iNewTeam );
-}
-
-void C_TFCSPlayer::TeamChangeStatic( int iNewTeam )
-{
-	// It's possible to receive events from the server before our local player is created.
-	// All crucial things that don't rely on local player
-	// should be put here.
-	const char *pTeamConfig = "exec team_red.cfg";
-
-	switch ( iNewTeam )
-	{
-	case TEAM_RED:
-		pTeamConfig = "exec team_red.cfg";
-		break;
-	case TEAM_BLUE:
-		pTeamConfig = "exec team_blue.cfg";
-		break;
-	case TEAM_GREEN:
-		pTeamConfig = "exec team_green.cfg";
-		break;
-	case TEAM_YELLOW:
-		pTeamConfig = "exec team_yellow.cfg";
-		break;
-	}
-
-	if ( !( iNewTeam == TEAM_UNASSIGNED || iNewTeam == TEAM_SPECTATOR ) )
-		engine->ClientCmd_Unrestricted( pTeamConfig );
-
-}
-
+ConVar cl_blobbyshadows( "cl_blobbyshadows", "0", FCVAR_CLIENTDLL );
 ShadowType_t C_TFCSPlayer::ShadowCastType( void )
 {
-	if ( !IsVisible()  || IsLocalPlayer() )
+	if ( !IsVisible() || IsLocalPlayer() )
 		return SHADOWS_NONE;
 
 	if ( IsEffectActive( EF_NODRAW | EF_NOSHADOW ) )
@@ -631,11 +714,12 @@ ShadowType_t C_TFCSPlayer::ShadowCastType( void )
 
 	// if we're first person spectating this player
 	if ( pLocalPlayer &&
-		 pLocalPlayer->GetObserverTarget() == this &&
-		 pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE )
-	{
+		pLocalPlayer->GetObserverTarget() == this &&
+		pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE )
 		return SHADOWS_NONE;
-	}
+
+	if ( cl_blobbyshadows.GetBool() )
+		return SHADOWS_SIMPLE;
 
 	return SHADOWS_RENDER_TO_TEXTURE_DYNAMIC;
 }
@@ -685,7 +769,9 @@ bool C_TFCSPlayer::GetShadowCastDirection( Vector *pDirection, ShadowType_t shad
 		return true;
 	}
 	else
+	{
 		return BaseClass::GetShadowCastDirection( pDirection, shadowType );
+	}
 }
 
 bool C_TFCSPlayer::ShouldReceiveProjectedTextures( int flags )
@@ -701,21 +787,7 @@ bool C_TFCSPlayer::ShouldReceiveProjectedTextures( int flags )
 	return BaseClass::ShouldReceiveProjectedTextures( flags );
 }
 
-CStudioHdr * C_TFCSPlayer::OnNewModel( void )
-{
-	CStudioHdr *pHdr = BaseClass::OnNewModel();
-	if ( pHdr )
-	{
-		InitPlayerGibs();
-
-		//if ( GetAnimState() )
-		//	GetAnimState()->OnNewModel();
-	}
-
-	return pHdr;
-}
-
-void C_TFCSPlayer::DoImpactEffect( trace_t& tr, int nDamageType )
+void C_TFCSPlayer::DoImpactEffect( trace_t &tr, int nDamageType )
 {
 	if ( GetActiveWeapon() )
 	{
@@ -724,6 +796,224 @@ void C_TFCSPlayer::DoImpactEffect( trace_t& tr, int nDamageType )
 	}
 
 	BaseClass::DoImpactEffect( tr, nDamageType );
+}
+
+void C_TFCSPlayer::PreThink( void )
+{
+	BaseClass::PreThink();
+}
+
+void C_TFCSPlayer::Simulate()
+{
+	if ( IsLocalPlayer() )
+	{
+		// Update the player's fog data if necessary.
+		UpdateFogController();
+
+		if ( IsAlive() )
+			UpdateIDTarget();
+	}
+	else
+	{
+		// Update step sounds for all other players
+		Vector vel;
+		EstimateAbsVelocity( vel );
+		UpdateStepSound( GetGroundSurface(), GetAbsOrigin(), vel );
+	}
+
+	// Update player's flashlight
+	UpdateFlashlight();
+
+	if ( gpGlobals->frametime != 0.0f )
+	{
+		if ( ShouldMuzzleFlash() )
+		{
+			DisableMuzzleFlash();
+
+			ProcessMuzzleFlashEvent();
+		}
+
+		//DoAnimationEvents( GetModelPtr() );
+	}
+
+	if ( IsAlive() )
+		UpdateLookAt();
+
+
+	BaseClass::Simulate();
+
+	if ( IsNoInterpolationFrame() || Teleported() )
+		ResetLatched();
+}
+
+const QAngle &C_TFCSPlayer::EyeAngles()
+{
+	if( IsLocalPlayer() )
+		return BaseClass::EyeAngles();
+	else
+		return m_angEyeAngles;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFCSPlayer::AddEntity( void )
+{
+	BaseClass::AddEntity();
+
+	//Tony; modified so third person can do the beam too.
+	if ( IsEffectActive( EF_DIMLIGHT ) )
+	{
+		//Tony; if local player, not in third person, and there's a beam, destroy it. It will get re-created if they go third person again.
+		if ( this == C_BasePlayer::GetLocalPlayer() && !::input->CAM_IsThirdPerson() && m_pFlashlightBeam != NULL )
+		{
+			ReleaseFlashlight();
+			return;
+		}
+		else if( this != C_BasePlayer::GetLocalPlayer() || ::input->CAM_IsThirdPerson() )
+		{
+			int iAttachment = LookupAttachment( "anim_attachment_RH" );
+
+			if ( iAttachment < 0 )
+				return;
+
+			Vector vecOrigin;
+			//Tony; EyeAngles will return proper whether it's local player or not.
+			QAngle eyeAngles = EyeAngles();
+
+			GetAttachment( iAttachment, vecOrigin, eyeAngles );
+
+			Vector vForward;
+			AngleVectors( eyeAngles, &vForward );
+				
+			trace_t tr;
+			UTIL_TraceLine( vecOrigin, vecOrigin + (vForward * 200), MASK_SHOT, this, COLLISION_GROUP_NONE, &tr );
+
+			if( !m_pFlashlightBeam )
+			{
+				BeamInfo_t beamInfo;
+				beamInfo.m_nType = TE_BEAMPOINTS;
+				beamInfo.m_vecStart = tr.startpos;
+				beamInfo.m_vecEnd = tr.endpos;
+				beamInfo.m_pszModelName = "sprites/glow01.vmt";
+				beamInfo.m_pszHaloName = "sprites/glow01.vmt";
+				beamInfo.m_flHaloScale = 3.0;
+				beamInfo.m_flWidth = 8.0f;
+				beamInfo.m_flEndWidth = 35.0f;
+				beamInfo.m_flFadeLength = 300.0f;
+				beamInfo.m_flAmplitude = 0;
+				beamInfo.m_flBrightness = 60.0;
+				beamInfo.m_flSpeed = 0.0f;
+				beamInfo.m_nStartFrame = 0.0;
+				beamInfo.m_flFrameRate = 0.0;
+				beamInfo.m_flRed = 255.0;
+				beamInfo.m_flGreen = 255.0;
+				beamInfo.m_flBlue = 255.0;
+				beamInfo.m_nSegments = 8;
+				beamInfo.m_bRenderable = true;
+				beamInfo.m_flLife = 0.5;
+				beamInfo.m_nFlags = FBEAM_FOREVER | FBEAM_ONLYNOISEONCE | FBEAM_NOTILE | FBEAM_HALOBEAM;
+				
+				m_pFlashlightBeam = beams->CreateBeamPoints( beamInfo );
+			}
+
+			if( m_pFlashlightBeam )
+			{
+				BeamInfo_t beamInfo;
+				beamInfo.m_vecStart = tr.startpos;
+				beamInfo.m_vecEnd = tr.endpos;
+				beamInfo.m_flRed = 255.0;
+				beamInfo.m_flGreen = 255.0;
+				beamInfo.m_flBlue = 255.0;
+
+				beams->UpdateBeamInfo( m_pFlashlightBeam, beamInfo );
+
+				//Tony; local players don't make the dlight.
+				if( this != C_BasePlayer::GetLocalPlayer() )
+				{
+					dlight_t *el = effects->CL_AllocDlight( 0 );
+					el->origin = tr.endpos;
+					el->radius = 50; 
+					el->color.r = 200;
+					el->color.g = 200;
+					el->color.b = 200;
+					el->die = gpGlobals->curtime + 0.1;
+				}
+			}
+		}
+	}
+	else if ( m_pFlashlightBeam )
+	{
+		ReleaseFlashlight();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Creates, destroys, and updates the flashlight effect as needed.
+//-----------------------------------------------------------------------------
+void C_TFCSPlayer::UpdateFlashlight()
+{
+	// The dim light is the flashlight.
+	if ( IsEffectActive( EF_DIMLIGHT ) )
+	{
+		if (!m_pTFCSFlashLightEffect)
+		{
+			// Turned on the headlight; create it.
+			m_pTFCSFlashLightEffect = new CTFCSFlashlightEffect(index);
+
+			if (!m_pTFCSFlashLightEffect)
+				return;
+
+			m_pTFCSFlashLightEffect->TurnOn();
+		}
+
+		Vector vecForward, vecRight, vecUp;
+		Vector position = EyePosition();
+
+		if ( ::input->CAM_IsThirdPerson() )
+		{
+			int iAttachment = LookupAttachment( "anim_attachment_RH" );
+
+			if ( iAttachment >= 0 )
+			{
+				Vector vecOrigin;
+				//Tony; EyeAngles will return proper whether it's local player or not.
+				QAngle eyeAngles = EyeAngles();
+
+				GetAttachment( iAttachment, vecOrigin, eyeAngles );
+
+				Vector vForward;
+				AngleVectors( eyeAngles, &vecForward, &vecRight, &vecUp );
+				position = vecOrigin;
+			}
+			else
+				EyeVectors( &vecForward, &vecRight, &vecUp );
+		}
+		else
+			EyeVectors( &vecForward, &vecRight, &vecUp );
+
+		// Update the light with the new position and direction.		
+		m_pTFCSFlashLightEffect->UpdateLight( position, vecForward, vecRight, vecUp, FLASHLIGHT_DISTANCE );
+	}
+	else if (m_pTFCSFlashLightEffect)
+	{
+		// Turned off the flashlight; delete it.
+		delete m_pTFCSFlashLightEffect;
+		m_pTFCSFlashLightEffect = NULL;
+	}
+}
+
+void CTFCSFlashlightEffect::UpdateLight( const Vector &vecPos, const Vector &vecDir, const Vector &vecRight, const Vector &vecUp, int nDistance )
+{
+	CFlashlightEffect::UpdateLight( vecPos, vecDir, vecRight, vecUp, nDistance );
+}
+
+const QAngle& C_TFCSPlayer::GetRenderAngles()
+{
+	if ( IsRagdoll() || !GetAnimState() )
+		return vec3_angle;
+	else
+		return GetAnimState()->GetRenderAngles();
 }
 
 bool C_TFCSPlayer::ShouldDraw( void )
@@ -769,36 +1059,15 @@ Vector C_TFCSPlayer::GetObserverCamOrigin( void )
 	return BaseClass::GetObserverCamOrigin();
 }
 
-const QAngle& C_TFCSPlayer::GetRenderAngles()
+void C_TFCSPlayer::NotifyShouldTransmit( ShouldTransmitState_t state )
 {
-	if ( IsRagdoll() || !GetAnimState() )
-		return vec3_angle;
-	else
-		return GetAnimState()->GetRenderAngles();
-}
-
-const QAngle& C_TFCSPlayer::EyeAngles()
-{
-	if ( IsLocalPlayer() )
-		return BaseClass::EyeAngles();
-	else
-		return m_angEyeAngles;
-}
-
-void C_TFCSPlayer::UpdateClientSideAnimation()
-{
-	// Update the animation data. It does the local check here so this works when using
-	// a third-person camera (and we don't have valid player angles).
-	if ( GetAnimState() )
+	if ( state == SHOULDTRANSMIT_END )
 	{
-		if ( this == C_BasePlayer::GetLocalPlayer() )
-			GetAnimState()->Update( EyeAngles()[YAW], m_angEyeAngles[PITCH] );
-		else
-			GetAnimState()->Update( m_angEyeAngles[YAW], m_angEyeAngles[PITCH] );	
+		if( m_pFlashlightBeam != NULL )
+			ReleaseFlashlight();
 	}
 
-
-	BaseClass::UpdateClientSideAnimation();
+	BaseClass::NotifyShouldTransmit( state );
 }
 
 void C_TFCSPlayer::OnDataChanged( DataUpdateType_t type )
@@ -809,6 +1078,60 @@ void C_TFCSPlayer::OnDataChanged( DataUpdateType_t type )
 		SetNextClientThink( CLIENT_THINK_ALWAYS );
 
 	UpdateVisibility();
+}
+
+void C_TFCSPlayer::PostDataUpdate( DataUpdateType_t updateType )
+{
+	// C_BaseEntity assumes we're networking the entity's angles, so pretend that it
+	// networked the same value we already have.
+	SetNetworkAngles( GetLocalAngles() );
+
+	if ( m_iSpawnInterpCounter != m_iSpawnInterpCounterCache )
+	{
+		// fix up interp
+		MoveToLastReceivedPosition( true );
+		ResetLatched();
+
+		m_iSpawnInterpCounterCache = m_iSpawnInterpCounter;
+
+		RemoveAllDecals();
+
+		if ( GetAnimState() )
+			GetAnimState()->ClearAnimationState();
+	
+		// reset HDR
+		if ( IsLocalPlayer() )
+			ResetToneMapping( 1.0 );
+
+		m_hFirstGib = NULL;
+		m_hSpawnedGibs.Purge();
+	}
+
+	BaseClass::PostDataUpdate( updateType );
+}
+
+void C_TFCSPlayer::RecvProxy_CycleLatch( const CRecvProxyData *pData, void *pStruct, void *pOut )
+{
+	C_TFCSPlayer* pPlayer = static_cast<C_TFCSPlayer*>( pStruct );
+
+	float flServerCycle = (float)pData->m_Value.m_Int / 16.0f;
+	float flCurCycle = pPlayer->GetCycle();
+	// The cycle is way out of sync.
+	if ( fabs( flCurCycle - flServerCycle ) > CYCLELATCH_TOLERANCE )
+	{
+		pPlayer->SetServerIntendedCycle( flServerCycle );
+	}
+}
+
+void C_TFCSPlayer::ReleaseFlashlight( void )
+{
+	if( m_pFlashlightBeam )
+	{
+		m_pFlashlightBeam->flags = 0;
+		m_pFlashlightBeam->die = gpGlobals->curtime - 1;
+
+		m_pFlashlightBeam = NULL;
+	}
 }
 
 void C_TFCSPlayer::ItemPreFrame( void )
@@ -828,67 +1151,113 @@ void C_TFCSPlayer::ItemPostFrame( void )
 	BaseClass::ItemPostFrame();
 }
 
-void C_TFCSPlayer::PostDataUpdate( DataUpdateType_t updateType )
+void C_TFCSPlayer::UpdateClientSideAnimation()
 {
-	// C_BaseEntity assumes we're networking the entity's angles, so pretend that it
-	// networked the same value we already have.
-	SetNetworkAngles( GetLocalAngles() );
-
-	// Did we just respawn?
-	if ( m_bSpawnInterpCounter != m_bSpawnInterpCounterCache )
-		Respawn();
-
-	BaseClass::PostDataUpdate( updateType );
-}
-
-void C_TFCSPlayer::Respawn()
-{
-	// fix up interp
-	MoveToLastReceivedPosition( true );
-	ResetLatched();
-
-	m_bSpawnInterpCounterCache = m_bSpawnInterpCounter;
-
-	RemoveAllDecals();
-
 	if ( GetAnimState() )
-		GetAnimState()->ClearAnimationState();
-	
-	// reset HDR
-	if ( IsLocalPlayer() )
-		ResetToneMapping( 1.0 );
+		GetAnimState()->Update( EyeAngles()[YAW], EyeAngles()[PITCH] );
 
-	m_hFirstGib = NULL;
-	m_hSpawnedGibs.Purge();
+	BaseClass::UpdateClientSideAnimation();
 }
 
-
-// Purpose: Update this client's target entity
-void C_TFCSPlayer::UpdateIDTarget()
+//-----------------------------------------------------------------------------
+// Purpose: Clear all pose parameters
+//-----------------------------------------------------------------------------
+void C_TFCSPlayer::InitializePoseParams( void )
 {
-	if ( !IsLocalPlayer() )
+	m_headYawPoseParam = LookupPoseParameter( "head_yaw" );
+	GetPoseParameterRange( m_headYawPoseParam, m_headYawMin, m_headYawMax );
+
+	m_headPitchPoseParam = LookupPoseParameter( "head_pitch" );
+	GetPoseParameterRange( m_headPitchPoseParam, m_headPitchMin, m_headPitchMax );
+
+	CStudioHdr *hdr = GetModelPtr();
+	for ( int i = 0; i < hdr->GetNumPoseParameters() ; i++ )
+		SetPoseParameter( hdr, i, 0.0 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFCSPlayer::CalculateIKLocks( float currentTime )
+{
+	if (!m_pIk) 
 		return;
 
-	// Clear old target and find a new one
-	m_iIDEntIndex = 0;
+	int targetCount = m_pIk->m_target.Count();
+	if ( targetCount == 0 )
+		return;
 
-	// don't show id's in any state but active.
-	//if ( State_Get() != STATE_ACTIVE )
-	//	return;
+	// In TF, we might be attaching a player's view to a walking model that's using IK. If we are, it can
+	// get in here during the view setup code, and it's not normally supposed to be able to access the spatial
+	// partition that early in the rendering loop. So we allow access right here for that special case.
+	SpatialPartitionListMask_t curSuppressed = partition->GetSuppressedLists();
+	partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, false );
+	CBaseEntity::PushEnableAbsRecomputations( false );
 
-	trace_t tr;
-	Vector vecStart, vecEnd;
-	VectorMA( MainViewOrigin(), 1500, MainViewForward(), vecEnd );
-	VectorMA( MainViewOrigin(), 10,   MainViewForward(), vecStart );
-	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, this, COLLISION_GROUP_NONE, &tr );
-
-	if ( !tr.startsolid && tr.DidHitNonWorldEntity() )
+	for (int i = 0; i < targetCount; i++)
 	{
-		C_BaseEntity *pEntity = tr.m_pEnt;
+		trace_t trace;
+		CIKTarget *pTarget = &m_pIk->m_target[i];
 
-		if ( pEntity && ( pEntity != this ) )
-			m_iIDEntIndex = pEntity->entindex();
+		if (!pTarget->IsActive())
+			continue;
+
+		switch( pTarget->type)
+		{
+		case IK_GROUND:
+			{
+				pTarget->SetPos( Vector( pTarget->est.pos.x, pTarget->est.pos.y, GetRenderOrigin().z ));
+				pTarget->SetAngles( GetRenderAngles() );
+			}
+			break;
+
+		case IK_ATTACHMENT:
+			{
+				C_BaseEntity *pEntity = NULL;
+				float flDist = pTarget->est.radius;
+
+				// FIXME: make entity finding sticky!
+				// FIXME: what should the radius check be?
+				for ( CEntitySphereQuery sphere( pTarget->est.pos, 64 ); ( pEntity = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
+				{
+					C_BaseAnimating *pAnim = pEntity->GetBaseAnimating( );
+					if (!pAnim)
+						continue;
+
+					int iAttachment = pAnim->LookupAttachment( pTarget->offset.pAttachmentName );
+					if (iAttachment <= 0)
+						continue;
+
+					Vector origin;
+					QAngle angles;
+					pAnim->GetAttachment( iAttachment, origin, angles );
+
+					// debugoverlay->AddBoxOverlay( origin, Vector( -1, -1, -1 ), Vector( 1, 1, 1 ), QAngle( 0, 0, 0 ), 255, 0, 0, 0, 0 );
+
+					float d = (pTarget->est.pos - origin).Length();
+
+					if ( d >= flDist)
+						continue;
+
+					flDist = d;
+					pTarget->SetPos( origin );
+					pTarget->SetAngles( angles );
+					// debugoverlay->AddBoxOverlay( pTarget->est.pos, Vector( -pTarget->est.radius, -pTarget->est.radius, -pTarget->est.radius ), Vector( pTarget->est.radius, pTarget->est.radius, pTarget->est.radius), QAngle( 0, 0, 0 ), 0, 255, 0, 0, 0 );
+				}
+
+				if (flDist >= pTarget->est.radius)
+				{
+					// debugoverlay->AddBoxOverlay( pTarget->est.pos, Vector( -pTarget->est.radius, -pTarget->est.radius, -pTarget->est.radius ), Vector( pTarget->est.radius, pTarget->est.radius, pTarget->est.radius), QAngle( 0, 0, 0 ), 0, 0, 255, 0, 0 );
+					// no solution, disable ik rule
+					pTarget->IKFailed( );
+				}
+			}
+			break;
+		}
 	}
+
+	CBaseEntity::PopEnableAbsRecomputations();
+	partition->SuppressLists( curSuppressed, true );
 }
 
 void C_TFCSPlayer::InitPlayerGibs( void )
@@ -929,11 +1298,12 @@ bool C_TFCSPlayer::CreatePlayerGibs( const Vector & vecOrigin, const Vector & ve
 //-----------------------------------------------------------------------------
 // Purpose: Try to steer away from any players and objects we might interpenetrate
 //-----------------------------------------------------------------------------
-#define TFCS_AVOID_MAX_RADIUS_SQR		5184.0f			// Based on player extents and max buildable extents.
-#define TFCS_OO_AVOID_MAX_RADIUS_SQR		0.00029f
-
 void C_TFCSPlayer::AvoidPlayers( CUserCmd *pCmd )
 {
+	// This is only used in team play.
+	if ( !TFCSGameRules()->IsTeamplay() )
+		return;
+
 	// Don't test if the player doesn't exist or is dead.
 	if ( IsAlive() == false )
 		return;
@@ -963,7 +1333,7 @@ void C_TFCSPlayer::AvoidPlayers( CUserCmd *pCmd )
 	Vector vecAvoidCenter, vecAvoidMin, vecAvoidMax;
 	for ( int i = 0; i < pTeam->GetNumPlayers(); ++i )
 	{
-		C_TFCSPlayer *pAvoidPlayer = ToTFCSPlayer( pTeam->GetPlayer( i ) );
+		C_TFCSPlayer *pAvoidPlayer = static_cast< C_TFCSPlayer * >( pTeam->GetPlayer( i ) );
 		if ( pAvoidPlayer == NULL )
 			continue;
 		// Is the avoid player me?
@@ -1023,10 +1393,7 @@ void C_TFCSPlayer::AvoidPlayers( CUserCmd *pCmd )
 
 	float flPushStrength = RemapValClamped( vecDelta.Length(), flAvoidRadius, 0, 0, cl_max_separation_force.GetInt() ); //flPushScale;
 
-#ifdef DEBUG
-	DevMsg( "PushScale = %f\n", flPushStrength );  
-#endif // DEBUG
-
+	//Msg( "PushScale = %f\n", flPushStrength );
 
 	// Check to see if we have enough push strength to make a difference.
 	if ( flPushStrength < 0.01f )
@@ -1051,16 +1418,22 @@ void C_TFCSPlayer::AvoidPlayers( CUserCmd *pCmd )
 	// Move away from the other player/object.
 	Vector vecSeparationVelocity;
 	if ( vecDelta.Dot( vecPush ) < 0 )
+	{
 		vecSeparationVelocity = vecPush * flPushStrength;
+	}
 	else
+	{
 		vecSeparationVelocity = vecPush * -flPushStrength;
+	}
 
 	// Don't allow the max push speed to be greater than the max player speed.
 	float flMaxPlayerSpeed = MaxSpeed();
 	float flCropFraction = 1.33333333f;
 
 	if ( ( GetFlags() & FL_DUCKING ) && ( GetGroundEntity() != NULL ) )
+	{	
 		flMaxPlayerSpeed *= flCropFraction;
+	}	
 
 	float flMaxPlayerSpeedSqr = flMaxPlayerSpeed * flMaxPlayerSpeed;
 
@@ -1087,38 +1460,37 @@ void C_TFCSPlayer::AvoidPlayers( CUserCmd *pCmd )
 	float forward = fwd * flPushStrength;
 	float side = rt * flPushStrength;
 
-#ifdef DEBUG
-	DevMsg( "fwd: %f - rt: %f - forward: %f - side: %f\n", fwd, rt, forward, side );  
-#endif // DEBUG
-
+	//Msg( "fwd: %f - rt: %f - forward: %f - side: %f\n", fwd, rt, forward, side );
 
 	pCmd->forwardmove	+= forward;
 	pCmd->sidemove		+= side;
 
 	// Clamp the move to within legal limits, preserving direction. This is a little
 	// complicated because we have different limits for forward, back, and side
-#ifdef DEBUG
-	DevMsg( "PRECLAMP: forwardmove=%f, sidemove=%f\n", pCmd->forwardmove, pCmd->sidemove );
-#endif
+
+	//Msg( "PRECLAMP: forwardmove=%f, sidemove=%f\n", pCmd->forwardmove, pCmd->sidemove );
 
 	float flForwardScale = 1.0f;
 	if ( pCmd->forwardmove > fabs( cl_forwardspeed.GetFloat() ) )
+	{
 		flForwardScale = fabs( cl_forwardspeed.GetFloat() ) / pCmd->forwardmove;
+	}
 	else if ( pCmd->forwardmove < -fabs( cl_backspeed.GetFloat() ) )
+	{
 		flForwardScale = fabs( cl_backspeed.GetFloat() ) / fabs( pCmd->forwardmove );
+	}
 
 	float flSideScale = 1.0f;
 	if ( fabs( pCmd->sidemove ) > fabs( cl_sidespeed.GetFloat() ) )
+	{
 		flSideScale = fabs( cl_sidespeed.GetFloat() ) / fabs( pCmd->sidemove );
+	}
 
 	float flScale = min( flForwardScale, flSideScale );
 	pCmd->forwardmove *= flScale;
 	pCmd->sidemove *= flScale;
 
-#ifdef DEBUG
-	DevMsg( "Pforwardmove=%f, sidemove=%f\n", pCmd->forwardmove, pCmd->sidemove );  
-#endif // DEBUG
-
+	//Msg( "Pforwardmove=%f, sidemove=%f\n", pCmd->forwardmove, pCmd->sidemove );
 }
 
 bool C_TFCSPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )

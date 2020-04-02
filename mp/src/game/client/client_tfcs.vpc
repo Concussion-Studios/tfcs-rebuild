@@ -3,7 +3,6 @@
 //
 //	Project Script
 //-----------------------------------------------------------------------------
-
 $Macro SRCDIR		"..\.."
 $Macro GAMENAME 	"tfcsource"
 
@@ -14,16 +13,17 @@ $Configuration
 	$Compiler
 	{
 		$AdditionalIncludeDirectories		"$BASE;.\tfcs,.\tfcs\hud,.\tfcs\vgui,$SRCDIR\game\shared\tfcs"
-		//$AdditionalIncludeDirectories		"$BASE;$SRCDIR\game\shared\Multiplayer"
+		$AdditionalIncludeDirectories		"$BASE;.\hl2,$SRCDIR\game\shared\Multiplayer"
 		$PreprocessorDefinitions			"$BASE;TFCSOURCE_DLL;ENABLE_HTMLWINDOW;GLOWS_ENABLE;USE_DETAIL_SHAPES;USE_MONITORS"
 	}
 }
 
-$Project "Client (TFCSOURCE)"
+$Project "Client"
 {
 	$Folder	"Source Files"
 	{
 		-$File	"$SRCDIR\game\shared\weapon_parse_default.cpp"
+
 		$File	"$SRCDIR\game\shared\predicted_viewmodel.cpp"
 		$File	"$SRCDIR\game\shared\predicted_viewmodel.h"
 		$File	"c_team_objectiveresource.cpp"
@@ -44,16 +44,22 @@ $Project "Client (TFCSOURCE)"
 		$File	"hud_vguiscreencursor.cpp"
 		$File	"hud_base_account.cpp"
 		$File	"hud_base_account.h"
-		//$File	"hud_vote.cpp"
-		//$File	"hud_vote.h"
+		$File	"hud_vote.cpp"
+		$File	"hud_vote.h"
 		$File	"bsp_utils.cpp"
 		$File	"bsp_utils.h"
 		
-		//$Folder	"Multiplayer"
-		//{
-		//	$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.cpp"
-		//	$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.h"
-		//}
+		$Folder	"Multiplayer"
+		{
+			$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.cpp"
+			$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.h"
+		}
+
+		$Folder	"HL2 DLL"
+		{
+			$File	"hl2\c_basehlplayer.cpp"
+			$File	"hl2\c_basehlplayer.h"
+		}
 
 		$Folder "TFC Source"
 		{

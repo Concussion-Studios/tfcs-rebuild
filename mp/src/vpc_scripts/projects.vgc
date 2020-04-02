@@ -23,6 +23,11 @@ $Project "server"
 	"game\server\server_tfcs.vpc"		[($WIN32||$POSIX) && $TFCS]
 }
 
+$Project "gameui"
+{
+	"gameui\gameui_tfcs.vpc"		[($WIN32||$POSIX) && $TFCS]
+}
+
 $Project "mathlib"
 {
 	"mathlib\mathlib.vpc" [$WINDOWS||$X360||$POSIX]
@@ -43,7 +48,3 @@ $Project "vgui_controls"
 	"vgui2\vgui_controls\vgui_controls.vpc" [$WIN32||$X360||$POSIX]
 }
 
-$Project "gameui"
-{
-	"gameui\GameUI.vpc" [$WIN32]
-}

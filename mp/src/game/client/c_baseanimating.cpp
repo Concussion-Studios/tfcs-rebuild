@@ -126,7 +126,7 @@ void C_InfoLightingRelative::GetLightingOffset( matrix3x4_t &offset )
 	if ( m_hLightingLandmark.Get() )
 	{
 		matrix3x4_t matWorldToLandmark;
- 		MatrixInvert( m_hLightingLandmark->EntityToWorldTransform(), matWorldToLandmark );
+		MatrixInvert( m_hLightingLandmark->EntityToWorldTransform(), matWorldToLandmark );
 		ConcatTransforms( EntityToWorldTransform(), matWorldToLandmark, offset );
 	}
 	else
@@ -365,7 +365,7 @@ void C_ClientRagdoll::OnRestore( void )
 	AddToLeafSystem( RENDER_GROUP_OPAQUE_ENTITY );
 
 	DestroyShadow();
- 	CreateShadow();
+	CreateShadow();
 
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
 	
@@ -898,7 +898,7 @@ void C_BaseAnimating::RemoveBaseAnimatingInterpolatedVars()
 	RemoveVar( m_flEncodedController, false );
 	RemoveVar( m_flPoseParameter, false );
 
-#ifdef HL2MP
+#ifdef TFCSOURCE_DLL
 	// HACK:  Don't want to remove interpolation for predictables in hl2dm, though
 	// The animation state stuff sets the pose parameters -- so they should interp
 	//  but m_flCycle is not touched, so it's only set during prediction (which occurs on tick boundaries)
@@ -1280,7 +1280,7 @@ void C_BaseAnimating::DelayedInitModelEffects( void )
 			}
 		}
 
- 		if ( !m_bNoModelParticles )
+		if ( !m_bNoModelParticles )
 		{
 			// Do we have a particles section?
 			KeyValues *pkvAllParticleEffects = modelKeyValues->FindKey("Particles");
@@ -3822,7 +3822,6 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 
 	case CL_EVENT_FOOTSTEP_LEFT:
 		{
-#ifndef HL2MP
 			char pSoundName[256];
 			if ( !options || !options[0] )
 			{
@@ -3842,13 +3841,11 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 				Q_snprintf( pSoundName, 256, "%s.FootstepLeft", options );
 			}
 			EmitSound( pSoundName );
-#endif
 		}
 		break;
 
 	case CL_EVENT_FOOTSTEP_RIGHT:
 		{
-#ifndef HL2MP
 			char pSoundName[256];
 			if ( !options || !options[0] )
 			{
@@ -3867,7 +3864,6 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 				Q_snprintf( pSoundName, 256, "%s.FootstepRight", options );
 			}
 			EmitSound( pSoundName );
-#endif
 		}
 		break;
 
@@ -3897,18 +3893,33 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 
 	// Eject brass
 	case CL_EVENT_EJECTBRASS1:
-		if ( m_Attachments.Count() > 0 )
 		{
-			if ( MainViewOrigin().DistToSqr( GetAbsOrigin() ) < (256 * 256) )
+			// Check if we're a weapon, if we belong to the local player, and if the local player is in third person - if all are true, don't do a muzzleflash in this instance, because
+			// we're using the view models dispatch for smoothness.
+			if ( dynamic_cast< C_BaseCombatWeapon *>(this) != NULL )
 			{
-				Vector attachOrigin;
-				QAngle attachAngles; 
-				
-				if( GetAttachment( 2, attachOrigin, attachAngles ) )
+				C_BaseCombatWeapon *pWeapon = dynamic_cast< C_BaseCombatWeapon *>(this);
+				if ( pWeapon && pWeapon->GetOwner() == C_BasePlayer::GetLocalPlayer() && ::input->CAM_IsThirdPerson() )
+					break;
+			}
+			
+			if ( ( prediction->InPrediction() && !prediction->IsFirstTimePredicted() ) )
+				break;
+
+			if ( m_Attachments.Count() > 0 )
+			{
+				if ( MainViewOrigin().DistToSqr( GetAbsOrigin() ) < (256 * 256) )
 				{
-					tempents->EjectBrass( attachOrigin, attachAngles, GetAbsAngles(), atoi( options ) );
+					Vector attachOrigin;
+					QAngle attachAngles; 
+					
+					if( GetAttachment( 2, attachOrigin, attachAngles ) )
+					{
+						tempents->EjectBrass( attachOrigin, attachAngles, GetAbsAngles(), atoi( options ) );
+					}
 				}
 			}
+			break;
 		}
 		break;
 
@@ -3922,6 +3933,36 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 	case AE_NPC_MUZZLEFLASH:
 		{
 			// Send out the effect for an NPC
+#if defined ( TFCSOURCE_DLL ) || defined ( SDK_DLL ) // works for the modified CSS weapons included in the new template sdk.
+			// TFCSOURCE_DLL - Make third person muzzleflashes as reliable as the first person ones
+			// while in third person the view model dispatches the muzzleflash event - note: the weapon models dispatch them too, but not frequently.
+			if ( IsViewModel() )
+			{
+				C_BasePlayer *pPlayer = ToBasePlayer( dynamic_cast<C_BaseViewModel *>(this)->GetOwner() );
+				if ( pPlayer && pPlayer == C_BasePlayer::GetLocalPlayer())
+				{
+					if ( ::input->CAM_IsThirdPerson() )
+					{
+						// Dispatch on the weapon - the player model doesn't have the attachments in hl2mp.
+						C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
+						if ( !pWeapon )
+							break;
+						pWeapon->DispatchMuzzleEffect( options, false );
+						break;
+					}
+				}
+			}
+
+			// Check if we're a weapon, if we belong to the local player, and if the local player is in third person - if all are true, don't do a muzzleflash in this instance, because
+			// we're using the view models dispatch for smoothness.
+			if ( dynamic_cast< C_BaseCombatWeapon *>(this) != NULL )
+			{
+				C_BaseCombatWeapon *pWeapon = dynamic_cast< C_BaseCombatWeapon *>(this);
+				if ( pWeapon && pWeapon->GetOwner() == C_BasePlayer::GetLocalPlayer() && ::input->CAM_IsThirdPerson() )
+					break;
+			}
+			
+#endif
 			DispatchMuzzleEffect( options, false );
 			break;
 		}
@@ -4748,7 +4789,7 @@ bool C_BaseAnimating::InitAsClientRagdoll( const matrix3x4_t *pDeltaBones0, cons
 	// Now set the dieragdoll sequence to get transforms for all
 	// non-simulated bones
 	m_nRestoreSequence = GetSequence();
-    SetSequence( SelectWeightedSequence( ACT_DIERAGDOLL ) );
+	SetSequence( SelectWeightedSequence( ACT_DIERAGDOLL ) );
 	m_nPrevSequence = GetSequence();
 	m_flPlaybackRate = 0;
 	UpdatePartitionListEntry();
@@ -5174,7 +5215,7 @@ void C_BaseAnimating::StudioFrameAdvance()
 		}
 		else
 		{
-		 	 flNewCycle = (flNewCycle < 0.0f) ? 0.0f : 1.0f;
+			 flNewCycle = (flNewCycle < 0.0f) ? 0.0f : 1.0f;
 		}
 		
 		m_bSequenceFinished = true;	// just in case it wasn't caught in GetEvents
@@ -6274,7 +6315,7 @@ void C_BaseAnimating::CleanupToolRecordingState( KeyValues *msg )
 {
 	if ( !ToolsEnabled() )
 		return;
-		    
+			
 	BaseAnimatingRecordingState_t *pState = (BaseAnimatingRecordingState_t*)msg->GetPtr( "baseanimating" );
 	if ( pState && pState->m_pBoneList )
 	{

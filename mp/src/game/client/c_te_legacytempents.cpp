@@ -1829,6 +1829,9 @@ void CTempEnts::MuzzleFlash( const Vector& pos1, const QAngle& angles, int type,
 
 	// UNDONE: These need their own effects/sprites.  For now use the pistol
 	// SMG1
+#if defined ( TFCSOURCE_DLL )		//  HACK for tfcs, make the default muzzleflash the smg muzzleflash for weapons like the RPG that are using 'type 0'
+	default:
+#endif // TFCSOURCE_DLL
 	case MUZZLEFLASH_SMG1:
 		if ( firstPerson )
 		{
@@ -1866,10 +1869,12 @@ void CTempEnts::MuzzleFlash( const Vector& pos1, const QAngle& angles, int type,
 		}
 		break;
 	
+#if !defined ( TFCSOURCE_DLL )	//  HACK for tfcs, make the default muzzleflash the smg muzzleflash for weapons like the RPG that are using 'type 0'
 	default:
 		// There's no supported muzzle flash for the type specified!
 		Assert(0);
 		break;
+#endif // TFCSOURCE_DLL
 	}
 
 #endif

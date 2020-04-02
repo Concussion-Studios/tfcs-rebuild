@@ -1456,7 +1456,7 @@ void CBaseCombatCharacter::FixupBurningServerRagdoll( CBaseEntity *pRagdoll )
 		pFireChild->SetAbsOrigin( pRagdoll->GetAbsOrigin() );
 		pFireChild->AttachToEntity( pRagdoll );
 		pFireChild->AddEFlags( EFL_FORCE_CHECK_TRANSMIT );
- 		pRagdoll->SetEffectEntity( pFireChild );
+		pRagdoll->SetEffectEntity( pFireChild );
 
 		color32 color = GetRenderColor();
 		pRagdoll->SetRenderColor( color.r, color.g, color.b );
@@ -1543,9 +1543,7 @@ bool CBaseCombatCharacter::BecomeRagdoll( const CTakeDamageInfo &info, const Vec
 #ifdef HL2_DLL	
 
 	bool bMegaPhyscannonActive = false;
-#if !defined( HL2MP )
 	bMegaPhyscannonActive = HL2GameRules()->MegaPhyscannonActive();
-#endif // !HL2MP
 
 	// Mega physgun requires everything to be a server-side ragdoll
 	if ( m_bForceServerRagdoll == true || ( ( bMegaPhyscannonActive == true ) && !IsPlayer() && Classify() != CLASS_PLAYER_ALLY_VITAL && Classify() != CLASS_PLAYER_ALLY ) )
@@ -1826,7 +1824,7 @@ void CBaseCombatCharacter::Weapon_DropAll( bool bDisallowWeaponPickup )
 			if (!pWeapon)
 				continue;
 
- 			Weapon_Drop( pWeapon );
+			Weapon_Drop( pWeapon );
 		}
 		return;
 	}
@@ -3102,12 +3100,12 @@ void CBaseCombatCharacter::VPhysicsShadowCollision( int index, gamevcollisioneve
 	// which can occur owing to ordering issues it appears.
 	float flOtherAttackerTime = 0.0f;
 
-#if defined( HL2_DLL ) && !defined( HL2MP )
+#if defined( HL2_DLL )
 	if ( HL2GameRules()->MegaPhyscannonActive() == true )
 	{
 		flOtherAttackerTime = 1.0f;
 	}
-#endif // HL2_DLL && !HL2MP
+#endif // HL2_DLL
 
 	if ( this == pOther->HasPhysicsAttacker( flOtherAttackerTime ) )
 		return;

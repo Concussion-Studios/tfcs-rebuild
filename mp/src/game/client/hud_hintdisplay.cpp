@@ -320,12 +320,10 @@ void CHudHintDisplay::LocalizeAndDisplay( const char *pszHudTxtMsg, const char *
 		C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
 		if ( pLocalPlayer )
 		{
-#ifndef HL2MP
 			if ( sv_hudhint_sound.GetBool() && cl_hudhint_sound.GetBool() )
 			{
 				pLocalPlayer->EmitSound( "Hud.Hint" );
 			}
-#endif // HL2MP
 
 			if ( pLocalPlayer->Hints() )
 			{
@@ -749,8 +747,8 @@ bool CHudHintKeyDisplay::SetHintText( const char *text )
 	}
 
 	// set the size of the hint panel to fit
- 	SetPos( ox, oy );
- 	SetSize( newWide, newTall );
+	SetPos( ox, oy );
+	SetSize( newWide, newTall );
 
 	m_iBaseY = oy;
 
@@ -780,7 +778,7 @@ void CHudHintKeyDisplay::MsgFunc_KeyHintText( bf_read &msg )
 	if ( SetHintText( szString ) )
 	{
 		SetVisible( true );
- 		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "KeyHintMessageShow" ); 
+		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "KeyHintMessageShow" ); 
 	}
 	else
 	{

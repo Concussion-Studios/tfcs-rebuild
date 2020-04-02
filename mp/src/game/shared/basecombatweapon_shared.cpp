@@ -32,8 +32,8 @@
 #include "fmtstr.h"
 #include "gameweaponmanager.h"
 
-#ifdef HL2MP
-	#include "hl2mp_gamerules.h"
+#ifdef TFCSOURCE_DLL
+	#include "tfcs_gamerules.h"
 #endif
 
 #endif
@@ -271,7 +271,7 @@ void CBaseCombatWeapon::Precache( void )
 				m_iPrimaryAmmoType = (int)TF_AMMO_METAL;
 			}
 #endif
- 		}
+		}
 		if ( GetWpnData().szAmmo2[0] )
 		{
 			m_iSecondaryAmmoType = GetAmmoDef()->Index( GetWpnData().szAmmo2 );
@@ -767,8 +767,8 @@ void CBaseCombatWeapon::OnPickedUp( CBaseCombatCharacter *pNewOwner )
 		m_OnNPCPickup.FireOutput(pNewOwner, this);
 	}
 
-#ifdef HL2MP
-	HL2MPRules()->RemoveLevelDesignerPlacedObject( this );
+#ifdef TFCSOURCE_DLL
+	TFCSGameRules()->RemoveLevelDesignerPlacedObject( this );
 #endif
 
 	// Someone picked me up, so make it so that I can't be removed.
@@ -1022,7 +1022,7 @@ void CBaseCombatWeapon::Equip( CBaseCombatCharacter *pOwner )
 void CBaseCombatWeapon::SetActivity( Activity act, float duration ) 
 { 
 	//Adrian: Oh man...
-#if !defined( CLIENT_DLL ) && (defined( HL2MP ) || defined( PORTAL ))
+#if !defined( CLIENT_DLL ) && (defined( TFCSOURCE_DLL ) || defined( PORTAL ))
 	SetModel( GetWorldModel() );
 #endif
 	
@@ -1033,7 +1033,7 @@ void CBaseCombatWeapon::SetActivity( Activity act, float duration )
 		sequence = SelectWeightedSequence( ACT_VM_IDLE );
 
 	//Adrian: Oh man again...
-#if !defined( CLIENT_DLL ) && (defined( HL2MP ) || defined( PORTAL ))
+#if !defined( CLIENT_DLL ) && (defined( TFCSOURCE_DLL ) || defined( PORTAL ))
 	SetModel( GetViewModel() );
 #endif
 
@@ -1109,7 +1109,7 @@ void CBaseCombatWeapon::SendViewModelAnim( int nSequence )
 	if ( !IsPredicted() )
 		return;
 #endif
-	
+
 	if ( nSequence < 0 )
 		return;
 
@@ -1117,7 +1117,7 @@ void CBaseCombatWeapon::SendViewModelAnim( int nSequence )
 	
 	if ( pOwner == NULL )
 		return;
-	
+
 	CBaseViewModel *vm = pOwner->GetViewModel( m_nViewModelIndex, false );
 	
 	if ( vm == NULL )
@@ -2664,14 +2664,14 @@ BEGIN_DATADESC( CBaseCombatWeapon )
 // don't save these, init to 0 and regenerate
 //	DEFINE_FIELD( m_flNextEmptySoundTime, FIELD_TIME ),
 //	DEFINE_FIELD( m_Activity, FIELD_INTEGER ),
- 	DEFINE_FIELD( m_nIdealSequence, FIELD_INTEGER ),
+	DEFINE_FIELD( m_nIdealSequence, FIELD_INTEGER ),
 	DEFINE_FIELD( m_IdealActivity, FIELD_INTEGER ),
 
 	DEFINE_FIELD( m_fFireDuration, FIELD_FLOAT ),
 
 	DEFINE_FIELD( m_bReloadsSingly, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_iSubType, FIELD_INTEGER ),
- 	DEFINE_FIELD( m_bRemoveable, FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_bRemoveable, FIELD_BOOLEAN ),
 
 	DEFINE_FIELD( m_flUnlockTime,		FIELD_TIME ),
 	DEFINE_FIELD( m_hLocker,			FIELD_EHANDLE ),

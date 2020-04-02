@@ -31,17 +31,15 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	"$BASE;fxctmp9;vshtmp9;"	[$WIN32||$POSIX]
-//		$AdditionalIncludeDirectories	"$BASE;..\..\dx9sdk\include"	[$WIN32]
-		$AdditionalIncludeDirectories	"$BASE;fxctmp9_360;vshtmp9_360"					[$X360]
+		$AdditionalIncludeDirectories	"$BASE;include"	[$WIN32||$POSIX]
 		$PreprocessorDefinitions		"$BASE;STDSHADER_DX9_DLL_EXPORT;FAST_MATERIALVAR_ACCESS;GAME_SHADER_DLL"
 		$PreprocessorDefinitions		"$BASE;USE_ACTUAL_DX" [($WIN32||$X360) && !$GL]
 	}
 
 	$Linker
 	{
-		$AdditionalDependencies			"$BASE version.lib winmm.lib"	[$WIN32]
-		$SystemLibraries                                                        "iconv" [$OSXALL]
+		$AdditionalDependencies	"$BASE version.lib winmm.lib"	[$WIN32]
+		$SystemLibraries	"iconv" [$OSXALL]
 	}
 }
 
@@ -71,11 +69,6 @@ $Project
 		$File	"example_model_dx9_helper.h"
 	}
 
-	$Folder	"Link Libraries" [$WIN32]
-	{
-//		$File	"$SRCDIR\dx9sdk\lib\d3dx9.lib"		
-	}
-
 	$Folder "Link Libraries"
 	{
         $Lib	mathlib
@@ -86,5 +79,5 @@ $Project
 	$File	"buildshaders.bat"
 
 	$Shaders	"stdshader_dx9_20b.txt"
-	$Shaders	"stdshader_dx9_30.txt"
+	//$Shaders	"stdshader_dx9_30.txt"
 }
