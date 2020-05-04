@@ -3,29 +3,29 @@
 // Purpose: 
 //
 //=============================================================================//
-#ifndef WEAPON_SDKBASE_RPG_H
-#define WEAPON_SDKBASE_RPG_H
+#ifndef WEAPON_TFCBASE_RPG_H
+#define WEAPON_TFCBASE_RPG_H
 #ifdef _WIN32
 #pragma once
 #endif
 
-#include "weapon_sdkbase.h"
+#include "weapon_tfcbase.h"
  
 #if defined( CLIENT_DLL )
-	#define CWeaponSDKBaseRPG C_WeaponSDKBaseRPG
+	#define CWeaponTFCBaseRPG C_WeaponTFCBaseRPG
 #endif
 
 //-----------------------------------------------------------------------------
 // RPG
 //-----------------------------------------------------------------------------
-class CWeaponSDKBaseRPG : public CWeaponSDKBase
+class CWeaponTFCBaseRPG : public CWeaponTFCBase
 {
 public:
-	DECLARE_CLASS( CWeaponSDKBaseRPG, CWeaponSDKBase );
+	DECLARE_CLASS( CWeaponTFCBaseRPG, CWeaponTFCBase );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 	
-	CWeaponSDKBaseRPG();
+	CWeaponTFCBaseRPG();
 
 	virtual const char	*GetDeploySound( void ) { return "Deploy.WeaponRPG"; }
 	virtual bool CanDrop( void ) { return false; }
@@ -37,7 +37,7 @@ public:
 	virtual	void FireRocket( void );
 
 private:
-	CWeaponSDKBaseRPG( const CWeaponSDKBaseRPG & );
+	CWeaponTFCBaseRPG( const CWeaponTFCBaseRPG & );
 };
 
-#endif // WEAPON_SDKBASE_RPG_H
+#endif // WEAPON_TFCBASE_RPG_H

@@ -7,37 +7,37 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "sdk_gamerules.h"
-#include "weapon_sdkbase_rpg.h"
+#include "tfc_gamerules.h"
+#include "weapon_tfcbase_rpg.h"
 
 #ifdef CLIENT_DLL
-	#include "c_sdk_player.h"
+	#include "c_tfc_player.h"
 	#include "prediction.h"
 #else
-	#include "sdk_player.h"
+	#include "tfc_player.h"
 #endif
 
-IMPLEMENT_NETWORKCLASS_ALIASED( WeaponSDKBaseRPG, DT_WeaponSDKBaseRPG )
+IMPLEMENT_NETWORKCLASS_ALIASED( WeaponTFCBaseRPG, DT_WeaponTFCBaseRPG )
 
-BEGIN_NETWORK_TABLE( CWeaponSDKBaseRPG, DT_WeaponSDKBaseRPG )
+BEGIN_NETWORK_TABLE( CWeaponTFCBaseRPG, DT_WeaponTFCBaseRPG )
 
 END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA( CWeaponSDKBaseRPG )
+BEGIN_PREDICTION_DATA( CWeaponTFCBaseRPG )
 END_PREDICTION_DATA()
 
-CWeaponSDKBaseRPG::CWeaponSDKBaseRPG()
+CWeaponTFCBaseRPG::CWeaponTFCBaseRPG()
 {
 }
 
-void CWeaponSDKBaseRPG::Precache()
+void CWeaponTFCBaseRPG::Precache()
 {
 	BaseClass::Precache();
 }
 
-bool CWeaponSDKBaseRPG::Reload( void )
+bool CWeaponTFCBaseRPG::Reload( void )
 {
-	CSDKPlayer *pPlayer = GetPlayerOwner();
+	CTFCPlayer *pPlayer = GetPlayerOwner();
 	if ( !pPlayer )
 		return false;
 
@@ -56,9 +56,9 @@ bool CWeaponSDKBaseRPG::Reload( void )
 	return true;
 }
 
-void CWeaponSDKBaseRPG::PrimaryAttack()
+void CWeaponTFCBaseRPG::PrimaryAttack()
 {
-	CSDKPlayer *pPlayer = ToSDKPlayer( GetPlayerOwner() );
+	CTFCPlayer *pPlayer = ToTFCPlayer( GetPlayerOwner() );
 	
 	// Out of ammo?
 	if ( m_iClip1 <= 0 )
@@ -90,12 +90,12 @@ void CWeaponSDKBaseRPG::PrimaryAttack()
 	m_flTimeWeaponIdle = gpGlobals->curtime + GetFireRate();	//length of the fire anim!
 }
 
-void CWeaponSDKBaseRPG::FireRocket( void )
+void CWeaponTFCBaseRPG::FireRocket( void )
 {
 	Assert( !"Derived classes must implement this." );
 }
 
-void CWeaponSDKBaseRPG::DoFireEffects()
+void CWeaponTFCBaseRPG::DoFireEffects()
 {
 	CBasePlayer *pPlayer = GetPlayerOwner();
 	if ( pPlayer )
@@ -104,7 +104,7 @@ void CWeaponSDKBaseRPG::DoFireEffects()
 	//smoke etc
 }
 
-void CWeaponSDKBaseRPG::WeaponIdle()
+void CWeaponTFCBaseRPG::WeaponIdle()
 {
 	if (m_flTimeWeaponIdle > gpGlobals->curtime)
 		return;

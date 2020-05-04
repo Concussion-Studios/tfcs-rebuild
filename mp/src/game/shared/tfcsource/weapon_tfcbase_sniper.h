@@ -3,25 +3,25 @@
 // Purpose: 
 //
 //=============================================================================//
-#ifndef WEAPON_SDKBASE_SNIPER_H
-#define WEAPON_SDKBASE_SNIPER_H
+#ifndef WEAPON_TFCBASE_SNIPER_H
+#define WEAPON_TFCBASE_SNIPER_H
 #ifdef _WIN32
 #pragma once
 #endif
 
 #ifdef CLIENT_DLL
-	#define CWeaponSDKBaseSniper C_WeaponSDKBaseSniper
+	#define CWeaponTFCBaseSniper C_WeaponTFCBaseSniper
 #endif
 
 #include "cbase.h"
-#include "weapon_sdkbase.h"
+#include "weapon_tfcbase.h"
 
-class CWeaponSDKBaseSniper : public CWeaponSDKBase
+class CWeaponTFCBaseSniper : public CWeaponTFCBase
 {
-	DECLARE_CLASS( CWeaponSDKBaseSniper, CWeaponSDKBase );
+	DECLARE_CLASS( CWeaponTFCBaseSniper, CWeaponTFCBase );
 
 public:
-	CWeaponSDKBaseSniper( void );
+	CWeaponTFCBaseSniper( void );
 
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
@@ -42,7 +42,7 @@ public:
 	}
 
 private:
-	CWeaponSDKBaseSniper( const CWeaponSDKBaseSniper & );
+	CWeaponTFCBaseSniper( const CWeaponTFCBaseSniper & );
 };
 
-#endif	// WEAPON_SDKBASE_SNIPER_H
+#endif	// WEAPON_TFCBASE_SNIPER_H

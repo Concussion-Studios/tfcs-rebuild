@@ -4,8 +4,8 @@
 //
 //=====================================================================================//
 
-#ifndef SDK_WEAPON_PARSE_H
-#define SDK_WEAPON_PARSE_H
+#ifndef TFC_WEAPON_PARSE_H
+#define TFC_WEAPON_PARSE_H
 #ifdef _WIN32
 #pragma once
 #endif
@@ -16,18 +16,18 @@
 
 
 //--------------------------------------------------------------------------------------------------------
-class CSDKWeaponInfo : public FileWeaponInfo_t
+class CTFCWeaponInfo : public FileWeaponInfo_t
 {
 public:
-	DECLARE_CLASS_GAMEROOT( CSDKWeaponInfo, FileWeaponInfo_t );
+	DECLARE_CLASS_GAMEROOT( CTFCWeaponInfo, FileWeaponInfo_t );
 	
-	CSDKWeaponInfo();
+	CTFCWeaponInfo();
 	
 	virtual void Parse( ::KeyValues *pKeyValuesData, const char *szWeaponName );
 
 	char m_szAnimExtension[16];		// string used to generate player animations with this weapon
 	//int m_iDefaultAmmoClips;		//Tony; default number of clips the weapon comes with.
-	float m_flWeaponFOV;		//Tony; added weapon fov, SDK uses models from a couple different games, so FOV is different.
+	float m_flWeaponFOV;		//Tony; added weapon fov, TFC uses models from a couple different games, so FOV is different.
 	int m_iAmmoToRemove;
 	float m_flMeleeRange;
 	bool m_bDrawCosshair;
@@ -60,4 +60,4 @@ public:
 };
 
 
-#endif // SDK_WEAPON_PARSE_H
+#endif // TFC_WEAPON_PARSE_H

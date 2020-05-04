@@ -6,19 +6,19 @@
 
 #include "cbase.h"
 
-#include "weapon_sdkbase.h"
-#include "sdk_weapon_melee.h"
+#include "weapon_tfcbase.h"
+#include "tfc_weapon_melee.h"
 
-#include "sdk_gamerules.h"
+#include "tfc_gamerules.h"
 #include "ammodef.h"
 #include "mathlib/mathlib.h"
 #include "in_buttons.h"
 #include "animation.h"
 
 #if defined( CLIENT_DLL )
-	#include "c_sdk_player.h"
+	#include "c_tfc_player.h"
 #else
-	#include "sdk_player.h"
+	#include "tfc_player.h"
 	#include "ndebugoverlay.h"
 	#include "te_effect_dispatch.h"
 	#include "ilagcompensationmanager.h"
@@ -27,12 +27,12 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-IMPLEMENT_NETWORKCLASS_ALIASED( WeaponSDKMelee, DT_WeaponSDKMelee )
+IMPLEMENT_NETWORKCLASS_ALIASED( WeaponTFCMelee, DT_WeaponTFCMelee )
 
-BEGIN_NETWORK_TABLE( CWeaponSDKMelee, DT_WeaponSDKMelee )
+BEGIN_NETWORK_TABLE( CWeaponTFCMelee, DT_WeaponTFCMelee )
 END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA( CWeaponSDKMelee )
+BEGIN_PREDICTION_DATA( CWeaponTFCMelee )
 END_PREDICTION_DATA()
 
 #define MELEE_HULL_DIM		16
@@ -43,7 +43,7 @@ static const Vector g_meleeMaxs(MELEE_HULL_DIM,MELEE_HULL_DIM,MELEE_HULL_DIM);
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-CWeaponSDKMelee::CWeaponSDKMelee()
+CWeaponTFCMelee::CWeaponTFCMelee()
 {
 	m_bFiresUnderwater = true;
 }
@@ -51,7 +51,7 @@ CWeaponSDKMelee::CWeaponSDKMelee()
 //-----------------------------------------------------------------------------
 // Purpose: Spawn the weapon
 //-----------------------------------------------------------------------------
-void CWeaponSDKMelee::Spawn( void )
+void CWeaponTFCMelee::Spawn( void )
 {
 	m_fMinRange1	= 0;
 	m_fMinRange2	= 0;
@@ -64,7 +64,7 @@ void CWeaponSDKMelee::Spawn( void )
 //-----------------------------------------------------------------------------
 // Purpose: Precache the weapon
 //-----------------------------------------------------------------------------
-void CWeaponSDKMelee::Precache( void )
+void CWeaponTFCMelee::Precache( void )
 {
 	//Call base class first
 	BaseClass::Precache();
@@ -73,9 +73,9 @@ void CWeaponSDKMelee::Precache( void )
 //------------------------------------------------------------------------------
 // Purpose : Update weapon
 //------------------------------------------------------------------------------
-void CWeaponSDKMelee::ItemPostFrame( void )
+void CWeaponTFCMelee::ItemPostFrame( void )
 {
-	CSDKPlayer *pPlayer = GetPlayerOwner();
+	CTFCPlayer *pPlayer = GetPlayerOwner();
 	if ( pPlayer == NULL )
 		return;
 
@@ -98,10 +98,10 @@ void CWeaponSDKMelee::ItemPostFrame( void )
 // Input   :
 // Output  :
 //------------------------------------------------------------------------------
-void CWeaponSDKMelee::PrimaryAttack()
+void CWeaponTFCMelee::PrimaryAttack()
 {
 #ifndef CLIENT_DLL
-	CSDKPlayer *pPlayer = ToSDKPlayer( GetPlayerOwner() );
+	CTFCPlayer *pPlayer = ToTFCPlayer( GetPlayerOwner() );
 	pPlayer->NoteWeaponFired();
 	// Move other players back to history positions based on local player's lag
 	lagcompensation->StartLagCompensation( pPlayer, pPlayer->GetCurrentCommand() );
@@ -118,10 +118,10 @@ void CWeaponSDKMelee::PrimaryAttack()
 //------------------------------------------------------------------------------
 // Purpose: Implement impact function
 //------------------------------------------------------------------------------
-bool CWeaponSDKMelee::DoSwingTrace(trace_t &traceHit)
+bool CWeaponTFCMelee::DoSwingTrace(trace_t &traceHit)
 {
 	// Try a ray
-	CSDKPlayer *pOwner = ToSDKPlayer(GetOwner());
+	CTFCPlayer *pOwner = ToTFCPlayer(GetOwner());
 	if (!pOwner)
 		return false;
 
@@ -162,9 +162,9 @@ bool CWeaponSDKMelee::DoSwingTrace(trace_t &traceHit)
 //------------------------------------------------------------------------------
 // Purpose: Implement impact function
 //------------------------------------------------------------------------------
-void CWeaponSDKMelee::Hit( trace_t &traceHit, Activity nHitActivity )
+void CWeaponTFCMelee::Hit( trace_t &traceHit, Activity nHitActivity )
 {
-	CSDKPlayer *pPlayer = ToSDKPlayer( GetOwner() );
+	CTFCPlayer *pPlayer = ToTFCPlayer( GetOwner() );
 	
 	//Do view kick
 	AddViewKick();
@@ -202,7 +202,7 @@ void CWeaponSDKMelee::Hit( trace_t &traceHit, Activity nHitActivity )
 	ImpactEffect( traceHit );
 }
 
-void CWeaponSDKMelee::ChooseIntersectionPoint(trace_t &hitTrace, const Vector &mins, const Vector &maxs, CSDKPlayer *pOwner)
+void CWeaponTFCMelee::ChooseIntersectionPoint(trace_t &hitTrace, const Vector &mins, const Vector &maxs, CTFCPlayer *pOwner)
 {
 	int			i, j, k;
 	float		distance;
@@ -245,7 +245,7 @@ void CWeaponSDKMelee::ChooseIntersectionPoint(trace_t &hitTrace, const Vector &m
 }
 
 
-Activity CWeaponSDKMelee::ChooseIntersectionPointAndActivity( trace_t &hitTrace, const Vector &mins, const Vector &maxs, CSDKPlayer *pOwner )
+Activity CWeaponTFCMelee::ChooseIntersectionPointAndActivity( trace_t &hitTrace, const Vector &mins, const Vector &maxs, CTFCPlayer *pOwner )
 {
 	int			i, j, k;
 	float		distance;
@@ -298,7 +298,7 @@ Activity CWeaponSDKMelee::ChooseIntersectionPointAndActivity( trace_t &hitTrace,
 // Purpose: 
 // Input  : &traceHit - 
 //-----------------------------------------------------------------------------
-bool CWeaponSDKMelee::ImpactWater( const Vector &start, const Vector &end )
+bool CWeaponTFCMelee::ImpactWater( const Vector &start, const Vector &end )
 {
 	//FIXME: This doesn't handle the case of trying to splash while being underwater, but that's not going to look good
 	//		 right now anyway...
@@ -341,7 +341,7 @@ bool CWeaponSDKMelee::ImpactWater( const Vector &start, const Vector &end )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CWeaponSDKMelee::ImpactEffect( trace_t &traceHit )
+void CWeaponTFCMelee::ImpactEffect( trace_t &traceHit )
 {
 	// See if we hit water (we don't do the other impact effects in this case)
 	if ( ImpactWater( traceHit.startpos, traceHit.endpos ) )
@@ -355,12 +355,12 @@ void CWeaponSDKMelee::ImpactEffect( trace_t &traceHit )
 // Purpose : Starts the swing of the weapon and determines the animation
 // Input   : bIsSecondary - is this a secondary attack?
 //------------------------------------------------------------------------------
-void CWeaponSDKMelee::Swing( int bIsSecondary )
+void CWeaponTFCMelee::Swing( int bIsSecondary )
 {
 	trace_t traceHit;
 
 	// Try a ray
-	CSDKPlayer *pOwner = ToSDKPlayer( GetOwner() );
+	CTFCPlayer *pOwner = ToTFCPlayer( GetOwner() );
 	if ( !pOwner )
 		return;
 

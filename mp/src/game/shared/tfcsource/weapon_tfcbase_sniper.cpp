@@ -4,23 +4,23 @@
 //
 //=============================================================================//
 #include "cbase.h"
-#include "weapon_sdkbase_sniper.h"
+#include "weapon_tfcbase_sniper.h"
 
-IMPLEMENT_NETWORKCLASS_ALIASED( WeaponSDKBaseSniper, DT_WeaponSDKBaseSniper )
+IMPLEMENT_NETWORKCLASS_ALIASED( WeaponTFCBaseSniper, DT_WeaponTFCBaseSniper )
 
-BEGIN_NETWORK_TABLE( CWeaponSDKBaseSniper, DT_WeaponSDKBaseSniper )
+BEGIN_NETWORK_TABLE( CWeaponTFCBaseSniper, DT_WeaponTFCBaseSniper )
 END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA( CWeaponSDKBaseSniper )
+BEGIN_PREDICTION_DATA( CWeaponTFCBaseSniper )
 END_PREDICTION_DATA()
 
-CWeaponSDKBaseSniper::CWeaponSDKBaseSniper()
+CWeaponTFCBaseSniper::CWeaponTFCBaseSniper()
 {
 	m_bReloadsSingly = false;
 	m_bFiresUnderwater = false;
 }
 
-void CWeaponSDKBaseSniper::PrimaryAttack( void )
+void CWeaponTFCBaseSniper::PrimaryAttack( void )
 {
 	BaseClass::PrimaryAttack();
 

@@ -4,8 +4,8 @@
 //
 //=====================================================================================//
 
-#ifndef SDK_WEAPON_MELEE_H
-#define SDK_WEAPON_MELEE_H
+#ifndef TFC_WEAPON_MELEE_H
+#define TFC_WEAPON_MELEE_H
 
 #ifdef _WIN32
 #pragma once
@@ -13,17 +13,17 @@
 
 
 #if defined( CLIENT_DLL )
-#define CWeaponSDKMelee C_WeaponSDKMelee
+#define CWeaponTFCMelee C_WeaponTFCMelee
 #endif
 
 //=========================================================
 // CBaseHLBludgeonWeapon 
 //=========================================================
-class CWeaponSDKMelee : public CWeaponSDKBase
+class CWeaponTFCMelee : public CWeaponTFCBase
 {
-	DECLARE_CLASS( CWeaponSDKMelee, CWeaponSDKBase );
+	DECLARE_CLASS( CWeaponTFCMelee, CWeaponTFCBase );
 public:
-	CWeaponSDKMelee();
+	CWeaponTFCMelee();
 
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
@@ -44,10 +44,10 @@ public:
 	virtual Activity	GetPrimaryAttackActivity( void )	{ return ACT_VM_HITCENTER; }
 	virtual Activity	GetSecondaryAttackActivity( void )	{ return ACT_VM_HITCENTER2; }
 
-	virtual float	GetRange( void )								{ return GetSDKWpnData().m_flMeleeRange; }
-	virtual	float	GetDamageForActivity( Activity hitActivity )	{ return GetSDKWpnData().m_iDamage;	}
+	virtual float	GetRange( void )								{ return GetTFCWpnData().m_flMeleeRange; }
+	virtual	float	GetDamageForActivity( Activity hitActivity )	{ return GetTFCWpnData().m_iDamage;	}
 
-	CWeaponSDKMelee( const CWeaponSDKMelee & );
+	CWeaponTFCMelee( const CWeaponTFCMelee & );
 
 protected:
 	virtual	void	ImpactEffect( trace_t &trace );
@@ -56,9 +56,9 @@ private:
 	bool			ImpactWater( const Vector &start, const Vector &end );
 	void			Swing( int bIsSecondary );
 	void			Hit( trace_t &traceHit, Activity nHitActivity );
-	void 			ChooseIntersectionPoint( trace_t &hitTrace, const Vector &mins, const Vector &maxs, CSDKPlayer *pOwner );
-	Activity		ChooseIntersectionPointAndActivity( trace_t &hitTrace, const Vector &mins, const Vector &maxs, CSDKPlayer *pOwner );
+	void 			ChooseIntersectionPoint( trace_t &hitTrace, const Vector &mins, const Vector &maxs, CTFCPlayer *pOwner );
+	Activity		ChooseIntersectionPointAndActivity( trace_t &hitTrace, const Vector &mins, const Vector &maxs, CTFCPlayer *pOwner );
 };
 
 
-#endif // SDK_WEAPON_MELEE_H
+#endif // TFC_WEAPON_MELEE_H

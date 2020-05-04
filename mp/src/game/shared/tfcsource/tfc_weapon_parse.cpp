@@ -6,20 +6,20 @@
 
 #include "cbase.h"
 #include <KeyValues.h>
-#include "sdk_weapon_parse.h"
+#include "tfc_weapon_parse.h"
 
 
 FileWeaponInfo_t* CreateWeaponInfo()
 {
-	return new CSDKWeaponInfo;
+	return new CTFCWeaponInfo;
 }
 
 
-CSDKWeaponInfo::CSDKWeaponInfo()
+CTFCWeaponInfo::CTFCWeaponInfo()
 {
 }
 
-void CSDKWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
+void CTFCWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 {
 	BaseClass::Parse( pKeyValuesData, szWeaponName );
 

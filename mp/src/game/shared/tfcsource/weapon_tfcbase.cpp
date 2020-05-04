@@ -7,22 +7,22 @@
 #include "cbase.h"
 #include "in_buttons.h"
 #include "takedamageinfo.h"
-#include "weapon_sdkbase.h"
+#include "weapon_tfcbase.h"
 #include "ammodef.h"
 #include "datacache/imdlcache.h"
-#include "sdk_fx_shared.h"
-#include "sdk_gamerules.h"
+#include "tfc_fx_shared.h"
+#include "tfc_gamerules.h"
 #include "tfc_viewmodel.h"
 
 #if defined( CLIENT_DLL )
-	#include "c_sdk_player.h"
+	#include "c_tfc_player.h"
 #else
-	#include "sdk_player.h"
+	#include "tfc_player.h"
 	#include "vphysics/constraints.h"
 #endif
 
 //Crowbar/Umbrella/Wrench/Knife
-acttable_t CWeaponSDKBase::m_acttableMelee[] =
+acttable_t CWeaponTFCBase::m_acttableMelee[] =
 {
 	{ ACT_MP_STAND_IDLE,				ACT_HL2MP_IDLE_MELEE,					false },
 	{ ACT_MP_CROUCH_IDLE,				ACT_HL2MP_IDLE_CROUCH_MELEE,			false },
@@ -40,7 +40,7 @@ acttable_t CWeaponSDKBase::m_acttableMelee[] =
 };
 
 // Pistol/Tranquilizer
-acttable_t CWeaponSDKBase::m_acttableHandGun[] = 
+acttable_t CWeaponTFCBase::m_acttableHandGun[] = 
 {
 	{ ACT_MP_STAND_IDLE,				ACT_HL2MP_IDLE_PISTOL,					false },
 	{ ACT_MP_CROUCH_IDLE,				ACT_HL2MP_IDLE_CROUCH_PISTOL,			false },
@@ -58,7 +58,7 @@ acttable_t CWeaponSDKBase::m_acttableHandGun[] =
 };
 
 // Shotguns
-acttable_t CWeaponSDKBase::m_acttableTwoHandsGuns[] = 
+acttable_t CWeaponTFCBase::m_acttableTwoHandsGuns[] = 
 {
 	{ ACT_MP_STAND_IDLE,				ACT_HL2MP_IDLE_SHOTGUN,					false },
 	{ ACT_MP_CROUCH_IDLE,				ACT_HL2MP_IDLE_CROUCH_SHOTGUN,			false },
@@ -76,7 +76,7 @@ acttable_t CWeaponSDKBase::m_acttableTwoHandsGuns[] =
 };
 
 // Nailgun
-acttable_t CWeaponSDKBase::m_acttableNoReload[] = 
+acttable_t CWeaponTFCBase::m_acttableNoReload[] = 
 {
 	{ ACT_MP_STAND_IDLE,				ACT_HL2MP_IDLE_PHYSGUN,					false },
 	{ ACT_MP_CROUCH_IDLE,				ACT_HL2MP_IDLE_CROUCH_PHYSGUN,			false },
@@ -94,7 +94,7 @@ acttable_t CWeaponSDKBase::m_acttableNoReload[] =
 };
 
 // Assault Cannon
-acttable_t CWeaponSDKBase::m_acttableAC[] =
+acttable_t CWeaponTFCBase::m_acttableAC[] =
 {
 	{ ACT_MP_STAND_IDLE,				ACT_HL2AC_IDLE_GATLING,						false },
 	{ ACT_MP_CROUCH_IDLE,				ACT_HL2AC_CROUCH_GATLING,					false },
@@ -112,7 +112,7 @@ acttable_t CWeaponSDKBase::m_acttableAC[] =
 };
 
 // Sniper Rifle
-acttable_t CWeaponSDKBase::m_acttableSniper[] =
+acttable_t CWeaponTFCBase::m_acttableSniper[] =
 {
 	{ ACT_MP_STAND_IDLE,				ACT_HL2AC_IDLE_SNIPER,						false },
 	{ ACT_MP_CROUCH_IDLE,				ACT_HL2AC_CROUCH_GATLING,					false },
@@ -130,7 +130,7 @@ acttable_t CWeaponSDKBase::m_acttableSniper[] =
 };
 
 // RPG/IC
-acttable_t CWeaponSDKBase::m_acttableRPG[] =
+acttable_t CWeaponTFCBase::m_acttableRPG[] =
 {
 	{ ACT_MP_STAND_IDLE,				ACT_HL2MP_IDLE_RPG,					false },
 	{ ACT_MP_CROUCH_IDLE,				ACT_HL2MP_IDLE_CROUCH_RPG,			false },
@@ -148,7 +148,7 @@ acttable_t CWeaponSDKBase::m_acttableRPG[] =
 };
 
 // Grenades
-acttable_t CWeaponSDKBase::m_acttableGrenade[] =
+acttable_t CWeaponTFCBase::m_acttableGrenade[] =
 {
 	{ ACT_MP_STAND_IDLE,				ACT_HL2MP_IDLE_GRENADE,					false },
 	{ ACT_MP_CROUCH_IDLE,				ACT_HL2MP_IDLE_CROUCH_GRENADE,			false },
@@ -166,7 +166,7 @@ acttable_t CWeaponSDKBase::m_acttableGrenade[] =
 };
 
 // Tools
-acttable_t CWeaponSDKBase::m_acttableTool[] = 
+acttable_t CWeaponTFCBase::m_acttableTool[] = 
 {
 	{ ACT_MP_STAND_IDLE,				ACT_HL2MP_IDLE_SLAM,					false },
 	{ ACT_MP_CROUCH_IDLE,				ACT_HL2MP_IDLE_CROUCH_SLAM,				false },
@@ -184,11 +184,11 @@ acttable_t CWeaponSDKBase::m_acttableTool[] =
 };
  
 // ----------------------------------------------------------------------------- //
-// CWeaponSDKBase tables.
+// CWeaponTFCBase tables.
 // ----------------------------------------------------------------------------- //
-IMPLEMENT_NETWORKCLASS_ALIASED( WeaponSDKBase, DT_WeaponSDKBase )
+IMPLEMENT_NETWORKCLASS_ALIASED( WeaponTFCBase, DT_WeaponTFCBase )
  
-BEGIN_NETWORK_TABLE( CWeaponSDKBase, DT_WeaponSDKBase )
+BEGIN_NETWORK_TABLE( CWeaponTFCBase, DT_WeaponTFCBase )
 #ifdef CLIENT_DLL
 	RecvPropFloat( RECVINFO( m_flDecreaseShotsFired ) ),
 	RecvPropBool( RECVINFO( m_bIsScoped ) ),
@@ -201,14 +201,14 @@ BEGIN_NETWORK_TABLE( CWeaponSDKBase, DT_WeaponSDKBase )
 END_NETWORK_TABLE()
  
 #ifdef CLIENT_DLL
-BEGIN_PREDICTION_DATA( CWeaponSDKBase )
+BEGIN_PREDICTION_DATA( CWeaponTFCBase )
 	DEFINE_PRED_FIELD( m_flTimeWeaponIdle, FIELD_FLOAT, FTYPEDESC_OVERRIDE | FTYPEDESC_NOERRORCHECK ),
 	DEFINE_PRED_FIELD( m_bIsScoped, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),	// I believe the client may want this predicted for actually displaying the scope
 END_PREDICTION_DATA()
 #endif
  
 #ifdef GAME_DLL
-BEGIN_DATADESC( CWeaponSDKBase )
+BEGIN_DATADESC( CWeaponTFCBase )
 	// New weapon Think and Touch Functions go here..
 END_DATADESC()
 #endif
@@ -235,7 +235,7 @@ void UTIL_ClipPunchAngleOffset( QAngle &in, const QAngle &punch, const QAngle &c
 // ----------------------------------------------------------------------------- //
 // CWeaponCSBase implementation. 
 // ----------------------------------------------------------------------------- //
-CWeaponSDKBase::CWeaponSDKBase()
+CWeaponTFCBase::CWeaponTFCBase()
 {
 	SetPredictionEligible( true );
  
@@ -247,7 +247,7 @@ CWeaponSDKBase::CWeaponSDKBase()
 }
 
 #ifdef CLIENT_DLL
-bool CWeaponSDKBase::ShouldPredict()
+bool CWeaponTFCBase::ShouldPredict()
 {
 	if ( GetOwner() && GetOwner() == C_BasePlayer::GetLocalPlayer())
 		return true;
@@ -255,7 +255,7 @@ bool CWeaponSDKBase::ShouldPredict()
 	return BaseClass::ShouldPredict();
 }
 
-void CWeaponSDKBase::OnDataChanged( DataUpdateType_t type )
+void CWeaponTFCBase::OnDataChanged( DataUpdateType_t type )
 {
 	BaseClass::OnDataChanged( type );
 
@@ -264,22 +264,22 @@ void CWeaponSDKBase::OnDataChanged( DataUpdateType_t type )
 }
 #endif 
 
-const CSDKWeaponInfo &CWeaponSDKBase::GetSDKWpnData() const
+const CTFCWeaponInfo &CWeaponTFCBase::GetTFCWpnData() const
 {
 	const FileWeaponInfo_t *pWeaponInfo = &GetWpnData();
-	const CSDKWeaponInfo *pSDKInfo;
+	const CTFCWeaponInfo *pTFCInfo;
  
 #ifdef _DEBUG
-	pSDKInfo = dynamic_cast< const CSDKWeaponInfo* >( pWeaponInfo );
-	Assert( pSDKInfo );
+	pTFCInfo = dynamic_cast< const CTFCWeaponInfo* >( pWeaponInfo );
+	Assert( pTFCInfo );
 #else
-	pSDKInfo = static_cast< const CSDKWeaponInfo* >( pWeaponInfo );
+	pTFCInfo = static_cast< const CTFCWeaponInfo* >( pWeaponInfo );
 #endif
  
-	return *pSDKInfo;
+	return *pTFCInfo;
 }
  
-bool CWeaponSDKBase::PlayEmptySound()
+bool CWeaponTFCBase::PlayEmptySound()
 {
 	CPASAttenuationFilter filter( this );
 	filter.UsePredictionRules();
@@ -289,16 +289,16 @@ bool CWeaponSDKBase::PlayEmptySound()
 	return 0;
 }
  
-CSDKPlayer* CWeaponSDKBase::GetPlayerOwner() const
+CTFCPlayer* CWeaponTFCBase::GetPlayerOwner() const
 {
-	return dynamic_cast< CSDKPlayer* >( GetOwner() );
+	return dynamic_cast< CTFCPlayer* >( GetOwner() );
 }
  
-float CWeaponSDKBase::GetAccuracyModifier()
+float CWeaponTFCBase::GetAccuracyModifier()
 {
 	float weaponAccuracy = 1.0f; // by default, don't make any alterations
 
-	CSDKPlayer *pPlayer = ToSDKPlayer( GetOwner() );
+	CTFCPlayer *pPlayer = ToTFCPlayer( GetOwner() );
 	if ( pPlayer )
 	{
 		if( !fabs( pPlayer->GetAbsVelocity().x ) && !fabs( pPlayer->GetAbsVelocity().y ) )	// player isn't moving
@@ -316,12 +316,12 @@ float CWeaponSDKBase::GetAccuracyModifier()
 	return weaponAccuracy;
 }
 
-void CWeaponSDKBase::SetWeaponVisible( bool visible )
+void CWeaponTFCBase::SetWeaponVisible( bool visible )
 {
 	CBaseViewModel *vm = nullptr;
 	CTFCViewModel *vmhands = nullptr;
 
-	CSDKPlayer *pOwner = ToSDKPlayer( GetOwner() );
+	CTFCPlayer *pOwner = ToTFCPlayer( GetOwner() );
 	if ( pOwner )
 	{
 		vm = pOwner->GetViewModel( VMINDEX_WEP );
@@ -368,8 +368,8 @@ void CWeaponSDKBase::SetWeaponVisible( bool visible )
 	}
 }
 
-//Tony; added as a default primary attack if it doesn't get overridden, ie: by CSDKWeaponMelee
-void CWeaponSDKBase::PrimaryAttack( void )
+//Tony; added as a default primary attack if it doesn't get overridden, ie: by CTFCWeaponMelee
+void CWeaponTFCBase::PrimaryAttack( void )
 {
 	int preShotAmmo = m_iClip1;
 
@@ -380,7 +380,7 @@ void CWeaponSDKBase::PrimaryAttack( void )
 		return;
 	}
  
-	CSDKPlayer *pPlayer = GetPlayerOwner();
+	CTFCPlayer *pPlayer = GetPlayerOwner();
  
 	if (!pPlayer)
 		return;
@@ -421,7 +421,7 @@ void CWeaponSDKBase::PrimaryAttack( void )
 		pPlayer->Weapon_ShootPosition(),
 		pPlayer->EyeAngles() + pPlayer->GetPunchAngle(),
 		GetWeaponID(),
-		0, //Tony; fire mode - this is unused at the moment, left over from CSS when SDK* was created in the first place.
+		0, //Tony; fire mode - this is unused at the moment, left over from CSS when TFC* was created in the first place.
 		CBaseEntity::GetPredictionRandomSeed() & 255,
 		flSpread
 		);*/
@@ -440,7 +440,7 @@ void CWeaponSDKBase::PrimaryAttack( void )
 	m_flNextSecondaryAttack = gpGlobals->curtime + SequenceDuration();
 }
 
-void CWeaponSDKBase::SecondaryAttack( void )
+void CWeaponTFCBase::SecondaryAttack( void )
 {
 	// Overrides secondary attack of weapons with scopes
 	// This may not be desired, but that's just how it works, so adjust all scoped weapons accordingly and keep this in mind!
@@ -458,7 +458,7 @@ void CWeaponSDKBase::SecondaryAttack( void )
 	}
 }
 
-bool CWeaponSDKBase::CanScope( void )
+bool CWeaponTFCBase::CanScope( void )
 {
 	// If this weapon doesn't have a scope, how are we expected to use it?
 	// We really shouldn't have to check for this by the time this function is called, but just in case...
@@ -469,19 +469,19 @@ bool CWeaponSDKBase::CanScope( void )
 	if ( UnscopeAfterShot() && (gpGlobals->curtime < m_flNextPrimaryAttack) )
 		return false;
 
-	CSDKPlayer *pOwner = ToSDKPlayer( GetOwner() );
+	CTFCPlayer *pOwner = ToTFCPlayer( GetOwner() );
 	if ( !pOwner )
 		return false;
 
 	return true;
 }
 
-void CWeaponSDKBase::EnterScope( void )
+void CWeaponTFCBase::EnterScope( void )
 {
 	if ( !CanScope() )
 		return;	// don't scope if we're not allowed to right now!
 
-	CSDKPlayer *pOwner = ToSDKPlayer( GetOwner() );
+	CTFCPlayer *pOwner = ToTFCPlayer( GetOwner() );
 	if ( !pOwner )
 		return;
 	
@@ -493,11 +493,11 @@ void CWeaponSDKBase::EnterScope( void )
 	m_flNextSecondaryAttack	= gpGlobals->curtime + 0.25f;	// make a bit of a delay between zooming/unzooming to prevent spam and possibly some bugs
 }
 
-void CWeaponSDKBase::ExitScope( bool unhideWeapon )
+void CWeaponTFCBase::ExitScope( bool unhideWeapon )
 {
 	m_bIsScoped = false;	// unscope regardless of whether or not we have an owner (should prevent some bugs)
 
-	CSDKPlayer *pOwner = ToSDKPlayer( GetOwner() );
+	CTFCPlayer *pOwner = ToTFCPlayer( GetOwner() );
 	if ( !pOwner )
 		return;
 
@@ -510,9 +510,9 @@ void CWeaponSDKBase::ExitScope( bool unhideWeapon )
 }
 
 //Tony; added so we can have base functionality without implementing it into every weapon.
-void CWeaponSDKBase::ItemPostFrame( void )
+void CWeaponTFCBase::ItemPostFrame( void )
 {
-	CSDKPlayer *pPlayer = GetPlayerOwner();
+	CTFCPlayer *pPlayer = GetPlayerOwner();
 	if ( !pPlayer )
 		return;
 
@@ -619,7 +619,7 @@ void CWeaponSDKBase::ItemPostFrame( void )
 	}
 }
  
-void CWeaponSDKBase::WeaponIdle( void )
+void CWeaponTFCBase::WeaponIdle( void )
 {
 	//Idle again if we've finished
 	if ( HasWeaponIdleTimeElapsed() )
@@ -628,7 +628,7 @@ void CWeaponSDKBase::WeaponIdle( void )
 		SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
 	}
 }
-bool CWeaponSDKBase::Reload( void )
+bool CWeaponTFCBase::Reload( void )
 {
 	bool fRet;
 	float fCacheTime = m_flNextSecondaryAttack;
@@ -655,9 +655,9 @@ bool CWeaponSDKBase::Reload( void )
 	return fRet;
 }
 
-void CWeaponSDKBase::SendReloadEvents()
+void CWeaponTFCBase::SendReloadEvents()
 {
-	CSDKPlayer *pPlayer = GetPlayerOwner();
+	CTFCPlayer *pPlayer = GetPlayerOwner();
 	if ( !pPlayer )
 		return;
  
@@ -677,7 +677,7 @@ void CWeaponSDKBase::SendReloadEvents()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CWeaponSDKBase::Precache( void )
+void CWeaponTFCBase::Precache( void )
 {
 	BaseClass::Precache();
 
@@ -687,7 +687,7 @@ void CWeaponSDKBase::Precache( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CWeaponSDKBase::Deploy( )
+bool CWeaponTFCBase::Deploy( )
 {
 	MDLCACHE_CRITICAL_SECTION();
 
@@ -706,7 +706,7 @@ bool CWeaponSDKBase::Deploy( )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CWeaponSDKBase::Holster( CBaseCombatWeapon *pSwitchingTo )
+bool CWeaponTFCBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 { 
 	MDLCACHE_CRITICAL_SECTION();
  
@@ -733,12 +733,12 @@ bool CWeaponSDKBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 		SetWeaponVisible( false );
 	else
 		// Hide the weapon when the holster animation's finished
-		SetContextThink( &CBaseCombatWeapon::HideThink, gpGlobals->curtime + flSequenceDuration, SDK_HIDEWEAPON_THINK_CONTEXT );
+		SetContextThink( &CBaseCombatWeapon::HideThink, gpGlobals->curtime + flSequenceDuration, TFC_HIDEWEAPON_THINK_CONTEXT );
  
 	return true;
 }
 
-acttable_t *CWeaponSDKBase::ActivityList( int &iActivityCount )
+acttable_t *CWeaponTFCBase::ActivityList( int &iActivityCount )
 {
 	acttable_t *pTable = NULL;
 
@@ -802,7 +802,7 @@ acttable_t *CWeaponSDKBase::ActivityList( int &iActivityCount )
 	return pTable;
 }
  
-void CWeaponSDKBase::WeaponSound( WeaponSound_t sound_type, float soundtime /* = 0.0f */ )
+void CWeaponTFCBase::WeaponSound( WeaponSound_t sound_type, float soundtime /* = 0.0f */ )
 {
 #ifdef CLIENT_DLL
 	// If we have some sounds from the weapon classname.txt file, play a random one of them
@@ -820,7 +820,7 @@ void CWeaponSDKBase::WeaponSound( WeaponSound_t sound_type, float soundtime /* =
 #endif
 }
 
-void CWeaponSDKBase::FallInit( void )
+void CWeaponTFCBase::FallInit( void )
 {
 #ifndef CLIENT_DLL
 	SetModel( GetWorldModel() );
@@ -872,7 +872,7 @@ void CWeaponSDKBase::FallInit( void )
 
 	SetPickupTouch();
 	
-	SetThink( &CWeaponSDKBase::FallThink );
+	SetThink( &CWeaponTFCBase::FallThink );
 
 	SetNextThink( gpGlobals->curtime + 0.1f );
 #endif	// !CLIENT_DLL
@@ -888,7 +888,7 @@ ConVar cl_bobenable( "cl_bobenable", "1" );
 float g_lateralBob;
 float g_verticalBob;
 
-float CWeaponSDKBase::CalcViewmodelBob()
+float CWeaponTFCBase::CalcViewmodelBob()
 {
 	static float	bobtime;
 	static float	lastbobtime;
@@ -943,7 +943,7 @@ float CWeaponSDKBase::CalcViewmodelBob()
 	return 0.0f;
 }
 
-void CWeaponSDKBase::AddViewmodelBob( CBaseViewModel *viewmodel, Vector& origin, QAngle& angles )
+void CWeaponTFCBase::AddViewmodelBob( CBaseViewModel *viewmodel, Vector& origin, QAngle& angles )
 {
 	if ( !cl_bobenable.GetBool() )
 		return;
@@ -968,7 +968,7 @@ void CWeaponSDKBase::AddViewmodelBob( CBaseViewModel *viewmodel, Vector& origin,
 	VectorMA( origin, g_lateralBob * cl_boblatscale.GetFloat(), right, origin );
 }
 #else
-void CWeaponSDKBase::FallThink(void)
+void CWeaponTFCBase::FallThink(void)
 {
 	// Prevent the common HL2DM weapon respawn bug from happening
 	// When a weapon is spawned, the following chain of events occurs:
@@ -993,7 +993,7 @@ void CWeaponSDKBase::FallThink(void)
 	return BaseClass::FallThink();
 }
 
-void CWeaponSDKBase::Materialize( void )
+void CWeaponTFCBase::Materialize( void )
 {
 	if ( IsEffectActive( EF_NODRAW ) )
 	{
@@ -1009,7 +1009,7 @@ void CWeaponSDKBase::Materialize( void )
 		VPhysicsInitNormal( SOLID_BBOX, GetSolidFlags() | FSOLID_TRIGGER, false );
 		SetMoveType( MOVETYPE_VPHYSICS );
 
-		SDKGameRules()->AddLevelDesignerPlacedObject( this );
+		TFCGameRules()->AddLevelDesignerPlacedObject( this );
 	}
 
 	if ( HasSpawnFlags( SF_NORESPAWN ) == false )
@@ -1026,12 +1026,12 @@ void CWeaponSDKBase::Materialize( void )
 	SetThink (NULL);
 }
 
-int CWeaponSDKBase::ObjectCaps()
+int CWeaponTFCBase::ObjectCaps()
 {
 	return BaseClass::ObjectCaps() & ~FCAP_IMPULSE_USE;
 }
 
-void CWeaponSDKBase::DoMuzzleFlash( void )
+void CWeaponTFCBase::DoMuzzleFlash( void )
 {
 	if ( !ShouldDrawMuzzleFlash() )
 		return;	// this weapon shouldn't have a muzzleflash drawn, so don't
