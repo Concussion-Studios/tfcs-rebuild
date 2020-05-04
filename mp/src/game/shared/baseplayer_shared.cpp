@@ -14,7 +14,6 @@
 #endif
 
 #if defined( CLIENT_DLL )
-
 	#include "iclientvehicle.h"
 	#include "prediction.h"
 	#include "c_basedoor.h"
@@ -23,9 +22,7 @@
 	#include "client_virtualreality.h"
 	#define CRecipientFilter C_RecipientFilter
 	#include "sourcevr/isourcevirtualreality.h"
-
 #else
-
 	#include "iservervehicle.h"
 	#include "trains.h"
 	#include "world.h"
@@ -34,7 +31,6 @@
 	#include "env_zoom.h"
 
 	extern int TrainSpeed(int iSpeed, int iMax);
-	
 #endif
 
 #if defined( CSTRIKE_DLL )
@@ -164,7 +160,7 @@ void CBasePlayer::ItemPreFrame()
 	PlayerUse();
 
 	//Tony; re-ordered this for efficiency and to make sure that certain things happen in the correct order!
-    if ( gpGlobals->curtime < m_flNextAttack )
+	if ( gpGlobals->curtime < m_flNextAttack )
 	{
 		return;
 	}
@@ -269,7 +265,7 @@ void CBasePlayer::ItemPostFrame()
 		return;
 	}
 
-    if ( gpGlobals->curtime < m_flNextAttack )
+	if ( gpGlobals->curtime < m_flNextAttack )
 	{
 		if ( GetActiveWeapon() )
 		{
@@ -761,7 +757,7 @@ void CBasePlayer::UpdateButtonState( int nUserCmdButtonMask )
 
 	// Get button states
 	m_nButtons = nUserCmdButtonMask;
- 	int buttonsChanged = m_afButtonLast ^ m_nButtons;
+	int buttonsChanged = m_afButtonLast ^ m_nButtons;
 	
 	// Debounced button codes for pressed/released
 	// UNDONE: Do we need auto-repeat?
@@ -1731,33 +1727,33 @@ void CBasePlayer::CalcObserverView( Vector& eyeOrigin, QAngle& eyeAngles, float&
 //-----------------------------------------------------------------------------
 float CBasePlayer::CalcRoll (const QAngle& angles, const Vector& velocity, float rollangle, float rollspeed)
 {
-    float   sign;
-    float   side;
-    float   value;
+	float   sign;
+	float   side;
+	float   value;
 	
 	Vector  forward, right, up;
 	
-    AngleVectors (angles, &forward, &right, &up);
+	AngleVectors (angles, &forward, &right, &up);
 	
 	// Get amount of lateral movement
-    side = DotProduct( velocity, right );
+	side = DotProduct( velocity, right );
 	// Right or left side?
-    sign = side < 0 ? -1 : 1;
-    side = fabs(side);
-    
+	sign = side < 0 ? -1 : 1;
+	side = fabs(side);
+	
 	value = rollangle;
 	// Hit 100% of rollangle at rollspeed.  Below that get linear approx.
-    if ( side < rollspeed )
+	if ( side < rollspeed )
 	{
 		side = side * value / rollspeed;
 	}
-    else
+	else
 	{
 		side = value;
 	}
 
 	// Scale by right/left sign
-    return side*sign;
+	return side*sign;
 }
 
 //-----------------------------------------------------------------------------

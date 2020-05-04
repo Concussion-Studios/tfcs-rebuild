@@ -317,7 +317,7 @@ CON_COMMAND_F( mp_forcewin, "Forces team to win", FCVAR_CHEAT )
 		if ( args.ArgC() == 1 )
 		{
 			// if no team specified, use player 1's team
-			iTeam = UTIL_PlayerByIndex( 1 )->GetTeamNumber();	
+			iTeam = UTIL_GetLocalPlayer()->GetTeamNumber();
 		}
 		else if ( args.ArgC() == 2 )
 		{
@@ -2803,8 +2803,8 @@ void CTeamplayRoundBasedRules::RoundRespawn( void )
 	}
 #endif
 
-	// Free any edicts that were marked deleted. This should hopefully clear some out
-	//  so the below function can use the now freed ones.
+    // Free any edicts that were marked deleted. This should hopefully clear some out
+    //  so the below function can use the now freed ones.
 	engine->AllowImmediateEdictReuse();
 
 	RespawnPlayers( true );

@@ -105,7 +105,7 @@ void WeaponsResource::LoadWeaponSprites( WEAPON_FILE_INFO_HANDLE hWeaponFileInfo
 
 	char sz[128];
 	
-#ifdef TFCSOURCE_DLL
+#ifdef SDK_DLL
 	Q_snprintf(sz, sizeof( sz ), "scripts/weapons/%s", pWeaponInfo->szClassName);
 #else
 	Q_snprintf(sz, sizeof( sz ), "scripts/%s", pWeaponInfo->szClassName);

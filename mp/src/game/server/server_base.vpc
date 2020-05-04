@@ -6,7 +6,6 @@
 
 $Macro OUTBINNAME	"server"
 $Macro OUTBINDIR	"$SRCDIR\..\game\$GAMENAME\bin"
-$Macro DEVKITBINDIR	"$GAMENAME\bin"							[$X360]
 
 $MacroRequired "GAMENAME"
 
@@ -19,9 +18,6 @@ $Configuration	"Debug"
 	{
 		$OutputDirectory		".\Debug_$GAMENAME"			[$WIN32]
 		$IntermediateDirectory	".\Debug_$GAMENAME"			[$WIN32]
-
-		$OutputDirectory		".\Debug_$GAMENAME_360"		[$X360]
-		$IntermediateDirectory	".\Debug_$GAMENAME_360"		[$X360]
 	}
 }
 
@@ -31,9 +27,6 @@ $Configuration	"Release"
 	{
 		$OutputDirectory		".\Release_$GAMENAME"		[$WIN32]
 		$IntermediateDirectory	".\Release_$GAMENAME"		[$WIN32]
-
-		$OutputDirectory		".\Release_$GAMENAME_360"	[$X360]
-		$IntermediateDirectory	".\Release_$GAMENAME_360"	[$X360]
 	}
 }
 
@@ -49,7 +42,7 @@ $Configuration
 		$AdditionalIncludeDirectories	"$BASE;.\;$SRCDIR\game\shared;$SRCDIR\utils\common;$SRCDIR\game\shared\econ;$SRCDIR\game\server\NextBot"
 		$PreprocessorDefinitions		"$BASE;GAME_DLL;VECTOR;VERSION_SAFE_STEAM_API_INTERFACES;PROTECTED_THINGS_ENABLE;sprintf=use_Q_snprintf_instead_of_sprintf;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead"
 		$PreprocessorDefinitions		"$BASE;SWDS" [$POSIX]
-		$PreprocessorDefinitions		"$BASE;fopen=dont_use_fopen" [$WINDOWS||$X360]
+		$PreprocessorDefinitions		"$BASE;fopen=dont_use_fopen" [$WINDOWS		]
 		$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
 		$Create/UsePCHThroughFile		"cbase.h"
 	}
@@ -353,7 +346,6 @@ $Project
 		$File	"fogcontroller.cpp"
 		$File	"fourwheelvehiclephysics.cpp"
 		$File	"fourwheelvehiclephysics.h"
-		$File	"Func_Monitor.cpp"
 		$File	"func_areaportal.cpp"
 		$File	"func_areaportalbase.cpp"
 		$File	"func_areaportalbase.h"
@@ -433,7 +425,6 @@ $Project
 		$File	"lights.h"
 		$File	"locksounds.h"
 		$File	"logic_measure_movement.cpp"
-		$File	"logic_mirror_movement.cpp"
 		$File	"logic_navigation.cpp"
 		$File	"logicauto.cpp"
 		$File	"logicentities.cpp"

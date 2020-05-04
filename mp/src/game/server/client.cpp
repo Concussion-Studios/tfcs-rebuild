@@ -97,19 +97,19 @@ void sv_allow_point_servercommand_changed( IConVar *pConVar, const char *pOldStr
 
 ConVar sv_allow_point_servercommand ( "sv_allow_point_servercommand",
 #ifdef TF_DLL
-									  // The default value here should match the default of the convar
-									  "official",
+                                      // The default value here should match the default of the convar
+                                      "official",
 #else
-									  // Other games may use this in their official maps, and only TF exposes IsValveMap() currently
-									  "always",
+                                      // Other games may use this in their official maps, and only TF exposes IsValveMap() currently
+                                      "always",
 #endif // TF_DLL
-									  FCVAR_NONE,
-									  "Allow use of point_servercommand entities in map. Potentially dangerous for untrusted maps.\n"
-									  "  disallow : Always disallow\n"
+                                      FCVAR_NONE,
+                                      "Allow use of point_servercommand entities in map. Potentially dangerous for untrusted maps.\n"
+                                      "  disallow : Always disallow\n"
 #ifdef TF_DLL
-									  "  official : Allowed for valve maps only\n"
+                                      "  official : Allowed for valve maps only\n"
 #endif // TF_DLL
-									  "  always   : Allow for all maps", sv_allow_point_servercommand_changed );
+                                      "  always   : Allow for all maps", sv_allow_point_servercommand_changed );
 
 void ClientKill( edict_t *pEdict, const Vector &vecForce, bool bExplode = false )
 {
@@ -364,7 +364,10 @@ void ClientPrecache( void )
 	CBaseEntity::PrecacheModel( "sprites/blueglow1.vmt" );	
 	CBaseEntity::PrecacheModel( "sprites/purpleglow1.vmt" );	
 	CBaseEntity::PrecacheModel( "sprites/purplelaser1.vmt" );	
+	
+#ifndef HL2MP
 	CBaseEntity::PrecacheScriptSound( "Hud.Hint" );
+#endif // HL2MP
 	CBaseEntity::PrecacheScriptSound( "Player.FallDamage" );
 	CBaseEntity::PrecacheScriptSound( "Player.Swim" );
 
@@ -919,8 +922,10 @@ CON_COMMAND( fov, "Change players FOV" )
 //------------------------------------------------------------------------------
 void CC_Player_SetModel( const CCommand &args )
 {
+#ifndef SDK_DLL
 	if ( gpGlobals->deathmatch )
 		return;
+#endif
 
 	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() );
 	if ( pPlayer && args.ArgC() == 2)
@@ -1211,8 +1216,10 @@ void CC_God_f (void)
 		   return;
    }
 #else
+#ifndef SDK_DLL
 	if ( gpGlobals->deathmatch )
 		return;
+#endif
 #endif
 
 	pPlayer->ToggleFlag( FL_GODMODE );
@@ -1380,8 +1387,10 @@ void CC_Notarget_f (void)
 	if ( !pPlayer )
 		return;
 
+#ifndef SDK_DLL
 	if ( gpGlobals->deathmatch )
 		return;
+#endif
 
 	pPlayer->ToggleFlag( FL_NOTARGET );
 	if ( !(pPlayer->GetFlags() & FL_NOTARGET ) )

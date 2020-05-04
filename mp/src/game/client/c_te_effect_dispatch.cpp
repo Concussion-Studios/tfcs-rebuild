@@ -179,10 +179,6 @@ void DispatchEffect( const char *pName, const CEffectData &data )
 	te->DispatchEffect( filter, 0.0, data.m_vOrigin, pName, data );
 }
 
-void DispatchEffect( const char *pName, const CEffectData &data, IRecipientFilter &filter )
-{
-	te->DispatchEffect( filter, 0.0, data.m_vOrigin, pName, data );
-}
 
 //-----------------------------------------------------------------------------
 // Playback

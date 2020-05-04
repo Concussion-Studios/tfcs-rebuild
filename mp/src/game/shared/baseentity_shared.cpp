@@ -30,9 +30,9 @@
 	#include "waterbullet.h"
 	#include "func_break.h"
 
-//#ifdef TFCSOURCE_DLL
-//	#include "te_tfcs_shotgun_shot.h"
-//#endif
+#ifdef HL2MP
+	#include "te_hl2mp_shotgun_shot.h"
+#endif
 
 	#include "gamestats.h"
 
@@ -1610,7 +1610,7 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 	
 	bool bDoServerEffects = true;
 
-#if defined( TFCSOURCE_DLL ) && defined( GAME_DLL )
+#if defined( HL2MP ) && defined( GAME_DLL )
 	bDoServerEffects = false;
 #endif
 
@@ -1689,8 +1689,8 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 		iSeed = CBaseEntity::GetPredictionRandomSeed( info.m_bUseServerRandomSeed ) & 255;
 	}
 
-#if defined( TFCSOURCE_DLL ) && defined( GAME_DLL )
-//	int iEffectSeed = iSeed;
+#if defined( HL2MP ) && defined( GAME_DLL )
+	int iEffectSeed = iSeed;
 #endif
 	//-----------------------------------------------------
 	// Set up our shot manipulator.
@@ -2021,12 +2021,12 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 		iSeed++;
 	}
 
-/*#if defined( TFCSOURCE_DLL ) && defined( GAME_DLL )
+#if defined( HL2MP ) && defined( GAME_DLL )
 	if ( bDoServerEffects == false )
 	{
-		TE_TFCSFireBullets( entindex(), tr.startpos, info.m_vecDirShooting, info.m_iAmmoType, iEffectSeed, info.m_iShots, info.m_vecSpread.x, bDoTracers, bDoImpacts );
+		TE_HL2MPFireBullets( entindex(), tr.startpos, info.m_vecDirShooting, info.m_iAmmoType, iEffectSeed, info.m_iShots, info.m_vecSpread.x, bDoTracers, bDoImpacts );
 	}
-#endif*/
+#endif
 
 #ifdef GAME_DLL
 	ApplyMultiDamage();
@@ -2047,7 +2047,7 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 bool CBaseEntity::ShouldDrawUnderwaterBulletBubbles()
 {
 #if defined( HL2_DLL ) && defined( GAME_DLL )
-	CBaseEntity *pPlayer = ( gpGlobals->maxClients == 1 ) ? UTIL_GetLocalPlayer() : NULL;
+	CBaseEntity *pPlayer = UTIL_GetNearestVisiblePlayer(this);
 	return pPlayer && (pPlayer->GetWaterLevel() == 3);
 #else
 	return false;
@@ -2076,7 +2076,7 @@ bool CBaseEntity::HandleShotImpactingWater( const FireBulletsInfo_t &info,
 		int	nMaxSplashSize = GetAmmoDef()->MaxSplashSize(info.m_iAmmoType);
 
 		CEffectData	data;
-		data.m_vOrigin = waterTrace.endpos;
+ 		data.m_vOrigin = waterTrace.endpos;
 		data.m_vNormal = waterTrace.plane.normal;
 		data.m_flScale = random->RandomFloat( nMinSplashSize, nMaxSplashSize );
 		if ( waterTrace.contents & CONTENTS_SLIME )
@@ -2169,7 +2169,7 @@ void CBaseEntity::DoImpactEffect( trace_t &tr, int nDamageType )
 //-----------------------------------------------------------------------------
 void CBaseEntity::ComputeTracerStartPosition( const Vector &vecShotSrc, Vector *pVecTracerStart )
 {
-#ifndef TFCSOURCE_DLL
+#ifndef HL2MP
 	if ( g_pGameRules->IsMultiplayer() )
 	{
 		// NOTE: we do this because in MakeTracer, we force it to use the attachment position

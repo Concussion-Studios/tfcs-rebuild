@@ -1,0 +1,179 @@
+//-----------------------------------------------------------------------------
+//	CLIENT_TFCSOURCE.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro GAMENAME 	"tfcsource"
+
+$Include "$SRCDIR\game\client\client_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE;.\tfcsource;.\tfcsource\vgui;$SRCDIR\game\shared\tfcsource;$SRCDIR\game\shared\Multiplayer"
+		$PreprocessorDefinitions			"$BASE;SDK_DLL;GLOWS_ENABLE"
+	}
+}
+$Project "Client"
+{
+	$Folder	"game_controls Header Files"
+	{
+		$File	"game_controls\ClassMenu.h"
+	}
+
+	$Folder	"Source Files"
+	{
+		-$File	"$SRCDIR\game\shared\weapon_parse_default.cpp"
+		$File	"$SRCDIR\game\shared\basecombatweapon_shared.h"
+		$File	"c_team_objectiveresource.cpp"
+		$File	"c_team_objectiveresource.h"
+		$File	"c_team_train_watcher.cpp"
+		$File	"c_team_train_watcher.h"
+		$File	"hud_base_account.cpp"
+		$File	"hud_base_account.h"
+		$File	"hud_controlpointicons.cpp"
+		$File	"hud_voicestatus.cpp"
+		$File	"hud_vguiscreencursor.cpp"
+		$File	"$SRCDIR\game\shared\teamplay_round_timer.cpp"
+		$File	"$SRCDIR\game\shared\teamplay_round_timer.h"
+		$File	"TeamBitmapImage.cpp"
+		$File	"voice_menu.cpp"
+		$File	"bsp_utils.cpp"
+		$File	"bsp_utils.h"
+		$File	"c_env_projectedtexture.h"
+		$File	"worldlight.cpp"
+		$File	"worldlight.h"		
+
+		$Folder	"game_controls"
+		{
+			$File	"game_controls\ClassMenu.cpp"
+		}
+
+		$Folder	"Team Fortress Classic"
+		{
+			$File	"tfcsource\c_te_firebullets.cpp"
+			$File	"tfcsource\clientmode_tfc.cpp"
+			$File	"tfcsource\clientmode_tfc.h"
+			$File	"tfcsource\tfc_in_main.cpp"
+			$File	"tfcsource\tfc_prediction.cpp"
+			$File	"$SRCDIR\game\shared\tfcsource\tfc_shareddefs.cpp"
+			$File	"$SRCDIR\game\shared\tfcsource\tfc_shareddefs.h"
+			$File	"$SRCDIR\game\shared\tfcsource\tfc_usermessages.cpp"
+
+			$Folder	"GUI"
+			{	
+				$File	"tfcsource\vgui\tfc_backgroundpanel.cpp"
+				$File	"tfcsource\vgui\tfc_backgroundpanel.h"
+				$File	"tfcsource\vgui\tfc_classmenu.cpp"
+				$File	"tfcsource\vgui\tfc_classmenu.h"
+				$File	"tfcsource\vgui\tfc_scoreboard.cpp"
+				$File	"tfcsource\vgui\tfc_scoreboard.h"
+				$File	"tfcsource\vgui\tfc_spectatorgui.cpp"
+				$File	"tfcsource\vgui\tfc_spectatorgui.h"
+				$File	"tfcsource\vgui\tfc_teammenu.cpp"
+				$File	"tfcsource\vgui\tfc_teammenu.h"
+				$File	"tfcsource\vgui\tfc_textwindow.cpp"
+				$File	"tfcsource\vgui\tfc_textwindow.h"
+				$File	"tfcsource\vgui\tfcviewport.cpp"
+				$File	"tfcsource\vgui\tfcviewport.h"
+				$File	"tfcsource\vgui\vgui_rootpanel_tfc.cpp"
+				$File	"tfcsource\vgui\vgui_rootpanel_tfc.h"
+			}
+
+			$Folder	"Hud Elements"
+			{
+				$File	"tfcsource\hud_tfcdeathnotice.cpp"
+				$File	"tfcsource\tfc_hud_ammo.cpp"
+				$File	"tfcsource\tfc_hud_armor.cpp"
+				$File	"tfcsource\tfc_hud_chat.cpp"
+				$File	"tfcsource\tfc_hud_chat.h"
+				$File	"tfcsource\tfc_hud_damage.cpp"
+				$File	"tfcsource\tfc_hud_health.cpp"
+				$File	"tfcsource\tfc_hud_targetid.cpp"
+				$File	"tfcsource\tfc_hud_weaponselection.cpp"
+				$File	"tfcsource\tfc_hud_scope.cpp"
+			}
+
+			$Folder	"Player"
+			{
+				$File	"tfcsource\c_tfc_player.cpp"
+				$File	"tfcsource\c_tfc_player.h"
+				$File	"tfcsource\c_tfc_player_resource.cpp"
+				$File	"tfcsource\c_tfc_player_resource.h"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_viewmodel.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_viewmodel.h"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_gamemovement.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_player_shared.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_playeranimstate.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_playeranimstate.h"
+			}
+
+			$Folder	"Rules"
+			{
+				$File	"tfcsource\c_tfc_team.cpp"
+				$File	"tfcsource\c_tfc_team.h"
+				$File	"tfcsource\c_tfc_objective_resource.cpp"
+				$File	"tfcsource\c_tfc_objective_resource.h"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_gamerules.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_gamerules.h"
+			}
+
+			$Folder	"Weapons"
+			{
+				$Folder	"Projectiles"
+				{
+					$File	"tfcsource\c_tfc_projectile_rpg.cpp"
+				}
+
+				$Folder	"Grenades"
+				{
+					$File	"$SRCDIR\game\shared\tfcsource\tfc_basegrenade_projectile.cpp"
+					$File	"$SRCDIR\game\shared\tfcsource\tfc_basegrenade_projectile.h"
+				}
+
+				$File	"tfcsource\tfc_fx_impacts.cpp"
+				$File	"tfcsource\tfc_fx_weaponfx.cpp"	
+				$File	"tfcsource\c_tfc_projectile_rpg.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_fx_shared.cpp"		
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_fx_shared.h"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_weapon_melee.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_weapon_melee.h"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_weapon_parse.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_weapon_parse.h"	
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_crowbar.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_railgun.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_tranq.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_tfcbase.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_tfcbase.h"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_shotgun.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_tfcbase_sniper.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_tfcbase_sniper.h"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_tfcbase_rpg.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_tfcbase_rpg.h"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_nailgun.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_shotgun12gauge.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_supernailgun.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_sniperrifle.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_autorifle.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_umbrella.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_knife.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_wrench.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_assaultcannon.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_medkit.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_rpg.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_rpg.h"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_ic.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_ic.h"
+			}
+
+			$Folder	"Multiplayer"
+			{
+				$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.cpp"
+				$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.h"
+			}
+		}
+	}
+}

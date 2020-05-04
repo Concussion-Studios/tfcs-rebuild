@@ -221,13 +221,8 @@ KeyValues* ReadEncryptedKVFile( IFileSystem *filesystem, const char *szFilenameW
 
 			if (!f)
 			{
-				//Not found yet? Try from "GAME"
-				f = filesystem->Open( szFullName, "rb", "GAME" );
-				if ( !f )
-				{
-					pKV->deleteThis();
-					return NULL;
-				}
+				pKV->deleteThis();
+				return NULL;
 			}
 			// load file into a null-terminated buffer
 			int fileSize = filesystem->Size(f);
@@ -288,7 +283,7 @@ bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeapo
 		return true;
 
 	char sz[128];
-#ifdef TFCSOURCE_DLL
+#ifdef SDK_DLL
 	Q_snprintf( sz, sizeof( sz ), "scripts/weapons/%s", szWeaponName );
 #else
 	Q_snprintf( sz, sizeof( sz ), "scripts/%s", szWeaponName );

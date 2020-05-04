@@ -24,6 +24,8 @@
 #include "econ_item_view.h"
 #endif
 
+extern float DamageForce( const Vector& size, float damage );
+
 // For queuing and processing usercmds
 class CCommandContext
 {
@@ -282,7 +284,7 @@ public:
 	// Returns true if this player wants pPlayer to be moved back in time when this player runs usercmds.
 	// Saves a lot of overhead on the server if we can cull out entities that don't need to lag compensate
 	// (like team members, entities out of our PVS, etc).
-	virtual bool			WantsLagCompensationOnEntity( const CBasePlayer	*pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const;
+	virtual bool			WantsLagCompensationOnEntity( const CBaseEntity	*pEntity, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const;
 
 	virtual void			Spawn( void );
 	virtual void			Activate( void );
@@ -926,7 +928,7 @@ protected:
 	int						m_iTrain;				// Train control position
 
 	float					m_iRespawnFrames;	// used in PlayerDeathThink() to make sure players can always respawn
- 	unsigned int			m_afPhysicsFlags;	// physics flags - set when 'normal' physics should be revisited or overriden
+	unsigned int			m_afPhysicsFlags;	// physics flags - set when 'normal' physics should be revisited or overriden
 	
 	// Vehicles
 	CNetworkHandle( CBaseEntity, m_hVehicle );
@@ -1045,6 +1047,7 @@ private:
 	// Multiplayer handling
 	PlayerConnectedState	m_iConnected;
 
+public:
 	// from edict_t
 	// CBasePlayer doesn't send this but CCSPlayer does.
 	CNetworkVarForDerived( int, m_ArmorValue );
@@ -1149,6 +1152,9 @@ protected:
 	friend class CHL2GameMovement;
 	friend class CDODGameMovement;
 	friend class CPortalGameMovement;
+#if defined ( SDK_DLL )
+	friend class CSDKGameMovement;
+#endif
 	
 	// Accessors for gamemovement
 	bool IsDucked( void ) const { return m_Local.m_bDucked; }

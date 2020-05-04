@@ -1,0 +1,165 @@
+//-----------------------------------------------------------------------------
+//	SERVER_TFCSOURCE.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro GAMENAME 	"tfcsource"
+
+$Include "$SRCDIR\game\server\server_base.vpc"
+$Include "$SRCDIR\game\server\nav_mesh.vpc" [$SOURCESDK]
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;.\tfcsource,$SRCDIR\game\shared\tfcsource,$SRCDIR\game\shared\Multiplayer"
+		$PreprocessorDefinitions		"$BASE;SDK_DLL;GLOWS_ENABLE"
+	}
+}
+
+$Project "Server"
+{
+	$Folder	"Source Files"
+	{
+		$File	"ai_relationship.cpp"
+		$File	"basegrenade_concussion.cpp"
+		$File	"basegrenade_contact.cpp"
+		$File	"basegrenade_timed.cpp"
+		$File	"EntityFlame.h"
+		$File	"Func_Monitor.cpp"
+		$File	"grenadethrown.cpp"
+		$File	"grenadethrown.h"
+		$File	"h_cycler.cpp"
+		$File	"h_cycler.h"
+		$File	"monstermaker.cpp"
+		$File	"monstermaker.h"
+		$File	"physics_bone_follower.h"
+		$File	"$SRCDIR\game\shared\predicted_viewmodel.cpp"
+		$File	"$SRCDIR\game\shared\predicted_viewmodel.h"
+		$File	"$SRCDIR\game\shared\ragdoll_shared.h"
+		$File	"$SRCDIR\game\shared\solidsetdefaults.h"
+		$File	"$SRCDIR\game\shared\touchlink.h"
+		$File	"logic_mirror_movement.cpp"
+		$File	"env_projectedtexture.h"
+
+		$Folder	"Team Fortress Classic"
+		{
+			$File	"tfcsource\tfc_client.cpp"
+			$File	"tfcsource\tfc_eventlog.cpp"
+			$File	"tfcsource\tfc_gameinterface.cpp"
+			$File	"$SRCDIR\game\shared\tfcsource\tfc_gamemovement.cpp"
+			$File	"$SRCDIR\game\shared\tfcsource\tfc_shareddefs.cpp"
+			$File	"$SRCDIR\game\shared\tfcsource\tfc_shareddefs.h"
+			$File	"$SRCDIR\game\shared\tfcsource\tfc_usermessages.cpp"
+			$File	"tfcsource\te_firebullets.cpp"
+			$File	"tfcsource\te_firebullets.h"
+			$File	"$SRCDIR\game\shared\tfcsource\tfc_player_shared.cpp"
+
+			$Folder	"PerfBots"
+			{
+				$File	"tfcsource\tfc_bot_temp.cpp"
+				$File	"tfcsource\tfc_bot_temp.h"
+			}
+
+			$Folder	"Items"
+			{
+				$File	"tfcsource\entity_backpack.cpp"
+				$File	"tfcsource\entity_armor.cpp"
+			}
+			
+			$Folder	"Solid Entities"
+			{
+				$File	"tfcsource\func_vehicle.cpp"
+				$File	"tfcsource\func_vehicle.h"
+			}
+
+			$Folder	"Player"
+			{
+				$File	"tfcsource\tfc_player.cpp"
+				$File	"tfcsource\tfc_player.h"
+				$File	"tfcsource\tfc_player_resource.cpp"
+				$File	"tfcsource\tfc_player_resource.h"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_viewmodel.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_viewmodel.h"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_player_shared.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_playeranimstate.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_playeranimstate.h"
+				$File	"tfcsource\tfc_playermove.cpp"
+			}
+
+			$Folder	"Rules"
+			{
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_gamerules.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_gamerules.h"
+				$File	"tfcsource\tfc_team.cpp"
+				$File	"tfcsource\tfc_team.h"
+				$File	"tfcsource\tfc_objective_resource.cpp"
+				$File	"tfcsource\tfc_objective_resource.h"
+			}
+
+			$Folder	"Weapons"
+			{
+				$Folder	"Projectiles"
+				{
+					$File	"tfcsource\tfc_projectile_base_rockets.cpp"
+					$File	"tfcsource\tfc_projectile_base_rockets.h"
+					$File	"tfcsource\tfc_projectile_rpg.cpp"
+					$File	"tfcsource\tfc_projectile_rpg.h"
+					$File	"tfcsource\tfc_projectile_ic.cpp"
+					$File	"tfcsource\tfc_projectile_ic.h"
+					$File	"tfcsource\tfc_projectile_base.cpp"
+					$File	"tfcsource\tfc_projectile_base.h"
+					$File	"tfcsource\tfc_projectile_nail.cpp"
+					$File	"tfcsource\tfc_projectile_nail.h"
+					$File	"tfcsource\tfc_projectile_tranq.cpp"
+					$File	"tfcsource\tfc_projectile_tranq.h"
+				}
+				
+				$Folder	"Grenades"
+				{
+					$File	"$SRCDIR\game\shared\tfcsource\tfc_basegrenade_projectile.cpp"
+					$File	"$SRCDIR\game\shared\tfcsource\tfc_basegrenade_projectile.h"
+				}
+
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_fx_shared.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_fx_shared.h"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_weapon_melee.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_weapon_melee.h"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_weapon_parse.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\tfc_weapon_parse.h"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_crowbar.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_railgun.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_tranq.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_tfcbase.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_tfcbase.h"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_shotgun.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_tfcbase_sniper.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_tfcbase_sniper.h"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_tfcbase_rpg.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_tfcbase_rpg.h"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_nailgun.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_shotgun12gauge.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_supernailgun.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_sniperrifle.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_autorifle.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_umbrella.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_knife.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_wrench.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_assaultcannon.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_medkit.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_rpg.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_rpg.h"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_ic.cpp"
+				$File	"$SRCDIR\game\shared\tfcsource\weapon_ic.h"
+			}
+
+			$Folder	"Multiplayer"
+			{
+				$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.cpp"
+				$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.h"
+			}
+		}
+	}
+}

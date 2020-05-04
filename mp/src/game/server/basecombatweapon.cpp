@@ -27,8 +27,12 @@
 #include "iservervehicle.h"
 #include "func_break.h"
 
-#ifdef TFCSOURCE_DLL
-	#include "tfcs_gamerules.h"
+#ifdef HL2MP
+	#include "hl2mp_gamerules.h"
+#endif
+
+#ifdef SDK_DLL
+#include "sdk_gamerules.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -567,7 +571,7 @@ void CBaseCombatWeapon::Materialize( void )
 	if ( IsEffectActive( EF_NODRAW ) )
 	{
 		// changing from invisible state to visible.
-#ifdef TFCSOURCE_DLL
+#ifdef HL2MP
 		EmitSound( "AlyxEmp.Charge" );
 #else
 		EmitSound( "BaseCombatWeapon.WeaponMaterialize" );
@@ -576,13 +580,21 @@ void CBaseCombatWeapon::Materialize( void )
 		RemoveEffects( EF_NODRAW );
 		DoMuzzleFlash();
 	}
-#ifdef TFCSOURCE_DLL
+#ifdef HL2MP
 	if ( HasSpawnFlags( SF_NORESPAWN ) == false )
 	{
 		VPhysicsInitNormal( SOLID_BBOX, GetSolidFlags() | FSOLID_TRIGGER, false );
 		SetMoveType( MOVETYPE_VPHYSICS );
 
-		TFCSGameRules()->AddLevelDesignerPlacedObject( this );
+		HL2MPRules()->AddLevelDesignerPlacedObject( this );
+	}
+#elif SDK_DLL
+	if ( HasSpawnFlags( SF_NORESPAWN ) == false )
+	{
+		VPhysicsInitNormal( SOLID_BBOX, GetSolidFlags() | FSOLID_TRIGGER, false );
+		SetMoveType( MOVETYPE_VPHYSICS );
+
+		SDKGameRules()->AddLevelDesignerPlacedObject( this );
 	}
 #else
 	SetSolid( SOLID_BBOX );

@@ -44,6 +44,7 @@ extern Color g_ColorGreen;
 extern Color g_ColorDarkGreen;
 extern Color g_ColorYellow;
 extern Color g_ColorGrey;
+extern Color g_ColorWhite;
 
 extern ConVar cl_showtextmsg;
 
@@ -55,16 +56,16 @@ enum ChatFilters
 	CHAT_FILTER_PUBLICCHAT	= 0x000004,
 	CHAT_FILTER_SERVERMSG	= 0x000008,
 	CHAT_FILTER_TEAMCHANGE	= 0x000010,
-    //=============================================================================
-    // HPE_BEGIN:
-    // [tj]Added a filter for achievement announce
-    //=============================================================================
-     
-    CHAT_FILTER_ACHIEVEMENT	= 0x000020,
-     
-    //=============================================================================
-    // HPE_END
-    //=============================================================================
+	//=============================================================================
+	// HPE_BEGIN:
+	// [tj]Added a filter for achievement announce
+	//=============================================================================
+	 
+	CHAT_FILTER_ACHIEVEMENT	= 0x000020,
+	 
+	//=============================================================================
+	// HPE_END
+	//=============================================================================
 };
 
 

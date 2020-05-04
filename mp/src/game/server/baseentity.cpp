@@ -265,7 +265,7 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE( CBaseEntity, DT_BaseEntity )
 #if PREDICTION_ERROR_CHECK_LEVEL > 1 
 	SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_NOSCALE|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
 #else
-	SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_COORD|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
+	SendPropVector(SENDINFO(m_vecOrigin), -1, SPROP_NOSCALE| SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin),
 #endif
 
 	SendPropInt		(SENDINFO( m_ubInterpolationFrame ), NOINTERP_PARITY_MAX_BITS, SPROP_UNSIGNED ),
@@ -940,12 +940,13 @@ void CBaseEntity::DrawDebugGeometryOverlays(void)
 			NDebugOverlay::EntityBounds(this, 255, 255, 255, 0, 0 );
 		}
 	}
-	if ( m_debugOverlays & OVERLAY_AUTOAIM_BIT && (GetFlags()&FL_AIMTARGET) && AI_GetSinglePlayer() != NULL )
+	CBasePlayer *pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin()); 
+	if (m_debugOverlays & OVERLAY_AUTOAIM_BIT && (GetFlags()&FL_AIMTARGET) && pPlayer != NULL) 
 	{
 		// Crude, but it gets the point across.
 		Vector vecCenter = GetAutoAimCenter();
 		Vector vecRight, vecUp, vecDiag;
-		CBasePlayer *pPlayer = AI_GetSinglePlayer();
+		// CBasePlayer *pPlayer = AI_GetSinglePlayer(); 
 		float radius = GetAutoAimRadius();
 
 		QAngle angles = pPlayer->EyeAngles();
@@ -1009,7 +1010,7 @@ int CBaseEntity::DrawDebugTextOverlays(void)
 
 		if( m_iGlobalname != NULL_STRING )
 		{
-			Q_snprintf( tempstr, sizeof(tempstr), "GLOBALNAME: %s", STRING(m_iGlobalname) );
+			Q_snprintf( tempstr, sizeof(tempstr), "Globalname: %s", STRING(m_iGlobalname) );
 			EntityText(offset,tempstr, 0);
 			offset++;
 		}
@@ -1021,14 +1022,14 @@ int CBaseEntity::DrawDebugTextOverlays(void)
 
 		if( GetModelName() != NULL_STRING || GetBaseAnimating() )
 		{
-			Q_snprintf(tempstr, sizeof(tempstr), "Model:%s", STRING(GetModelName()) );
+			Q_snprintf(tempstr, sizeof(tempstr), "Model: %s", STRING(GetModelName()) );
 			EntityText(offset,tempstr,0);
 			offset++;
 		}
 
 		if( m_hDamageFilter.Get() != NULL )
 		{
-			Q_snprintf( tempstr, sizeof(tempstr), "DAMAGE FILTER:%s", m_hDamageFilter->GetDebugName() );
+			Q_snprintf( tempstr, sizeof(tempstr), "Damage Filter: %s", m_hDamageFilter->GetDebugName() );
 			EntityText( offset,tempstr,0 );
 			offset++;
 		}
@@ -1463,11 +1464,11 @@ int CBaseEntity::TakeDamage( const CTakeDamageInfo &inputInfo )
 			{
 				if ( inputInfo.GetDamageForce() == vec3_origin )
 				{
-					DevWarning( "CBaseEntity::TakeDamage:  with inputInfo.GetDamageForce() == vec3_origin\n" );
+					DevMsg( "CBaseEntity::TakeDamage:  with inputInfo.GetDamageForce() == vec3_origin\n" );
 				}
 				if ( inputInfo.GetDamagePosition() == vec3_origin )
 				{
-					DevWarning( "CBaseEntity::TakeDamage:  with inputInfo.GetDamagePosition() == vec3_origin\n" );
+					DevMsg( "CBaseEntity::TakeDamage:  with inputInfo.GetDamagePosition() == vec3_origin\n" );
 				}
 			}
 		}
@@ -1577,28 +1578,8 @@ int CBaseEntity::VPhysicsTakeDamage( const CTakeDamageInfo &info )
 		if ( gameFlags & FVPHYSICS_PLAYER_HELD )
 		{
 			// if the player is holding the object, use it's real mass (player holding reduced the mass)
-			CBasePlayer *pPlayer = NULL;
-			
-			if ( AI_IsSinglePlayer() )
-			{
-				pPlayer = UTIL_GetLocalPlayer();
-			}
-			else
-			{
-				// See which MP player is holding the physics object and then use that player to get the real mass of the object.
-				// This is ugly but better than having linkage between an object and its "holding" player.
-				for ( int i = 1; i <= gpGlobals->maxClients; i++ )
-				{
-					CBasePlayer *tempPlayer = UTIL_PlayerByIndex( i );
-					if ( tempPlayer && (tempPlayer->GetHeldObject() == this ) )
-					{
-						pPlayer = tempPlayer;
-						break;
-					}
-				}
-			}
-
- 			if ( pPlayer )
+			CBasePlayer *pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin()); 
+			if ( pPlayer )
 			{
 				float mass = pPlayer->GetHeldObjectMass( VPhysicsGetObject() );
 				if ( mass != 0.0f )
@@ -3770,16 +3751,19 @@ void CBaseEntity::DrawInputOverlay(const char *szInputName, CBaseEntity *pCaller
 	}
 	AddTimedOverlay(bigstring, 10.0);
 
+	if ( g_pDeveloper->GetInt() > 1 )
+		return;
+
 	if ( Value.FieldType() == FIELD_INTEGER )
 	{
-		DevMsg( 2, "input: (%s,%d) -> (%s,%s), from (%s)\n", szInputName, Value.Int(), STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
+		ConDColorMsg( Color( 93, 210, 255, 255 ), "input: (%s,%d) -> (%s,%s), from (%s)\n", szInputName, Value.Int(), STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
 	}
 	else if ( Value.FieldType() == FIELD_STRING )
 	{
-		DevMsg( 2, "input: (%s,%s) -> (%s,%s), from (%s)\n", szInputName, Value.String(), STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
+		ConDColorMsg( Color( 93, 210, 255, 255 ), "input: (%s,%s) -> (%s,%s), from (%s)\n", szInputName, Value.String(), STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
 	}
 	else
-		DevMsg( 2, "input: (%s) -> (%s,%s), from (%s)\n", szInputName, STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
+		ConDColorMsg( Color( 93, 210, 255, 255 ), "input: (%s) -> (%s,%s), from (%s)\n", szInputName, STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
 }
 
 //------------------------------------------------------------------------------
@@ -3789,6 +3773,7 @@ void CBaseEntity::DrawInputOverlay(const char *szInputName, CBaseEntity *pCaller
 //------------------------------------------------------------------------------
 void CBaseEntity::DrawOutputOverlay(CEventAction *ev)
 {
+	//ConColorMsg( clr, "\"%s\" = \"%s\"", var->GetName(), value );
 	// Print to entity
 	char bigstring[1024];
 	if ( ev->m_flDelay )
@@ -3801,14 +3786,17 @@ void CBaseEntity::DrawOutputOverlay(CEventAction *ev)
 	}
 	AddTimedOverlay(bigstring, 10.0);
 
+	if ( g_pDeveloper->GetInt() > 1 )
+		return;
+
 	// Now print to the console
 	if ( ev->m_flDelay )
 	{
-		DevMsg( 2, "output: (%s,%s) -> (%s,%s,%.1f)\n", STRING(m_iClassname), GetDebugName(), STRING(ev->m_iTarget), STRING(ev->m_iTargetInput), ev->m_flDelay );
+		ConDColorMsg( Color( 80, 185, 240, 255 ), "output: (%s,%s) -> (%s,%s,%.1f)\n", STRING(m_iClassname), GetDebugName(), STRING(ev->m_iTarget), STRING(ev->m_iTargetInput), ev->m_flDelay );
 	}
 	else
 	{
-		DevMsg( 2, "output: (%s,%s) -> (%s,%s)\n", STRING(m_iClassname), GetDebugName(), STRING(ev->m_iTarget), STRING(ev->m_iTargetInput) );
+		ConDColorMsg( Color( 80, 185, 240, 255 ), "output: (%s,%s) -> (%s,%s)\n", STRING(m_iClassname), GetDebugName(), STRING(ev->m_iTarget), STRING(ev->m_iTargetInput) );
 	}
 }
 
@@ -3865,7 +3853,7 @@ void CBaseEntity::OnEntityEvent( EntityEvent_t event, void *pEventData )
 
 	if ( m_nSlimeTouch > 0 )
 	{
- 		nNewContents |= CONTENTS_SLIME;
+		nNewContents |= CONTENTS_SLIME;
 	}
 
 	if (( nNewContents & MASK_WATER ) == 0)
@@ -3927,7 +3915,10 @@ bool CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator,
 					{
 						Q_snprintf( szBuffer, sizeof(szBuffer), "(%0.2f) input <NULL>: %s.%s(%s)\n", gpGlobals->curtime, GetDebugName(), szInputName, Value.String() );
 					}
-					DevMsg( 2, "%s", szBuffer );
+
+					if ( g_pDeveloper->GetInt() > 1 )
+						ConDColorMsg( Color( 100, 126, 200, 255 ), "%s", szBuffer );
+
 					ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 
 					if (m_debugOverlays & OVERLAY_MESSAGE_BIT)
@@ -3987,7 +3978,9 @@ bool CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator,
 		}
 	}
 
-	DevMsg( 2, "unhandled input: (%s) -> (%s,%s)\n", szInputName, STRING(m_iClassname), GetDebugName()/*,", from (%s,%s)" STRING(pCaller->m_iClassname), STRING(pCaller->m_iName)*/ );
+	if ( g_pDeveloper->GetInt() > 1 )
+		ConDColorMsg( Color( 200, 191, 231, 255 ), "unhandled input: (%s) -> (%s,%s)\n", szInputName, STRING(m_iClassname), GetDebugName()/*,", from (%s,%s)" STRING(pCaller->m_iClassname), STRING(pCaller->m_iName)*/ );
+	
 	return false;
 }
 
@@ -4133,8 +4126,12 @@ void CBaseEntity::GetInputDispatchEffectPosition( const char *sInputString, Vect
 //-----------------------------------------------------------------------------
 void CBaseEntity::InputKill( inputdata_t &inputdata )
 {
+	if ( IsPlayer() )
+		return;
+
 	// tell owner ( if any ) that we're dead.This is mostly for NPCMaker functionality.
 	CBaseEntity *pOwner = GetOwnerEntity();
+
 	if ( pOwner )
 	{
 		pOwner->DeathNotice( this );
@@ -4146,6 +4143,9 @@ void CBaseEntity::InputKill( inputdata_t &inputdata )
 
 void CBaseEntity::InputKillHierarchy( inputdata_t &inputdata )
 {
+	if ( IsPlayer() )
+		return;
+
 	CBaseEntity *pChild, *pNext;
 	for ( pChild = FirstMoveChild(); pChild; pChild = pNext )
 	{
@@ -5093,8 +5093,15 @@ void CC_Ent_Remove( const CCommand& args )
 	// Found one?
 	if ( pEntity )
 	{
-		Msg( "Removed %s(%s)\n", STRING(pEntity->m_iClassname), pEntity->GetDebugName() );
-		UTIL_Remove( pEntity );
+		if ( pEntity->IsPlayer() )
+		{
+			Msg("Attempted to remove a player entity\n");
+		}
+		else
+		{
+			Msg("Removed %s(%s)\n", STRING(pEntity->m_iClassname), pEntity->GetDebugName());
+			UTIL_Remove(pEntity);
+		}
 	}
 }
 static ConCommand ent_remove("ent_remove", CC_Ent_Remove, "Removes the given entity(s)\n\tArguments:   	{entity_name} / {class_name} / no argument picks what player is looking at ", FCVAR_CHEAT);
@@ -5116,10 +5123,17 @@ void CC_Ent_RemoveAll( const CCommand& args )
 		{
 			if (  (ent->GetEntityName() != NULL_STRING	&& FStrEq(args[1], STRING(ent->GetEntityName())))	|| 
 				  (ent->m_iClassname != NULL_STRING	&& FStrEq(args[1], STRING(ent->m_iClassname))) ||
-				  (ent->GetClassname()!=NULL && FStrEq(args[1], ent->GetClassname())))
+				  (ent->GetClassname() != NULL && FStrEq(args[1], ent->GetClassname())))
 			{
-				UTIL_Remove( ent );
-				iCount++;
+				if ( ent->IsPlayer() )
+				{
+					Msg("Attempted to remove player entities\n");
+				}
+				else
+				{
+					UTIL_Remove(ent);
+					iCount++;
+				}
 			}
 		}
 
@@ -5192,7 +5206,7 @@ void CC_Find_Ent( const CCommand& args )
 	}
 
 	int iCount = 0;
- 	const char *pszSubString = args[1];
+	const char *pszSubString = args[1];
 	Msg("Searching for entities with class/target name containing substring: '%s'\n", pszSubString );
 
 	CBaseEntity *ent = NULL;
@@ -5220,7 +5234,7 @@ void CC_Find_Ent( const CCommand& args )
 
 		if ( bMatches )
 		{
- 			iCount++;
+			iCount++;
 			Msg("   '%s' : '%s' (entindex %d) \n", ent->GetClassname(), ent->GetEntityName().ToCStr(), ent->entindex() );
 		}
 	}
@@ -6066,7 +6080,7 @@ void CBaseEntity::SetLocalOrigin( const Vector& origin )
 	{
 		if ( CheckEmitReasonablePhysicsSpew() )
 		{
-			Warning( "Bad SetLocalOrigin(%f,%f,%f) on %s\n", origin.x, origin.y, origin.z, GetDebugName() );
+			DevMsg( 2, "Bad SetLocalOrigin(%f,%f,%f) on %s\n", origin.x, origin.y, origin.z, GetDebugName() );
 		}
 		Assert( false );
 		return;
@@ -6109,9 +6123,9 @@ void CBaseEntity::SetLocalAngles( const QAngle& angles )
 	{
 		if ( CheckEmitReasonablePhysicsSpew() )
 		{
-			Warning( "Bad SetLocalAngles(%f,%f,%f) on %s\n", angles.x, angles.y, angles.z, GetDebugName() );
+			DevMsg( 2, "Bad SetLocalAngles(%f,%f,%f) on %s\n", angles.x, angles.y, angles.z, GetDebugName() );
 		}
-		AssertMsg( false, "Bad SetLocalAngles(%f,%f,%f) on %s\n", angles.x, angles.y, angles.z, GetDebugName() );
+		Assert( false );
 		return;
 	}
 
@@ -6156,7 +6170,7 @@ void CBaseEntity::SetLocalAngularVelocity( const QAngle &vecAngVelocity )
 	{
 		if ( CheckEmitReasonablePhysicsSpew() )
 		{
-			Warning( "Bad SetLocalAngularVelocity(%f,%f,%f) on %s\n", vecAngVelocity.x, vecAngVelocity.y, vecAngVelocity.z, GetDebugName() );
+			DevMsg( 2, "Bad SetLocalAngularVelocity(%f,%f,%f) on %s\n", vecAngVelocity.x, vecAngVelocity.y, vecAngVelocity.z, GetDebugName() );
 		}
 		Assert( false );
 		return;
@@ -6668,7 +6682,7 @@ void CBaseEntity::DispatchResponse( const char *conceptName )
 	ModifyOrAppendCriteria( set );
 
 	// Append local player criteria to set,too
-	CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+	CBasePlayer *pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin()); 
 	if( pPlayer )
 		pPlayer->ModifyOrAppendPlayerCriteria( set );
 
@@ -6727,7 +6741,7 @@ void CBaseEntity::DumpResponseCriteria( void )
 	ModifyOrAppendCriteria( set );
 
 	// Append local player criteria to set,too
-	CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+	CBasePlayer *pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin()); 
 	if ( pPlayer )
 	{
 		pPlayer->ModifyOrAppendPlayerCriteria( set );
@@ -7212,7 +7226,7 @@ bool CBaseEntity::SUB_AllowedToFade( void )
 
 	// on Xbox, allow these to fade out
 #ifndef _XBOX
-	CBasePlayer *pPlayer = ( AI_IsSinglePlayer() ) ? UTIL_GetLocalPlayer() : NULL;
+	CBasePlayer *pPlayer = UTIL_GetNearestVisiblePlayer(this); 
 
 	if ( pPlayer && pPlayer->FInViewCone( this ) )
 		return false;
@@ -7232,7 +7246,7 @@ void CBaseEntity::SUB_FadeOut( void  )
 		SetRenderColorA( 255 );
 		return;
 	}
-    
+	
 	SUB_PerformFadeOut();
 
 	if ( m_clrRender->a == 0 )
@@ -7333,7 +7347,7 @@ void CC_Ent_Create( const CCommand& args )
 	}
 
 	// Don't allow regular users to create point_servercommand entities for the same reason as blocking ent_fire
-	if ( !Q_stricmp( args[1], "point_servercommand" ) )
+	if ( !Q_stricmp( args[1], "point_servercommand" ) || !Q_stricmp( args[1], "point_clientcommand" ) )
 	{
 		if ( engine->IsDedicatedServer() )
 		{

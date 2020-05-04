@@ -35,7 +35,8 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#ifdef CSTRIKE_DLL
+//Tony; modified so that the sdk view models are right handed out of the box.
+#if defined( CSTRIKE_DLL ) || defined( SDK_DLL )
 	ConVar cl_righthand( "cl_righthand", "1", FCVAR_ARCHIVE, "Use right-handed view models." );
 #endif
 

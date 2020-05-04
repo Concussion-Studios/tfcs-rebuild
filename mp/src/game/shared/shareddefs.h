@@ -121,8 +121,8 @@ public:
 
 #define WEAPON_NOCLIP			-1	// clip sizes set to this tell the weapon it doesn't use a clip
 
-#define	MAX_AMMO_TYPES	32		// ???
-#define MAX_AMMO_SLOTS  32		// not really slots
+#define	MAX_AMMO_TYPES	128		// ???
+#define MAX_AMMO_SLOTS  128		// not really slots
 
 #define HUD_PRINTNOTIFY		1
 #define HUD_PRINTCONSOLE	2
@@ -228,8 +228,8 @@ enum CastVote
 //Since this is decided by the gamerules (and it can be whatever number as long as its less than MAX_PLAYERS).
 #if defined( CSTRIKE_DLL )
 	#define MAX_PLAYERS				65  // Absolute max players supported
-#elif TFCSOURCE_DLL
-	#define MAX_PLAYERS				TFCS_MAX_PLAYERS  // Absolute max players supported
+#elif SDK_DLL
+	#define MAX_PLAYERS				SDK_MAX_PLAYERS  // Absolute max players supported
 #else
 	#define MAX_PLAYERS				33  // Absolute max players supported
 #endif
@@ -285,7 +285,7 @@ enum CastVote
 
 // Humans only have left and right hands, though we might have aliens with more
 //  than two, sigh
-#define MAX_VIEWMODELS			2
+#define MAX_VIEWMODELS			4
 
 #define MAX_BEAM_ENTS			10
 
@@ -986,9 +986,5 @@ enum
 	MAX_VISION_MODES
 };
 #endif // TF_DLL || TF_CLIENT_DLL
-
-#ifdef TFCSOURCE_DLL
-	#include "tfcs_shareddefs.h"
-#endif
 
 #endif // SHAREDDEFS_H

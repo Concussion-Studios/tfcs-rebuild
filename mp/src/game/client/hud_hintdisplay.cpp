@@ -35,7 +35,6 @@ public:
 	void Reset();
 	void MsgFunc_HintText( bf_read &msg );
 	void FireGameEvent( IGameEvent * event);
-
 	bool SetHintText( wchar_t *text );
 	void LocalizeAndDisplay( const char *pszHudTxtMsg, const char *szRawString );
 
@@ -320,10 +319,12 @@ void CHudHintDisplay::LocalizeAndDisplay( const char *pszHudTxtMsg, const char *
 		C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
 		if ( pLocalPlayer )
 		{
+#ifndef HL2MP
 			if ( sv_hudhint_sound.GetBool() && cl_hudhint_sound.GetBool() )
 			{
 				pLocalPlayer->EmitSound( "Hud.Hint" );
 			}
+#endif // HL2MP
 
 			if ( pLocalPlayer->Hints() )
 			{
@@ -337,9 +338,7 @@ void CHudHintDisplay::LocalizeAndDisplay( const char *pszHudTxtMsg, const char *
 	}
 }
 
-
-
-
+#ifndef SDK_DLL
 //-----------------------------------------------------------------------------
 // Purpose: Displays small key-centric hints on the right hand side of the screen
 //-----------------------------------------------------------------------------
@@ -786,3 +785,4 @@ void CHudHintKeyDisplay::MsgFunc_KeyHintText( bf_read &msg )
 		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "KeyHintMessageHide" ); 
 	}
 }
+#endif

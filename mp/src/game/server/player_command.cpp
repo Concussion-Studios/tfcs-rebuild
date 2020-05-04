@@ -53,25 +53,20 @@ void CPlayerMove::StartCommand( CBasePlayer *player, CUserCmd *cmd )
 #if defined (HL2_DLL)
 	// pull out backchannel data and move this out
 
-	// Let's not bother with IK Ground Contact Info in MP games -- the system needs to be re-worked, every client sends down the same info for each entity, so how would it determine which to use?
-	if ( 1 == gpGlobals->maxClients )
+	int i;
+	for (i = 0; i < cmd->entitygroundcontact.Count(); i++)
 	{
-		int i;
-		for (i = 0; i < cmd->entitygroundcontact.Count(); i++)
+		int entindex =  cmd->entitygroundcontact[i].entindex;
+		CBaseEntity *pEntity = CBaseEntity::Instance( engine->PEntityOfEntIndex( entindex) );
+		if (pEntity)
 		{
-			int entindex =  cmd->entitygroundcontact[i].entindex;
-			CBaseEntity *pEntity = CBaseEntity::Instance( engine->PEntityOfEntIndex( entindex) );
-			if (pEntity)
+			CBaseAnimating *pAnimating = pEntity->GetBaseAnimating();
+			if (pAnimating)
 			{
-				CBaseAnimating *pAnimating = pEntity->GetBaseAnimating();
-				if (pAnimating)
-				{
-					pAnimating->SetIKGroundContactInfo( cmd->entitygroundcontact[i].minheight, cmd->entitygroundcontact[i].maxheight );
-				}
+				pAnimating->SetIKGroundContactInfo( cmd->entitygroundcontact[i].minheight, cmd->entitygroundcontact[i].maxheight );
 			}
 		}
 	}
-
 
 #endif
 }

@@ -69,6 +69,13 @@ enum PlayerAnimEvent_t
 	PLAYERANIMEVENT_PASSTIME_THROW_CANCEL,
 
 	PLAYERANIMEVENT_ATTACK_PRIMARY_SUPER,
+	
+	// Tony; some SDK ones now too.
+	PLAYERANIMEVENT_STAND_TO_PRONE,
+	PLAYERANIMEVENT_CROUCH_TO_PRONE,
+	PLAYERANIMEVENT_PRONE_TO_STAND,
+	PLAYERANIMEVENT_PRONE_TO_CROUCH,
+
 
 	PLAYERANIMEVENT_COUNT
 };
@@ -154,7 +161,6 @@ struct MultiPlayerMovementData_t
 	// Set speeds to -1 if they are not used.
 	float		m_flWalkSpeed;
 	float		m_flRunSpeed;
-	float		m_flSprintSpeed;	
 	float		m_flBodyYawRate;
 };
 
@@ -188,7 +194,6 @@ public:
 
 	virtual void SetRunSpeed( float flSpeed ) { m_MovementData.m_flRunSpeed = flSpeed; }
 	virtual void SetWalkSpeed( float flSpeed ) { m_MovementData.m_flWalkSpeed = flSpeed; }
-	virtual void SetSprintSpeed( float flSpeed ) { m_MovementData.m_flSprintSpeed = flSpeed; }
 
 	// Debug
 	virtual void ShowDebugInfo( void );
@@ -346,7 +351,7 @@ protected:
 	//but want complete functionality.
 private:
 	friend class CSDKPlayerAnimState;
-	friend class CTFCSPlayerAnimState;
+	friend class CHL2MPPlayerAnimState;
 	DebugPlayerAnimData_t		m_DebugAnimData;
 
 };

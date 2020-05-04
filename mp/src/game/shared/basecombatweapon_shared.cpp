@@ -32,8 +32,12 @@
 #include "fmtstr.h"
 #include "gameweaponmanager.h"
 
-#ifdef TFCSOURCE_DLL
-	#include "tfcs_gamerules.h"
+#ifdef HL2MP
+	#include "hl2mp_gamerules.h"
+#endif
+
+#ifdef SDK_DLL
+	#include "sdk_gamerules.h"
 #endif
 
 #endif
@@ -767,8 +771,12 @@ void CBaseCombatWeapon::OnPickedUp( CBaseCombatCharacter *pNewOwner )
 		m_OnNPCPickup.FireOutput(pNewOwner, this);
 	}
 
-#ifdef TFCSOURCE_DLL
-	TFCSGameRules()->RemoveLevelDesignerPlacedObject( this );
+#ifdef HL2MP
+	HL2MPRules()->RemoveLevelDesignerPlacedObject( this );
+#endif
+
+#ifdef SDK_DLL
+	SDKGameRules()->RemoveLevelDesignerPlacedObject( this );
 #endif
 
 	// Someone picked me up, so make it so that I can't be removed.
@@ -1022,8 +1030,9 @@ void CBaseCombatWeapon::Equip( CBaseCombatCharacter *pOwner )
 void CBaseCombatWeapon::SetActivity( Activity act, float duration ) 
 { 
 	//Adrian: Oh man...
-#if !defined( CLIENT_DLL ) && (defined( TFCSOURCE_DLL ) || defined( PORTAL ))
-	SetModel( GetWorldModel() );
+#if !defined( CLIENT_DLL ) && (defined( HL2MP ) || defined( PORTAL ) || defined( SDK_DLL ) )
+	if (GetOwner()->IsPlayer())
+		SetModel( GetWorldModel() );
 #endif
 	
 	int sequence = SelectWeightedSequence( act ); 
@@ -1033,8 +1042,9 @@ void CBaseCombatWeapon::SetActivity( Activity act, float duration )
 		sequence = SelectWeightedSequence( ACT_VM_IDLE );
 
 	//Adrian: Oh man again...
-#if !defined( CLIENT_DLL ) && (defined( TFCSOURCE_DLL ) || defined( PORTAL ))
-	SetModel( GetViewModel() );
+#if !defined( CLIENT_DLL ) && (defined( HL2MP ) || defined( PORTAL ) || defined( SDK_DLL ) )
+	if (GetOwner()->IsPlayer())
+		SetModel( GetViewModel() );
 #endif
 
 	if ( sequence != ACTIVITY_NOT_AVAILABLE )
@@ -1109,7 +1119,7 @@ void CBaseCombatWeapon::SendViewModelAnim( int nSequence )
 	if ( !IsPredicted() )
 		return;
 #endif
-
+	
 	if ( nSequence < 0 )
 		return;
 
@@ -1117,7 +1127,7 @@ void CBaseCombatWeapon::SendViewModelAnim( int nSequence )
 	
 	if ( pOwner == NULL )
 		return;
-
+	
 	CBaseViewModel *vm = pOwner->GetViewModel( m_nViewModelIndex, false );
 	
 	if ( vm == NULL )

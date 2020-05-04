@@ -116,7 +116,7 @@ public:
 	// Handle view smoothing when going up stairs
 	void				SmoothViewOnStairs( Vector& eyeOrigin );
 	virtual float		CalcRoll (const QAngle& angles, const Vector& velocity, float rollangle, float rollspeed);
-	void				CalcViewRoll( QAngle& eyeAngles );
+	virtual void		CalcViewRoll( QAngle& eyeAngles );
 	void				CreateWaterEffects( void );
 
 	virtual void			SetPlayerUnderwater( bool state );
@@ -571,6 +571,9 @@ private:
 	friend class CHL2GameMovement;
 	friend class CDODGameMovement;
 	friend class CPortalGameMovement;
+#if defined ( SDK_DLL )
+	friend class CSDKGameMovement;
+#endif
 	
 	// Accessors for gamemovement
 	float GetStepSize( void ) const { return m_Local.m_flStepSize; }

@@ -239,9 +239,9 @@ END_RECV_TABLE()
 		RecvPropEHandle		( RECVINFO( m_hLastWeapon ) ),
 		RecvPropEHandle		( RECVINFO( m_hGroundEntity ) ),
 
-		RecvPropFloat		( RECVINFO(m_vecVelocity[0]), 0, RecvProxy_LocalVelocityX ),
-		RecvPropFloat		( RECVINFO(m_vecVelocity[1]), 0, RecvProxy_LocalVelocityY ),
-		RecvPropFloat		( RECVINFO(m_vecVelocity[2]), 0, RecvProxy_LocalVelocityZ ),
+ 		RecvPropFloat		( RECVINFO(m_vecVelocity[0]), 0, RecvProxy_LocalVelocityX ),
+ 		RecvPropFloat		( RECVINFO(m_vecVelocity[1]), 0, RecvProxy_LocalVelocityY ),
+ 		RecvPropFloat		( RECVINFO(m_vecVelocity[2]), 0, RecvProxy_LocalVelocityZ ),
 
 		RecvPropVector		( RECVINFO( m_vecBaseVelocity ) ),
 
@@ -412,6 +412,7 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( player, C_BasePlayer );
 #endif
 
+
 // -------------------------------------------------------------------------------- //
 // Functions.
 // -------------------------------------------------------------------------------- //
@@ -484,7 +485,7 @@ void C_BasePlayer::Spawn( void )
 
 	m_iFOV	= 0;	// init field of view.
 
-	SetModel( "models/player.mdl" );
+    SetModel( "models/player.mdl" );
 
 	Precache();
 
@@ -1759,7 +1760,7 @@ void C_BasePlayer::CalcInEyeCamView(Vector& eyeOrigin, QAngle& eyeAngles, float&
 	else
 	{
 		Vector offset = GetViewOffset();
-#ifdef TFCSOURCE_DLL
+#ifdef HL2MP
 		offset = target->GetViewOffset();
 #endif
 		eyeOrigin += offset; // hack hack

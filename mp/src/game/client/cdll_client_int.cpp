@@ -148,6 +148,8 @@
 #include "fbxsystem/fbxsystem.h"
 #endif
 
+
+
 extern vgui::IInputInternal *g_InputInternal;
 
 //=============================================================================
@@ -169,6 +171,10 @@ extern vgui::IInputInternal *g_InputInternal;
 #ifdef SIXENSE
 #include "sixense/in_sixense.h"
 #endif
+
+//Discord
+#include "discord_rpc.h"
+#include <time.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -262,7 +268,7 @@ void ProcessCacheUsedMaterials()
 	g_bRequestCacheUsedMaterials = false;
 	if ( materials )
 	{
-        materials->CacheUsedMaterials();
+		materials->CacheUsedMaterials();
 	}
 }
 
@@ -331,6 +337,9 @@ void DispatchHudText( const char *pszName );
 static ConVar s_CV_ShowParticleCounts("showparticlecounts", "0", 0, "Display number of particles drawn per frame");
 static ConVar s_cl_team("cl_team", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "Default team when joining a game");
 static ConVar s_cl_class("cl_class", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "Default class when joining a game");
+// Discord RPC
+static ConVar cl_discord_appid("cl_discord_appid", "642934054303432735", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT);
+static int64_t startTimestamp = time(0);
 
 #ifdef HL1MP_CLIENT_DLL
 static ConVar s_cl_load_hl1_content("cl_load_hl1_content", "0", FCVAR_ARCHIVE, "Mount the content from Half-Life: Source if possible");
@@ -344,7 +353,7 @@ class IClientPurchaseInterfaceV2 *g_pClientPurchaseInterface = (class IClientPur
 
 static ConVar *g_pcv_ThreadMode = NULL;
 
-#if defined TFCSOURCE_DLL && defined _WINDOWS
+#if defined SDK_DLL && defined _WINDOWS
 //#pragma message(FILE_LINE_STRING " !!FIXME!! replace all this with Sys_LoadGameModule")
 static class DllOverride {
 	public:
@@ -397,48 +406,48 @@ public:
 		}
 	}
 
-    //=============================================================================
-    // HPE_BEGIN
-    // [dwenger] Necessary for stats display
-    //=============================================================================
+	//=============================================================================
+	// HPE_BEGIN
+	// [dwenger] Necessary for stats display
+	//=============================================================================
 
-    void CreateAchievementsPanel( vgui::Panel* pParent )
-    {
-        if (g_pAchievementsAndStatsInterface)
-        {
-            g_pAchievementsAndStatsInterface->CreatePanel( pParent );
-        }
-    }
+	void CreateAchievementsPanel( vgui::Panel* pParent )
+	{
+		if (g_pAchievementsAndStatsInterface)
+		{
+			g_pAchievementsAndStatsInterface->CreatePanel( pParent );
+		}
+	}
 
-    void DisplayAchievementPanel()
-    {
-        if (g_pAchievementsAndStatsInterface)
-        {
-            g_pAchievementsAndStatsInterface->DisplayPanel();
-        }
-    }
+	void DisplayAchievementPanel()
+	{
+		if (g_pAchievementsAndStatsInterface)
+		{
+			g_pAchievementsAndStatsInterface->DisplayPanel();
+		}
+	}
 
-    void ShutdownAchievementPanel()
-    {
-        if (g_pAchievementsAndStatsInterface)
-        {
-            g_pAchievementsAndStatsInterface->ReleasePanel();
-        }
-    }
+	void ShutdownAchievementPanel()
+	{
+		if (g_pAchievementsAndStatsInterface)
+		{
+			g_pAchievementsAndStatsInterface->ReleasePanel();
+		}
+	}
 
 	int GetAchievementsPanelMinWidth( void ) const
 	{
-        if ( g_pAchievementsAndStatsInterface )
-        {
-            return g_pAchievementsAndStatsInterface->GetAchievementsPanelMinWidth();
-        }
+		if ( g_pAchievementsAndStatsInterface )
+		{
+			return g_pAchievementsAndStatsInterface->GetAchievementsPanelMinWidth();
+		}
 
 		return 0;
 	}
 
-    //=============================================================================
-    // HPE_END
-    //=============================================================================
+	//=============================================================================
+	// HPE_END
+	//=============================================================================
 
 	const char *GetHolidayString()
 	{
@@ -850,6 +859,54 @@ bool IsEngineThreaded()
 }
 
 //-----------------------------------------------------------------------------
+// Discord RPC
+//-----------------------------------------------------------------------------
+
+static void HandleDiscordReady(const DiscordUser* connectedUser)
+{
+	DevMsg("Discord: Connected to user %s#%s - %s\n",
+		connectedUser->username,
+		connectedUser->discriminator,
+		connectedUser->userId);
+}
+
+static void HandleDiscordDisconnected(int errcode, const char* message)
+{
+	DevMsg("Discord: Disconnected (%d: %s)\n", errcode, message);
+}
+
+static void HandleDiscordError(int errcode, const char* message)
+{
+	DevMsg("Discord: Error (%d: %s)\n", errcode, message);
+}
+
+static void HandleDiscordJoin(const char* secret)
+{
+	DiscordRichPresence discordPresence;
+	memset(&discordPresence, 0, sizeof(discordPresence));
+	discordPresence.partyId = "ae488379-351d-4a4f-ad32-2b9b01c91657";
+	discordPresence.joinSecret = "MTI4NzM0OjFpMmhuZToxMjMxMjM= ";
+	Discord_UpdatePresence(&discordPresence);
+	// Not implemented
+}
+
+static void HandleDiscordSpectate(const char* secret)
+{
+	DiscordRichPresence discordPresence;
+	memset(&discordPresence, 0, sizeof(discordPresence));
+	discordPresence.partyId = "ae488379-351d-4a4f-ad32-2b9b01c91657";
+	discordPresence.spectateSecret = "MTIzNDV8MTIzNDV8MTMyNDU0";
+
+	Discord_UpdatePresence(&discordPresence);
+	// Not implemented
+}
+
+static void HandleDiscordJoinRequest(const DiscordUser* request)
+{
+	// Not implemented
+}
+
+//-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
 
@@ -1102,6 +1159,33 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	HookHapticMessages(); // Always hook the messages
 #endif
 
+	// Discord RPC
+	DiscordEventHandlers handlers;
+	memset(&handlers, 0, sizeof(handlers));
+
+	handlers.ready = HandleDiscordReady;
+	handlers.disconnected = HandleDiscordDisconnected;
+	handlers.errored = HandleDiscordError;
+	handlers.joinGame = HandleDiscordJoin;
+	handlers.spectateGame = HandleDiscordSpectate;
+	handlers.joinRequest = HandleDiscordJoinRequest;
+
+	char appid[255];
+	sprintf(appid, "%d", engine->GetAppID());
+	Discord_Initialize(cl_discord_appid.GetString(), &handlers, 1, appid);
+
+	if (!g_bTextMode)
+	{
+		DiscordRichPresence discordPresence;
+		memset(&discordPresence, 0, sizeof(discordPresence));
+
+		discordPresence.state = "In-Game";
+		discordPresence.details = "Main Menu";
+		discordPresence.startTimestamp = startTimestamp;
+		discordPresence.largeImageKey = "logo";
+		Discord_UpdatePresence(&discordPresence);
+	}
+
 	return true;
 }
 
@@ -1176,10 +1260,10 @@ void CHLClient::PostInit()
 //-----------------------------------------------------------------------------
 void CHLClient::Shutdown( void )
 {
-    if (g_pAchievementsAndStatsInterface)
-    {
-        g_pAchievementsAndStatsInterface->ReleasePanel();
-    }
+	if (g_pAchievementsAndStatsInterface)
+	{
+		g_pAchievementsAndStatsInterface->ReleasePanel();
+	}
 
 #ifdef SIXENSE
 	g_pSixenseInput->Shutdown();
@@ -1226,6 +1310,9 @@ void CHLClient::Shutdown( void )
 	DisconnectDataModel();
 	ShutdownFbx();
 #endif
+
+	// Discord RPC
+	Discord_Shutdown();
 	
 	// This call disconnects the VGui libraries which we rely on later in the shutdown path, so don't do it
 //	DisconnectTier3Libraries( );
@@ -1639,10 +1726,27 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	}
 #endif
 
+	// Discord RPC
+	if (!g_bTextMode)
+	{
+		DiscordRichPresence discordPresence;
+		memset(&discordPresence, 0, sizeof(discordPresence));
+
+		char buffer[256];
+		char map_buffer[256];
+		discordPresence.state = "In-Game";
+		sprintf(buffer, "Map: %s", pMapName);
+		sprintf(map_buffer, "map_%s", pMapName);
+		discordPresence.details = buffer;
+		discordPresence.largeImageKey = map_buffer;
+		Discord_UpdatePresence(&discordPresence);
+	}
+
 	// Check low violence settings for this map
 	g_RagdollLVManager.SetLowViolence( pMapName );
 
 	gHUD.LevelInit();
+
 
 #if defined( REPLAY_ENABLED )
 	// Initialize replay ragdoll recorder
@@ -1730,6 +1834,19 @@ void CHLClient::LevelShutdown( void )
 
 	gHUD.LevelShutdown();
 
+	// Discord RPC
+	if (!g_bTextMode)
+	{
+		DiscordRichPresence discordPresence;
+		memset(&discordPresence, 0, sizeof(discordPresence));
+
+		discordPresence.state = "In-Game";
+		discordPresence.details = "Main Menu";
+		discordPresence.startTimestamp = startTimestamp;
+		discordPresence.largeImageKey = "logo";
+		Discord_UpdatePresence(&discordPresence);
+	}
+
 	internalCenterPrint->Clear();
 
 	messagechars->Clear();
@@ -1745,6 +1862,7 @@ void CHLClient::LevelShutdown( void )
 	ReleaseRenderTargets();
 #endif
 
+	
 	// string tables are cleared on disconnect from a server, so reset our global pointers to NULL
 	ResetStringTablePointers();
 
@@ -1980,7 +2098,7 @@ void SimulateEntities()
 	VPROF_BUDGET("Client SimulateEntities", VPROF_BUDGETGROUP_CLIENT_SIM);
 
 	// Service timer events (think functions).
-  	ClientThinkList()->PerformThinkFunctions();
+	ClientThinkList()->PerformThinkFunctions();
 
 	// TODO: make an ISimulateable interface so C_BaseNetworkables can simulate?
 	{

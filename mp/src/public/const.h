@@ -106,7 +106,7 @@
 // CBaseEntity::m_fFlags
 // PLAYER SPECIFIC FLAGS FIRST BECAUSE WE USE ONLY A FEW BITS OF NETWORK PRECISION
 // This top block is for singleplayer games only....no HL2:DM (which defines HL2_DLL)
-#if !defined( TFCSOURCE_DLL ) && ( defined( PORTAL ) || defined( HL2_EPISODIC ) || defined ( HL2_DLL ) || defined( HL2_LOSTCOAST ) )
+#if !defined( HL2MP ) && ( defined( PORTAL ) || defined( HL2_EPISODIC ) || defined ( HL2_DLL ) || defined( HL2_LOSTCOAST ) )
 #define	FL_ONGROUND				(1<<0)	// At rest / on the ground
 #define FL_DUCKING				(1<<1)	// Player flag -- Player is fully crouched
 #define	FL_WATERJUMP			(1<<2)	// player jumping out of water
@@ -442,6 +442,18 @@ typedef CThreadMutex CSourceMutex;
 class CThreadNullMutex;
 typedef CThreadNullMutex CSourceMutex;
 #endif
+
+//Tony; added for IPlayerInfo V3. 
+//Putting all standard possible stances, but GetStance in CBasePlayer will only return standing or ducking by default -
+//up to the mod to specify the others, or override what GetStance returns.
+enum player_Stance
+{
+	PINFO_STANCE_STANDING = 0,
+	PINFO_STANCE_DUCKING,
+
+	PINFO_STANCE_SPRINTING,
+	PINFO_STANCE_PRONE,
+};
 
 #endif
 

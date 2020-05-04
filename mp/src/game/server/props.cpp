@@ -834,8 +834,8 @@ void CBreakableProp::Spawn()
 	m_flDmgModExplosive = 1.0;
 	
 	//jmd: I am guessing that the call to Spawn will set any flags that should be set anyway; this
-	//clears flags we don't want (specifically the FL_ONFIRE for explosive barrels in TFCSOURCE_DLL)]
-#ifdef TFCSOURCE_DLL
+	//clears flags we don't want (specifically the FL_ONFIRE for explosive barrels in HL2MP)]
+#if defined ( HL2MP ) || defined ( SDK_DLL )
 	ClearFlags();
 #endif 
 
@@ -1732,8 +1732,10 @@ void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 		WRITE_ANGLES( GetAbsAngles() );
 		MessageEnd();
 
-#ifndef TFCSOURCE_DLL
+#ifndef HL2MP
+#ifndef SDK_DLL
 		UTIL_Remove( this );
+#endif
 #endif
 		return;
 	}
@@ -1798,8 +1800,10 @@ void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 		}
 	}
 
-#ifndef TFCSOURCE_DLL
+#ifndef HL2MP
+#ifndef SDK_DLL
 	UTIL_Remove( this );
+#endif
 #endif
 }
 
@@ -5782,6 +5786,12 @@ void CPhysicsPropRespawnable::Materialize( void )
 	}
 
 	RemoveEffects( EF_NODRAW );
+
+#ifdef SDK_DLL
+	// changing from invisible state to visible.
+	EmitSound( "BaseCombatWeapon.WeaponMaterialize" );
+#endif // SDK_DLL
+
 	Spawn();
 }
 

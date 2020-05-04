@@ -44,8 +44,6 @@ $Project "mathlib"
 		$File	"almostequal.cpp"
 	}
 
-
-
 	$Folder	"Public Header Files"
 	{
 		$File	"$SRCDIR\public\mathlib\amd3dx.h"			[$WINDOWS||$LINUX]		

@@ -59,7 +59,7 @@ void CHudVoiceSelfStatus::ApplySchemeSettings(vgui::IScheme *pScheme)
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
-#ifdef TFCSOURCE_DLL
+#ifdef HL2MP
 	SetBgColor( Color( 0, 0, 0, 0 ) );
 #endif
 }
@@ -188,7 +188,7 @@ void CHudVoiceStatus::ApplySchemeSettings(vgui::IScheme *pScheme)
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
-#ifdef TFCSOURCE_DLL
+#ifdef HL2MP
 	SetBgColor( Color( 0, 0, 0, 0 ) );
 #endif
 }
@@ -238,7 +238,7 @@ void CHudVoiceStatus::OnThink( void )
 				//=============================================================================
 
 				activeSpeaker.pAvatar = new CAvatarImage();
-#ifdef CSTRIKE_DLL
+#ifdef SDK_DLL //CSTRIKE_DLL
 				// [jpaquin] this allows counter strike to display default avatars for bots.  It can't be a virtual function on
 				// C_BasePlayer because there would be no way to get a game specific default image if the player is null.
 				extern vgui::IImage* GetDefaultAvatarImage( C_BasePlayer *pPlayer );

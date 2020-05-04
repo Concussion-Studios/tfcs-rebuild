@@ -7,44 +7,32 @@
 /////////////////////////
 // Project definitions //
 /////////////////////////
-
 $Project "client"
 {
-	"game\client\client_tfcs.vpc"		[($WIN32||$POSIX) && $TFCS]
-}
-
-$Project "game_shader_dx9"
-{
-	"materialsystem\stdshaders\game_shader_dx9_tfcs.vpc" [$TFCS]
+	"game\client\client_tfcsource.vpc"		[($WIN32||$POSIX) && $TFC]
 }
 
 $Project "server"
 {
-	"game\server\server_tfcs.vpc"		[($WIN32||$POSIX) && $TFCS]
-}
-
-$Project "gameui"
-{
-	"gameui\gameui_tfcs.vpc"		[($WIN32||$POSIX) && $TFCS]
+	"game\server\server_tfcsource.vpc"		[($WIN32||$POSIX) && $TFC]
 }
 
 $Project "mathlib"
 {
-	"mathlib\mathlib.vpc" [$WINDOWS||$X360||$POSIX]
+	"mathlib\mathlib.vpc" [$WINDOWS||$POSIX]
 }
 
 $Project "raytrace"
 {
-	"raytrace\raytrace.vpc" [$WIN32||$X360||$POSIX]
+	"raytrace\raytrace.vpc" [$WIN32||$POSIX]
 }
 
 $Project "tier1"
 {
-	"tier1\tier1.vpc" 	[$WINDOWS || $X360||$POSIX]
+	"tier1\tier1.vpc" 	[$WINDOWS||$POSIX]
 }
 
 $Project "vgui_controls"
 {
-	"vgui2\vgui_controls\vgui_controls.vpc" [$WIN32||$X360||$POSIX]
+	"vgui2\vgui_controls\vgui_controls.vpc" [$WIN32||$POSIX]
 }
-

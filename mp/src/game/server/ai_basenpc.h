@@ -446,6 +446,8 @@ float ChangeDistance( float flInterval, float flGoalDistance, float flGoalVeloci
 //
 //=============================================================================
 
+#define MAX_AIS	256 
+
 class CAI_Manager
 {
 public:
@@ -454,17 +456,12 @@ public:
 	CAI_BaseNPC **	AccessAIs();
 	int				NumAIs();
 	
-	void AddAI( CAI_BaseNPC *pAI );
+	int  AddAI( CAI_BaseNPC *pAI ); 
 	void RemoveAI( CAI_BaseNPC *pAI );
 
 	bool FindAI( CAI_BaseNPC *pAI )	{ return ( m_AIs.Find( pAI ) != m_AIs.InvalidIndex() ); }
 	
 private:
-	enum
-	{
-		MAX_AIS = 256
-	};
-	
 	typedef CUtlVector<CAI_BaseNPC *> CAIArray;
 	
 	CAIArray m_AIs;
@@ -1765,12 +1762,12 @@ public:
 	virtual void		Event_Killed( const CTakeDamageInfo &info );
 
 	virtual Vector		GetShootEnemyDir( const Vector &shootOrigin, bool bNoisy = true );
-#ifdef HL2_DLL
+#if defined ( HL2_DLL ) || defined ( SDK_DLL )
 	virtual Vector		GetActualShootPosition( const Vector &shootOrigin );
 	virtual Vector		GetActualShootTrajectory( const Vector &shootOrigin );
 	virtual	Vector		GetAttackSpread( CBaseCombatWeapon *pWeapon, CBaseEntity *pTarget = NULL );
 	virtual	float		GetSpreadBias( CBaseCombatWeapon *pWeapon, CBaseEntity *pTarget );
-#endif //HL2_DLL
+#endif //HL2_DLL && SDK_DLL
 	virtual void		CollectShotStats( const Vector &vecShootOrigin, const Vector &vecShootDir );
 	virtual Vector		BodyTarget( const Vector &posSrc, bool bNoisy = true );
 	virtual Vector		GetAutoAimCenter() { return BodyTarget(vec3_origin, false); }
@@ -2122,6 +2119,13 @@ public:
 	void				GetPlayerAvoidBounds( Vector *pMins, Vector *pMaxs );
 
 	void				StartPingEffect( void ) { m_flTimePingEffect = gpGlobals->curtime + 2.0f; DispatchUpdateTransmitState(); }
+
+	// used by lag compensation to be able to refer to & track specific NPCs, and detect changes in the AI list
+	void				SetAIIndex(int i) { m_iAIIndex = i; }
+	int					GetAIIndex() { return m_iAIIndex; }
+
+private:
+	int					m_iAIIndex;
 };
 
 

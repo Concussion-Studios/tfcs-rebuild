@@ -114,12 +114,11 @@ public:
 
 private:
 
-	void RenderGlowModels( const CViewSetup *pSetup, CMatRenderContextPtr &pRenderContext );
 	void ApplyEntityGlowEffects( const CViewSetup *pSetup, CMatRenderContextPtr &pRenderContext, float flBloomScale, int x, int y, int w, int h );
 
 	struct GlowObjectDefinition_t
 	{
-		bool ShouldDraw() const
+		bool ShouldDraw( int nSlot ) const
 		{
 			return m_hEntity.Get() && 
 				   ( m_bRenderWhenOccluded || m_bRenderWhenUnoccluded ) && 
@@ -136,7 +135,7 @@ private:
 
 		bool m_bRenderWhenOccluded;
 		bool m_bRenderWhenUnoccluded;
-
+	
 		// Linked list of free slots
 		int m_nNextFreeSlot;
 
@@ -144,6 +143,10 @@ private:
 		static const int END_OF_FREE_LIST = -1;
 		static const int ENTRY_IN_USE = -2;
 	};
+
+	void DrawGlowVisible( CMatRenderContextPtr& pRenderContext );
+	void DrawGlowOccluded( CMatRenderContextPtr& pRenderContext);
+	void DrawGlowAlways( CMatRenderContextPtr& pRenderContext);
 
 	CUtlVector< GlowObjectDefinition_t > m_GlowObjectDefinitions;
 	int m_nFirstFreeSlot;

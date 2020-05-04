@@ -36,6 +36,7 @@
 #include "tier0/memdbgon.h"
 
 extern CBaseEntity				*g_pLastSpawn;
+void InitBodyQue(void);
 extern void W_Precache(void);
 extern void ActivityList_Free( void );
 extern CUtlMemoryPool g_EntityListPool;
@@ -615,17 +616,16 @@ void CWorld::Precache( void )
 	EventList_Free();
 	RegisterSharedEvents();
 
-// init sentence group playback stuff from sentences.txt.
-// ok to call this multiple times, calls after first are ignored.
-
+	// init sentence group playback stuff from sentences.txt.
+	// ok to call this multiple times, calls after first are ignored.
 	SENTENCEG_Init();
 
 	// Precache standard particle systems
 	PrecacheStandardParticleSystems( );
 
-// the area based ambient sounds MUST be the first precache_sounds
+	// the area based ambient sounds MUST be the first precache_sounds
 
-// player precaches     
+	// player precaches     
 	W_Precache ();									// get weapon precaches
 	ClientPrecache();
 	g_pGameRules->Precache();
@@ -646,9 +646,9 @@ void CWorld::Precache( void )
 	PrecacheScriptSound( "BaseEntity.EnterWater" );
 	PrecacheScriptSound( "BaseEntity.ExitWater" );
 
-//
-// Setup light animation tables. 'a' is total darkness, 'z' is maxbright.
-//
+	//
+	// Setup light animation tables. 'a' is total darkness, 'z' is maxbright.
+	//
 	for ( int i = 0; i < ARRAYSIZE(g_DefaultLightstyles); i++ )
 	{
 		engine->LightStyle( i, GetDefaultLightstyleString(i) );

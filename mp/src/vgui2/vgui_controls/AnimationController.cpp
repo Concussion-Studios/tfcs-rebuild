@@ -13,7 +13,7 @@
 #include <vgui_controls/AnimationController.h>
 #include "filesystem.h"
 #include "filesystem_helpers.h"
-#include <vgui_controls/ModelPanel.h>
+#include "ModelPanel.h"
 
 #include <stdio.h>
 #include <math.h>

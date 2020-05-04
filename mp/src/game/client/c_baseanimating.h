@@ -140,7 +140,7 @@ public:
 	virtual void GetPoseParameters( CStudioHdr *pStudioHdr, float poseParameter[MAXSTUDIOPOSEPARAM] );
 	virtual void BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed );
 	virtual void ApplyBoneMatrixTransform( matrix3x4_t& transform );
-	virtual int	VPhysicsGetObjectList( IPhysicsObject **pList, int listMax );
+ 	virtual int	VPhysicsGetObjectList( IPhysicsObject **pList, int listMax );
 
 	// model specific
 	virtual bool SetupBones( matrix3x4_t *pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime );
@@ -163,7 +163,7 @@ public:
 	virtual void FireObsoleteEvent( const Vector& origin, const QAngle& angles, int event, const char *options );
 	virtual const char* ModifyEventParticles( const char* token ) { return token; }
 
-#if defined ( SDK_DLL ) || defined ( TFCSOURCE_DLL )
+#if defined ( SDK_DLL ) || defined ( HL2MP )
 	virtual void ResetEventsParity() { m_nPrevResetEventsParity = -1; } // used to force animation events to function on players so the muzzleflashes and other events occur
 																		// so new functions don't have to be made to parse the models like CSS does in ProcessMuzzleFlashEvent
 																		// allows the multiplayer world weapon models to declare the muzzleflashes, and other effects like sp
@@ -370,7 +370,11 @@ public:
 	int								GetHitboxSetCount( void );
 	void							DrawClientHitboxes( float duration = 0.0f, bool monocolor = false );
 
-	C_BaseAnimating*				FindFollowedEntity();
+#ifdef SDK_DLL // ZMRCHANGE: We have to make this a virtual so we can override it in our viewmodel class.
+	virtual C_BaseAnimating* FindFollowedEntity();
+#else
+	C_BaseAnimating* FindFollowedEntity();
+#endif
 
 	virtual bool					IsActivityFinished( void ) { return m_bSequenceFinished; }
 	inline bool						IsSequenceFinished( void );
